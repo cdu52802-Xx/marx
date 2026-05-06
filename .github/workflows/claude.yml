@@ -32,7 +32,10 @@ jobs:
 
       - name: Run Claude Code
         id: claude
-        uses: anthropics/claude-code-action@v1
+        # Pin 到 v1.0.99（last-good）—— v1.0.100+ 在 claude.ai 不可达环境会
+        # install.sh 静默失败 + SDK 报 "native binary not found"。
+        # 上游 issue: anthropics/claude-code-action#1242（open）
+        uses: anthropics/claude-code-action@v1.0.99
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
 
