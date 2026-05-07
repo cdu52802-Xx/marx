@@ -1,0 +1,4 @@
+# 行尾统一为 LF（消除 Windows git 的 "LF will be replaced by CRLF" 噪音）
+# text=auto: 让 git 自动判断文本/二进制
+# eol=lf: 工作区文本文件强制 LF 行尾，避免双机（Win + 跨平台 CI）切换时来回转换
+* text=auto eol=lf
