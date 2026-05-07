@@ -1,0 +1,581 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Marx 星图 · 风格 B · 革命粗野</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,wght@0,400;0,700;0,900;1,400&family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+SC:wght@500;700;900&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --red: #c8102e;
+        --red-dark: #8e0d22;
+        --ink: #0a0a0a;
+        --paper: #e8dcc4;
+        --paper-soft: #f1e8d4;
+        --rule: #0a0a0a;
+        --shadow-hard: 5px 5px 0 var(--ink);
+        --shadow-hard-red: 5px 5px 0 var(--red);
+        --display: 'Bodoni Moda', 'Noto Sans SC', serif;
+        --mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+        --zh-bold: 'Noto Sans SC', -apple-system, sans-serif;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: var(--mono);
+        font-size: 13px;
+        line-height: 1.5;
+        color: var(--ink);
+        background: var(--paper);
+        min-height: 100vh;
+      }
+      a {
+        color: inherit;
+      }
+      .preview-banner {
+        background: var(--ink);
+        color: var(--paper);
+        padding: 10px 32px;
+        font-family: var(--mono);
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        display: flex;
+        justify-content: space-between;
+        border-bottom: 4px solid var(--red);
+      }
+      .preview-banner a {
+        color: var(--red);
+        text-decoration: none;
+        border-bottom: 1px solid var(--red);
+      }
+      .stage {
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        min-height: 100vh;
+        padding: 0;
+      }
+      /* 顶栏 */
+      header {
+        background: var(--ink);
+        color: var(--paper);
+        padding: 0;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: stretch;
+        border-bottom: 4px solid var(--ink);
+      }
+      .brand {
+        font-family: var(--display);
+        font-weight: 900;
+        font-size: 96px;
+        line-height: 0.85;
+        padding: 24px 32px 18px;
+        letter-spacing: -0.04em;
+        background: var(--red);
+        color: var(--paper);
+      }
+      .brand small {
+        display: block;
+        font-family: var(--mono);
+        font-size: 11px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.32em;
+        line-height: 1.2;
+        margin-top: 12px;
+        opacity: 0.85;
+      }
+      .toolbar {
+        display: grid;
+        grid-template-rows: auto auto auto;
+        align-items: stretch;
+        font-family: var(--mono);
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+      }
+      .toolbar > * {
+        padding: 12px 24px;
+        border-bottom: 1px solid var(--paper);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .toolbar > *:last-child {
+        border-bottom: none;
+      }
+      .toolbar .search input {
+        background: transparent;
+        border: none;
+        color: var(--paper);
+        font-family: var(--mono);
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        flex: 1;
+        outline: none;
+        padding: 4px 0;
+      }
+      .toolbar .search input::placeholder {
+        color: var(--paper);
+        opacity: 0.5;
+      }
+      .toolbar .tabs a {
+        text-decoration: none;
+        padding: 4px 10px;
+      }
+      .toolbar .tabs a.active {
+        background: var(--red);
+        color: var(--paper);
+      }
+      .toolbar .swap {
+        font-family: var(--display);
+        font-weight: 700;
+        font-size: 18px;
+        color: var(--red);
+        letter-spacing: 0;
+      }
+      /* 主舞台 */
+      main {
+        display: grid;
+        grid-template-columns: 1fr 380px;
+        gap: 0;
+        padding: 0;
+        position: relative;
+      }
+      .relations-canvas {
+        position: relative;
+        background: var(--paper);
+        border-right: 4px solid var(--ink);
+        padding: 24px;
+      }
+      .canvas-folio {
+        position: absolute;
+        top: 16px;
+        left: 24px;
+        font-family: var(--mono);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        color: var(--ink);
+      }
+      .canvas-folio strong {
+        background: var(--red);
+        color: var(--paper);
+        padding: 2px 8px;
+        margin-right: 8px;
+      }
+      svg.relations {
+        width: 100%;
+        height: 540px;
+        display: block;
+        margin-top: 32px;
+      }
+      .node-rect {
+        fill: var(--red);
+        stroke: var(--ink);
+        stroke-width: 2;
+        filter: drop-shadow(4px 4px 0 var(--ink));
+      }
+      .node-rect.center {
+        fill: var(--ink);
+        stroke: var(--red);
+      }
+      .node-rect.work {
+        fill: var(--paper);
+        stroke: var(--ink);
+      }
+      .node-link {
+        stroke: var(--ink);
+        stroke-width: 2;
+      }
+      .node-link.thick {
+        stroke-width: 4;
+        stroke: var(--red);
+      }
+      .node-label {
+        font-family: var(--zh-bold);
+        font-weight: 900;
+        font-size: 14px;
+        fill: var(--ink);
+        text-transform: uppercase;
+      }
+      .node-label.center {
+        fill: var(--paper);
+        font-size: 18px;
+      }
+      .node-label.work {
+        fill: var(--ink);
+      }
+      .node-label-en {
+        font-family: var(--mono);
+        font-size: 9px;
+        fill: var(--ink);
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+      .mini-map {
+        position: absolute;
+        right: 28px;
+        bottom: 28px;
+        width: 184px;
+        height: 124px;
+        background: var(--ink);
+        color: var(--paper);
+        padding: 12px;
+        box-shadow: var(--shadow-hard-red);
+        border: 2px solid var(--ink);
+      }
+      .mini-map-title {
+        font-family: var(--mono);
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        color: var(--red);
+        margin-bottom: 6px;
+        font-weight: 700;
+      }
+      .mini-map svg {
+        width: 100%;
+        height: calc(100% - 18px);
+      }
+      /* 详情卡 */
+      .detail {
+        background: var(--paper-soft);
+        padding: 0;
+        position: relative;
+      }
+      .detail-head {
+        background: var(--red);
+        color: var(--paper);
+        padding: 24px 28px;
+        border-bottom: 4px solid var(--ink);
+      }
+      .detail-head .kicker {
+        font-family: var(--mono);
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.32em;
+        font-weight: 700;
+        margin-bottom: 8px;
+        opacity: 0.9;
+      }
+      .detail-head h2 {
+        font-family: var(--zh-bold);
+        font-weight: 900;
+        font-size: 56px;
+        line-height: 0.95;
+        margin: 0;
+      }
+      .detail-head .orig {
+        display: block;
+        font-family: var(--display);
+        font-style: italic;
+        font-weight: 400;
+        font-size: 18px;
+        margin-top: 8px;
+      }
+      .detail-body {
+        padding: 24px 28px 32px;
+      }
+      .meta {
+        font-family: var(--mono);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        font-weight: 700;
+        border-top: 2px solid var(--ink);
+        border-bottom: 2px solid var(--ink);
+        padding: 8px 0;
+        margin-bottom: 20px;
+      }
+      .section-label {
+        font-family: var(--display);
+        font-weight: 900;
+        font-style: italic;
+        font-size: 22px;
+        color: var(--ink);
+        margin: 22px 0 6px;
+        letter-spacing: -0.01em;
+        position: relative;
+      }
+      .section-label::after {
+        content: '';
+        display: inline-block;
+        width: 60px;
+        height: 4px;
+        background: var(--red);
+        vertical-align: middle;
+        margin-left: 12px;
+      }
+      .detail p {
+        font-family: var(--mono);
+        font-size: 13px;
+        line-height: 1.6;
+        margin: 0 0 12px;
+      }
+      blockquote {
+        margin: 12px 0;
+        padding: 12px 14px;
+        background: var(--ink);
+        color: var(--paper);
+        font-family: var(--display);
+        font-style: italic;
+        font-size: 16px;
+        line-height: 1.5;
+      }
+      .successor {
+        margin: 14px 0;
+        padding: 14px 16px;
+        background: var(--paper);
+        border-left: 8px solid var(--red);
+        box-shadow: var(--shadow-hard);
+      }
+      .successor h4 {
+        margin: 0 0 4px;
+        font-family: var(--zh-bold);
+        font-weight: 900;
+        font-size: 16px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      .successor h4 em {
+        color: var(--red);
+        font-family: var(--mono);
+        font-size: 11px;
+        font-style: normal;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        font-weight: 700;
+        margin-left: 8px;
+      }
+      .successor p {
+        margin: 0;
+        font-size: 12px;
+      }
+      /* 时间轴 */
+      footer {
+        background: var(--ink);
+        color: var(--paper);
+        padding: 22px 32px 28px;
+      }
+      .timeline {
+        position: relative;
+      }
+      .timeline-rule {
+        height: 4px;
+        background: var(--red);
+        position: relative;
+        margin-top: 14px;
+      }
+      .timeline-rule::before,
+      .timeline-rule::after {
+        content: '';
+        position: absolute;
+        top: -8px;
+        width: 4px;
+        height: 20px;
+        background: var(--red);
+      }
+      .timeline-rule::before {
+        left: 0;
+      }
+      .timeline-rule::after {
+        right: 0;
+      }
+      .epochs {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        margin-top: 14px;
+      }
+      .epochs > div {
+        font-family: var(--zh-bold);
+        font-weight: 700;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+      .epochs > div .roman {
+        display: block;
+        color: var(--red);
+        font-family: var(--display);
+        font-size: 28px;
+        font-weight: 900;
+        line-height: 1;
+        margin-bottom: 4px;
+      }
+      .years {
+        display: flex;
+        justify-content: space-between;
+        font-family: var(--mono);
+        font-size: 14px;
+        font-weight: 700;
+        margin-top: 6px;
+        letter-spacing: 0.04em;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="preview-banner">
+      <span>Marx 星图 · 风格预览 B · 革命粗野 / Revolutionary Brutalism</span>
+      <a href="./index.html">← 返回 4 风格对比</a>
+    </div>
+    <div class="stage">
+      <header>
+        <div class="brand">
+          MARX
+          <small>星图 · DIE STERNKARTE</small>
+        </div>
+        <div class="toolbar">
+          <div class="search">
+            <input placeholder="搜索 / SEARCH..." />
+          </div>
+          <div class="tabs">
+            <a class="active" href="#">关系图</a>
+            <a href="#">地理图</a>
+          </div>
+          <div class="swap">⇄ 主副互换</div>
+        </div>
+      </header>
+
+      <main>
+        <section class="relations-canvas">
+          <div class="canvas-folio">
+            <strong>FOLIO 01</strong> Marx 思想关系图 · 8 节点
+          </div>
+          <svg class="relations" viewBox="0 0 800 540" xmlns="http://www.w3.org/2000/svg">
+            <!-- 关系连线 -->
+            <line x1="400" y1="270" x2="180" y2="120" class="node-link" />
+            <line x1="400" y1="270" x2="640" y2="120" class="node-link thick" />
+            <line x1="400" y1="270" x2="160" y2="320" class="node-link" />
+            <line x1="400" y1="270" x2="660" y2="340" class="node-link thick" />
+            <line x1="400" y1="270" x2="220" y2="470" class="node-link thick" />
+            <line x1="400" y1="270" x2="580" y2="470" class="node-link" />
+            <line x1="400" y1="270" x2="380" y2="100" class="node-link" />
+            <line x1="180" y1="120" x2="380" y2="100" class="node-link" />
+            <line x1="640" y1="120" x2="660" y2="340" class="node-link" />
+            <!-- 节点：方形 (粗野不要圆) -->
+            <g>
+              <rect x="370" y="240" width="60" height="60" class="node-rect center" />
+              <text x="400" y="276" class="node-label center" text-anchor="middle">MARX</text>
+              <text x="400" y="290" class="node-label-en" text-anchor="middle" style="fill:#e8dcc4">
+                1818-1883
+              </text>
+            </g>
+            <g>
+              <rect x="155" y="100" width="50" height="40" class="node-rect" />
+              <text x="180" y="86" class="node-label" text-anchor="middle">黑格尔</text>
+              <text x="180" y="156" class="node-label-en" text-anchor="middle">HEGEL</text>
+            </g>
+            <g>
+              <rect x="355" y="80" width="50" height="40" class="node-rect" />
+              <text x="380" y="68" class="node-label" text-anchor="middle">费尔巴哈</text>
+            </g>
+            <g>
+              <rect x="615" y="100" width="50" height="40" class="node-rect" />
+              <text x="640" y="86" class="node-label" text-anchor="middle">恩格斯</text>
+              <text x="640" y="156" class="node-label-en" text-anchor="middle">ENGELS</text>
+            </g>
+            <g>
+              <rect x="135" y="300" width="50" height="40" class="node-rect" />
+              <text x="160" y="356" class="node-label" text-anchor="middle">蒲鲁东</text>
+            </g>
+            <g>
+              <rect x="635" y="320" width="50" height="40" class="node-rect work" />
+              <text x="660" y="376" class="node-label work" text-anchor="middle">资本论</text>
+              <text x="660" y="392" class="node-label-en" text-anchor="middle">DAS KAPITAL</text>
+            </g>
+            <g>
+              <rect x="195" y="450" width="50" height="40" class="node-rect work" />
+              <text x="220" y="506" class="node-label work" text-anchor="middle">党宣言</text>
+            </g>
+            <g>
+              <rect x="555" y="450" width="50" height="40" class="node-rect" />
+              <text x="580" y="506" class="node-label" text-anchor="middle">异化</text>
+            </g>
+          </svg>
+
+          <div class="mini-map">
+            <div class="mini-map-title">▒▒ GEOGRAPHIA ▒▒</div>
+            <svg viewBox="0 0 168 96" xmlns="http://www.w3.org/2000/svg">
+              <path d="M10 50 L 50 44 L 90 36 L 130 42 L 158 38" fill="none" stroke="#c8102e" stroke-width="2" />
+              <rect x="17" y="53" width="6" height="6" fill="#e8dcc4" />
+              <rect x="55" y="37" width="6" height="6" fill="#e8dcc4" />
+              <rect x="97" y="37" width="6" height="6" fill="#e8dcc4" />
+              <rect x="135" y="41" width="6" height="6" fill="#c8102e" />
+              <text x="140" y="58" font-family="JetBrains Mono" font-size="8" font-weight="700" fill="#e8dcc4">
+                LONDON
+              </text>
+            </svg>
+          </div>
+        </section>
+
+        <aside class="detail">
+          <div class="detail-head">
+            <div class="kicker">CONCEPT · §IV 核心概念</div>
+            <h2>异化</h2>
+            <span class="orig">Verfremdung / Entfremdung</span>
+          </div>
+          <div class="detail-body">
+            <div class="meta">EST. 1844 · SRC《1844 经济学哲学手稿》</div>
+
+            <div class="section-label">白话定义</div>
+            <p>
+              人在资本主义生产中，跟"劳动产品 / 劳动过程 / 自己的本质 / 他人"四重疏离。例：工人造的车不属于自己。
+            </p>
+
+            <div class="section-label">Marx 自己怎么用</div>
+            <blockquote>
+              1844 手稿首次提出 → 1857-58 大纲改用"对象化" → 1867 资本论隐含在"商品拜物教"里。
+            </blockquote>
+
+            <div class="section-label">后来者怎么发展</div>
+            <div class="successor">
+              <h4>卢卡奇 <em>1923 · 历史与阶级意识</em></h4>
+              <p>扩展为"物化"（Verdinglichung），推到资本主义意识结构层面。</p>
+            </div>
+            <div class="successor">
+              <h4>阿尔都塞 <em>1965 · 保卫马克思</em></h4>
+              <p>批为"青年 Marx 的人本主义残留"，主张用"意识形态国家机器"取代。</p>
+            </div>
+            <div class="successor">
+              <h4>哈贝马斯 <em>1973 · 合法化危机</em></h4>
+              <p>转译为"生活世界殖民化"，接入沟通行动理论。</p>
+            </div>
+          </div>
+        </aside>
+      </main>
+
+      <footer>
+        <div class="timeline">
+          <div class="years">
+            <span>1818</span>
+            <span>1840s</span>
+            <span>1860s</span>
+            <span>1883</span>
+          </div>
+          <div class="timeline-rule"></div>
+          <div class="epochs">
+            <div><span class="roman">I</span>青年时期</div>
+            <div><span class="roman">II</span>1848 革命</div>
+            <div><span class="roman">III</span>流亡伦敦研究期</div>
+            <div><span class="roman">IV</span>资本论时期</div>
+          </div>
+        </div>
+      </footer>
+    </div>
+  </body>
+</html>

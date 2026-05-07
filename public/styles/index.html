@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Marx 星图 · 4 风格对比 · 调研入口</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,800;1,400&family=Inter+Tight:wght@400;500;700&family=Noto+Serif+SC:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #0d0d10;
+        --bg-soft: #15151a;
+        --line: #2a2a32;
+        --text: #e8e6df;
+        --text-soft: #9b9990;
+        --accent: #d4a574;
+        --display: 'Fraunces', 'Noto Serif SC', serif;
+        --body: 'Inter Tight', system-ui, sans-serif;
+        --zh: 'Noto Serif SC', 'Songti SC', '宋体', serif;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: var(--body);
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.65;
+        min-height: 100vh;
+      }
+      .wrap {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 56px 32px 80px;
+      }
+      header {
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 32px;
+        margin-bottom: 40px;
+      }
+      .kicker {
+        font-family: var(--body);
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.32em;
+        color: var(--accent);
+        margin-bottom: 20px;
+      }
+      h1 {
+        font-family: var(--display);
+        font-weight: 800;
+        font-size: clamp(36px, 6vw, 64px);
+        line-height: 1.05;
+        margin: 0 0 18px;
+        letter-spacing: -0.02em;
+      }
+      h1 em {
+        font-style: italic;
+        font-weight: 400;
+        color: var(--accent);
+      }
+      .lede {
+        font-family: var(--display);
+        font-style: italic;
+        font-size: 19px;
+        max-width: 720px;
+        color: var(--text-soft);
+        margin: 0;
+      }
+      .ask {
+        margin-top: 32px;
+        padding: 20px 24px;
+        background: var(--bg-soft);
+        border-left: 3px solid var(--accent);
+        border-radius: 0 6px 6px 0;
+      }
+      .ask h3 {
+        font-family: var(--display);
+        font-weight: 600;
+        font-size: 18px;
+        margin: 0 0 8px;
+        color: var(--accent);
+      }
+      .ask ol {
+        font-family: var(--zh);
+        font-size: 15px;
+        margin: 0;
+        padding-left: 20px;
+        color: var(--text);
+      }
+      .ask ol li {
+        margin: 4px 0;
+      }
+      .ask .meta {
+        margin-top: 12px;
+        font-size: 13px;
+        color: var(--text-soft);
+        font-family: var(--zh);
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 22px;
+      }
+      @media (max-width: 720px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .card {
+        position: relative;
+        text-decoration: none;
+        color: inherit;
+        background: var(--bg-soft);
+        border: 1px solid var(--line);
+        padding: 28px 28px 24px;
+        border-radius: 8px;
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        gap: 14px;
+        transition: border-color 0.2s ease, transform 0.2s ease;
+      }
+      .card:hover {
+        border-color: var(--accent);
+        transform: translateY(-2px);
+      }
+      .card .id {
+        font-family: var(--display);
+        font-style: italic;
+        font-weight: 800;
+        font-size: 56px;
+        line-height: 1;
+        color: var(--accent);
+        margin-bottom: -8px;
+      }
+      .card h2 {
+        font-family: var(--zh);
+        font-weight: 700;
+        font-size: 28px;
+        margin: 0;
+        line-height: 1.2;
+      }
+      .card h2 small {
+        display: block;
+        font-family: var(--display);
+        font-style: italic;
+        font-weight: 400;
+        font-size: 16px;
+        color: var(--text-soft);
+        margin-top: 4px;
+      }
+      .card .desc {
+        font-family: var(--zh);
+        font-size: 14px;
+        line-height: 1.7;
+        color: var(--text-soft);
+        margin: 0;
+      }
+      .swatch {
+        display: flex;
+        gap: 0;
+        margin-top: 4px;
+        height: 18px;
+        border-radius: 3px;
+        overflow: hidden;
+      }
+      .swatch span {
+        flex: 1;
+      }
+      .card .open {
+        font-family: var(--body);
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        color: var(--accent);
+        margin-top: 6px;
+      }
+      .card .open::after {
+        content: ' →';
+      }
+
+      /* swatch 配色 (跟 4 个 mockup 对齐) */
+      .sw-a span:nth-child(1) { background: #1a1a1a; }
+      .sw-a span:nth-child(2) { background: #f4ede0; }
+      .sw-a span:nth-child(3) { background: #8b2635; }
+
+      .sw-b span:nth-child(1) { background: #c8102e; }
+      .sw-b span:nth-child(2) { background: #0a0a0a; }
+      .sw-b span:nth-child(3) { background: #e8dcc4; }
+
+      .sw-c span:nth-child(1) { background: #1b3a4b; }
+      .sw-c span:nth-child(2) { background: #8b3626; }
+      .sw-c span:nth-child(3) { background: #c9c0ae; }
+
+      .sw-d span:nth-child(1) { background: #f2e8d5; }
+      .sw-d span:nth-child(2) { background: #4a6fa5; }
+      .sw-d span:nth-child(3) { background: #b23a3a; }
+
+      footer {
+        margin-top: 60px;
+        padding-top: 24px;
+        border-top: 1px solid var(--line);
+        font-family: var(--body);
+        font-size: 13px;
+        color: var(--text-soft);
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+      footer a {
+        color: var(--text-soft);
+        text-decoration: underline;
+        text-underline-offset: 3px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <div class="kicker">Marx 星图 · 风格调研入口 · 2026-05-07</div>
+        <h1>4 个视觉风格<em>方向</em>，请帮我选一个</h1>
+        <p class="lede">
+          这是「Marx 星图」中文 Marx 思想可视化项目的视觉风格备选方案。点开任意一张卡片看 mockup 实样（含关系图主视图 / 详情卡 / 时间轴），然后告诉我你的偏好。
+        </p>
+
+        <div class="ask">
+          <h3>能否帮忙回答 3 个问题</h3>
+          <ol>
+            <li>4 个里你最喜欢哪个？为什么？（直觉答即可，不必长）</li>
+            <li>哪个最不喜欢？为什么？</li>
+            <li>看完哪个会让你「想点进来用一下」？</li>
+          </ol>
+          <p class="meta">
+            注：mockup 是静态图，不是真实可交互产品。重点感受字体 / 配色 / 整体气质。
+          </p>
+        </div>
+      </header>
+
+      <main class="grid">
+        <a class="card" href="./a-editorial.html">
+          <span class="id">A</span>
+          <h2>
+            学术编辑
+            <small>Editorial Scholar</small>
+          </h2>
+          <p class="desc">
+            像 19 世纪牛津出版社的现代复刻版。古典衬线 + 牛皮纸背景 + 学者红强调。思想类天然适配，引用块感强。<strong>稳，但记忆点弱。</strong>
+          </p>
+          <div class="swatch sw-a">
+            <span></span><span></span><span></span>
+          </div>
+          <span class="open">View mockup A</span>
+        </a>
+
+        <a class="card" href="./b-brutalism.html">
+          <span class="id">B</span>
+          <h2>
+            革命粗野
+            <small>Revolutionary Brutalism</small>
+          </h2>
+          <p class="desc">
+            苏维埃宣传海报 + 现代 brutalism。锐角硬阴影 + 革命红黑配 + 巨大 display 字号。<strong>记忆点最强，但风险高（学者可能觉得"宣传味"过浓）。</strong>
+          </p>
+          <div class="swatch sw-b">
+            <span></span><span></span><span></span>
+          </div>
+          <span class="open">View mockup B</span>
+        </a>
+
+        <a class="card" href="./c-industrial.html">
+          <span class="id">C</span>
+          <h2>
+            工业历史
+            <small>Industrial Letterpress</small>
+          </h2>
+          <p class="desc">
+            19 世纪工厂 + 老式铅印术。钢蓝 / 锈红 / 沙石灰，全局颗粒纹理，六边形螺帽节点。<strong>跟 Marx 时代背景共振最直接。</strong>
+          </p>
+          <div class="swatch sw-c">
+            <span></span><span></span><span></span>
+          </div>
+          <span class="open">View mockup C</span>
+        </a>
+
+        <a class="card" href="./d-archive.html">
+          <span class="id">D</span>
+          <h2>
+            档案文献
+            <small>Archive Manuscript</small>
+          </h2>
+          <p class="desc">
+            像在博物馆翻 Marx 手稿。羊皮纸 + 手写体旁注 + 修改红 + 褪色蓝。<strong>学者氛围最浓，但可能偏"博物馆陈列"。</strong>
+          </p>
+          <div class="swatch sw-d">
+            <span></span><span></span><span></span>
+          </div>
+          <span class="open">View mockup D</span>
+        </a>
+      </main>
+
+      <footer>
+        <span>项目 main demo（M1）：<a href="../index.html">../index.html</a></span>
+        <span>本入口仅用于风格选型调研，不是产品形态调研</span>
+      </footer>
+    </div>
+  </body>
+</html>
