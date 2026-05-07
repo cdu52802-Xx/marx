@@ -5,7 +5,7 @@
 
 ## 项目状态
 
-- 第一个产品代号：**Marx**；阶段：仅有结构骨架，产品方向待定
+- 第一个产品代号：**Marx**；阶段：brainstorming 完成 → M1 implementation plan 就绪 → 等执行（2026-05-07）
 - 仓库：GitHub 私仓 `cdu52802-Xx/marx`
 - 主用户：0 代码 PM，vibe coding 模式
 - 双机切换：Claude 主力机（`F:\AI\projects\Marx`）+ Codex 主力机（`<盘>:\AI\projects\Marx`）
@@ -14,7 +14,8 @@
 
 每次新 session 开始（特别是新窗口、新机器、`/clear` 之后）：
 
-- **主动扫一眼 `docs/` 下最新的 `YYYY-MM-DD-*.md`**（取文件名日期最新那个），把里面的"下次入口"+"已知坑"+"关键决策"吃进上下文
+- **优先读 `docs/` 下最新的 `YYYY-MM-DD-*-takeaway.md`**——阶段续接锚点（含「下次入口」「已知坑」「关键决策」「context 保护提醒」）
+- 当前最新：[`docs/2026-05-07-session-takeaway.md`](docs/2026-05-07-session-takeaway.md)（**brainstorming 完成 + M1 plan 就绪**，含新窗口续接开场白模板）
 - 这是元-6 阶段落文 + 跨窗口持续性原则的实操形式，30 秒重建上下文比每次重新摸索高效
 - 不需要每个文件都读，最新 1 份通常够用；如有交叉引用再延伸
 
@@ -32,7 +33,10 @@
 |---|---|
 | `docs/` | PRD、决策记录、阶段性 takeaway（与代码一起入库） |
 | `specs/` | spec-first 工作流的 design doc（每个特性先写在这里再动代码） |
-| `src/` | 代码（结构由项目类型决定，未来再加） |
+| `plans/` | implementation plan（design doc → plan → 按 task 跑） |
+| `src/` | 代码（M1 起：TypeScript + D3 + Vite） |
+| `tests/` | vitest 单元测试（M1 起新建） |
+| `e2e/` | Playwright e2e 测试（M1 起新建） |
 | `.github/workflows/` | claude-code-action 等 CI 配置 |
 | `AGENTS.md` | 本文件——项目级 agent context |
 | `README.md` | 给人读的项目说明 |
