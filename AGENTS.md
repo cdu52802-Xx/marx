@@ -5,8 +5,9 @@
 
 ## 项目状态
 
-- 第一个产品代号：**Marx**；阶段：brainstorming 完成 → M1 implementation plan 就绪 → 等执行（2026-05-07）
-- 仓库：GitHub 私仓 `cdu52802-Xx/marx`
+- 第一个产品代号：**Marx 星图**；阶段：M1（项目骨架 + Hello World deploy）已完成上线（2026-05-07）→ 待 M2 plan
+- 在线：https://cdu52802-xx.github.io/marx/
+- 仓库：`cdu52802-Xx/marx`（**public**，2026-05-07 从 private 改 public 因为 GitHub Pages 免费层不支持私仓）
 - 主用户：0 代码 PM，vibe coding 模式
 - 双机切换：Claude 主力机（`F:\AI\projects\Marx`）+ Codex 主力机（`<盘>:\AI\projects\Marx`）
 
@@ -15,7 +16,8 @@
 每次新 session 开始（特别是新窗口、新机器、`/clear` 之后）：
 
 - **优先读 `docs/` 下最新的 `YYYY-MM-DD-*-takeaway.md`**——阶段续接锚点（含「下次入口」「已知坑」「关键决策」「context 保护提醒」）
-- 当前最新：[`docs/2026-05-07-session-takeaway.md`](docs/2026-05-07-session-takeaway.md)（**brainstorming 完成 + M1 plan 就绪**，含新窗口续接开场白模板）
+- 当前最新：[`docs/2026-05-07-m1-takeaway.md`](docs/2026-05-07-m1-takeaway.md)（**M1 已完成 + 已上线** https://cdu52802-xx.github.io/marx/，含 5 个已知坑 + M2 入口开场白）
+- 上一阶段：[`docs/2026-05-07-session-takeaway.md`](docs/2026-05-07-session-takeaway.md)（brainstorming 完成 + M1 plan 就绪，仅追溯）
 - 这是元-6 阶段落文 + 跨窗口持续性原则的实操形式，30 秒重建上下文比每次重新摸索高效
 - 不需要每个文件都读，最新 1 份通常够用；如有交叉引用再延伸
 
