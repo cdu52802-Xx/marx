@@ -126,6 +126,21 @@ marx/
 
 **Files:** 无新建（全部为验证步骤）
 
+> ⚠️ **已知阻塞 · Wikidata 用户本机不通**（2026-05-07 实测）
+>
+> 用户本机访问 https://query.wikidata.org/ 打不开（中国大陆典型网络环境，详见 [takeaway 坑 12](../docs/2026-05-07-style-mockup-takeaway.md) + memory `user_environment_china_network.md`）。**Step 2/3 + Task 5/6 全依赖此 endpoint，需要先选 fallback 再跑 Task 1**：
+>
+> | 方案 | 适用 | 怎么做 | 影响 |
+> |---|---|---|---|
+> | **a. 挂代理 / VPN** | 用户有可用代理 | 启代理，正常跑 Step 2 验证能通，按原 plan 推进 Task 1-9 | 脚本不动 |
+> | **b. 离线缓存** | 用户能用其他网络（手机 4G / 朋友 wifi / 国外）打开 query.wikidata.org | 在网页 UI 手动跑 `scripts/sparql/01-05*.sparql` 5 个查询，下载 JSON 结果保存到 `scripts/sparql/cache/{01..05}.json`，修改 fetch-skeleton.ts 加 env 开关 `MARX_USE_CACHE=1` 时读本地缓存替代 endpoint fetch | Task 5 fetch-skeleton.ts 要加 ~30 行 cache 逻辑；Step 2/3 跳过 |
+> | **c. 跨机** | Codex 机器网络环境不同 | 在 Codex 跑 fetch-skeleton.ts，git push 后切回 Claude 机继续 Task 7-9 | 脚本不动；可能 Codex 机也一样不通 |
+> | **d. 代跑** | 朋友 / 同事愿意远程代跑 | 让人代跑 `npm run fetch:skeleton`，把 `src/data/nodes_skeleton.json` 回传 commit | 脚本不动；一次性，重跑要重新求人 |
+>
+> **决策点**：执行 Task 1 之前，**用户先告诉 Claude 走哪种 fallback**，Claude 再决定 Task 1-9 的具体执行步骤（方案 a / c / d 不动 plan，方案 b 需要在 Task 5 前修改 fetch-skeleton.ts 增加 cache 读取逻辑）。
+>
+> 如果用户走方案 a，下面 Step 1-6 全部按原计划跑。如果走 b/c/d，Step 2/3 可以跳过（注明跳过原因）。
+
 - [ ] **Step 1: 跑 4 条阻塞性前置检查命令**
 
 ```bash
