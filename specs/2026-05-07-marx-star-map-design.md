@@ -1,9 +1,9 @@
-# Marx 星图 · Design Doc · v1（基于访谈反馈调整路径 A）
+# Marx 星图 · Design Doc · v1.1（v1 + 视觉风格定调 A 学术编辑）
 
-> **状态**：design v1 · brainstorming 第 5 步产出
-> **日期**：2026-05-07
-> **上游**：[`PRD.md`](../docs/PRD.md) v0.3 / 上轮访谈包 [`docs/2026-05-06-brainstorming-用户访谈包.md`](../docs/2026-05-06-brainstorming-用户访谈包.md)
-> **下游**：进 brainstorming 第 6 步 → 调 `superpowers:writing-plans` 出实施计划
+> **状态**：design v1.1 · brainstorming 第 5 步产出 + 视觉风格定调（2026-05-07 调研选定 A 学术编辑 / Editorial Scholar）
+> **日期**：v1 = 2026-05-07 / v1.1 = 2026-05-07（新增 § 7 视觉风格定调 + § 3.1 / § 4.1 色编码替换）
+> **上游**：[`PRD.md`](../docs/PRD.md) v0.3 / 上轮访谈包 [`docs/2026-05-06-brainstorming-用户访谈包.md`](../docs/2026-05-06-brainstorming-用户访谈包.md) / [4 风格 mockup 调研入口](../public/styles/index.html)
+> **下游**：M1 已上线 · M2 plan 已写 · M2 实施时 plan 局部修订引用 § 7 主导色 · M4-M6 视觉规范全部按 § 7 落代码
 
 ---
 
@@ -47,7 +47,7 @@
 └─────────────────────────────────────────────────────────────┘
 ```
 
-> **布局位置说明**（v0.3 用户反馈补充）：以上 ASCII 仅为粗略示意。副图小窗在字符画里看起来"浮在主图中间"，那只是 ASCII 表达局限——实际产品**不会**是这种随意浮动的观感。副图的具体位置 / 尺寸 / 视觉样式（是否浮于主图之上 vs 主图给副图预留专属空间 / 圆角 / 阴影 / 边框 / 与时间轴的衔接）延后到前端实施阶段调 `frontend-design` / `ui-ux-pro-max` 等 UI/UX 专门 skill 时再优化。本 design doc 这一阶段只锁信息架构和功能逻辑。
+> **布局位置说明**（v0.3 补 / v1.1 更新）：以上 ASCII 仅为粗略示意。副图小窗在字符画里看起来"浮在主图中间"，那只是 ASCII 表达局限——实际产品**不会**是这种随意浮动的观感。副图的具体视觉规范（位置 / 尺寸 / 边框 / 阴影 / 圆角 / 与时间轴衔接）已在 v1.1 补的 § 7 视觉风格定调中按 A 学术编辑方向锁定。
 
 ### 2.2 默认配置
 
@@ -191,7 +191,7 @@
 • SEP "Lukács" / "Habermas" / "Althusser" 各自词条
 ```
 
-> **信息密度提示**（v0.3 用户反馈补充）：本节示例展示的是「白话定义 + Marx 自己怎么用 + 后来者怎么发展 + 引用源」四段式完整内容，密度较高。实际渲染时可能需要做二次筛选（如默认折叠后来者发展 / 引用源 panel，用户点击展开），或通过分层分类的前端布局（缩进 / 配色 / 字号 / 折叠展开交互）降低密度感，让用户觉得舒服而不是密。这部分视觉细节延后到前端实施阶段调 `frontend-design` / `ui-ux-pro-max` 等 UI/UX 专门 skill 时讨论。
+> **信息密度提示**（v0.3 补 / v1.1 更新）：本节示例展示的是「白话定义 + Marx 自己怎么用 + 后来者怎么发展 + 引用源」四段式完整内容，密度较高。降低密度感的视觉手段（行间距 1.7 / 引用块左侧学者红装饰线 / 章节序号大写罗马数字 / 牛皮纸纹理）已在 § 7 视觉风格定调锁定。是否默认折叠后来者发展 / 引用源 panel 这种交互细节留到 M4 实施时按 mockup A 验证方案敲定。
 
 ### 5.4 数据来源
 
@@ -203,7 +203,7 @@
 
 不冲突。原 PRD 第 5 节排除的是「把后来者做成主图节点」（方案 1）。本 design **V1 范围内**做的是「在概念详情卡里加旁注」（方案 2）—— V1 范围内后来者不出现在主图任一 tab，只在核心概念节点详情卡的下半部分作为参考资料。
 
-**远期不预设否定**：V2+ 根据用户反馈，方案 2 仍可能演化为「后来者混入主图」（方案 1）/「独立 Marx 之后视图」（方案 3）/「方案 2 + 方案 3 双视图切换」。详见 § 9.3。PRD v0.3 第 5 节做对应澄清。
+**远期不预设否定**：V2+ 根据用户反馈，方案 2 仍可能演化为「后来者混入主图」（方案 1）/「独立 Marx 之后视图」（方案 3）/「方案 2 + 方案 3 双视图切换」。详见 § 10.3（v1.1 章节后移）。PRD v0.3 第 5 节做对应澄清。
 
 ---
 
@@ -267,7 +267,198 @@ SELECT ?work ?workLabel ?pubYear WHERE {
 
 ---
 
-## 7. 首屏体验设计 · 命中访谈反馈的 4 条策略
+## 7. 视觉风格定调（v1.1 新增 · 选定方向 A 学术编辑）
+
+> **状态**：design v1.1 · 视觉风格选型基于 4 风格 mockup 调研后选定方向 A 学术编辑（Editorial Scholar）
+> **选型依据**：朋友反馈"A 像查字典，非常适合阅读"——精准命中产品定位「工具型 V1 / 学者优先」（§ 1 / § 10.4）
+> **AGENTS.md 合规**：本节回应第 65-69 行硬要求（spec 必含视觉风格定调一节，含 Tone / 字体 / 配色 / 氛围细节）
+> **mockup 物证**：[A 学术编辑 mockup](https://cdu52802-xx.github.io/marx/styles/a-editorial.html) · 落选反例 [B 革命粗野](https://cdu52802-xx.github.io/marx/styles/b-brutalism.html) / [C 工业历史](https://cdu52802-xx.github.io/marx/styles/c-industrial.html) / [D 档案文献](https://cdu52802-xx.github.io/marx/styles/d-archive.html)
+
+### 7.1 Tone
+
+**19 世纪学术期刊的现代复刻版**。视觉退到第二位，让 Marx 思想本身（节点 / 概念 / 后来者发展）成为主角。
+
+设计原则（按强度排序）：
+
+1. **不抢戏**：所有装饰服务于内容可读性，不为"记忆点"而设计。学者打开就能用，视觉是透明的。
+2. **静谧学术**：refined but not luxe，类似牛津 / 剑桥 / 芝加哥学术出版社的现代版。不是文艺复兴古旧，也不是 IKEA 极简。
+3. **典雅严肃**：Marx 思想是"值得郑重对待的文本"。不娱乐化、不刺激。
+
+**不是什么**（反向锚定 4 mockup 调研反馈）：
+
+- ❌ 不是 brutalism / 革命海报 / 巨大 display 字号 / 红黑硬阴影（命中 B 反馈"冲击力太强 / 眼睛累"否定）
+- ❌ 不是颗粒纹理 + 钢铁螺帽 + 锈红配色（命中 C 反馈"游戏配色 / 苏丹的游戏 / 同人文学大字典"否定）
+- ❌ 不是羊皮纸 + 手写体 + 修改红旁注（命中 D 反馈"海盗 / 迪士尼 / 没有学习氛围"否定）
+- ❌ 不是 cyberpunk / 数据可视化炫技（ui-ux-pro-max 脚本初判错误方向）
+- ❌ 不是 Web3 / 紫色渐变白底 / 玻璃态等 AI slop
+
+### 7.2 字体方向
+
+| 角色 | 字体 | 备注 |
+|---|---|---|
+| Display 西文 | **Playfair Display** | 古典对比衬线，h1-h3 / 章节标题 / 装饰 italic |
+| Body 西文 | **Source Serif 4** | Adobe 学术专用衬线，长文阅读最佳，opsz 8-60 可变 |
+| Body 中文 | **Noto Serif SC**（思源宋体） | 跟 Source Serif 4 同源（Adobe 设计），跨语言一致 |
+| Mono / 引文 hash | **JetBrains Mono** | 节点 ID / Wikidata QID / 引用源 hash 用，少量 |
+
+**字号规范**：
+
+| 用途 | 字号 / 行间距 |
+|---|---|
+| h1 标题 | 32-44px / line-height 1.1 |
+| h2 章节 | 22-28px / 1.15 |
+| h3 子节 | 16-18px / 1.3 |
+| 正文 | 15-16px / **1.7**（学术阅读舒适基线） |
+| 节点 label | 12-14px / 1.2 |
+| 时间轴 | 13px / 1 |
+| 脚注 / meta | 12-13px / small caps + letter-spacing 0.08em |
+
+**避开**（AGENTS.md 第 67 行 + AI slop 反例）：
+
+- ❌ Inter / Roboto / Arial / Space Grotesk / 其他常见 sans-serif
+- ❌ 仿宋 / 楷体 / 中文古体（太偏古典书卷，过时观感）
+- ❌ 任何无衬线西文 body（破坏学术编辑调性）
+
+### 7.3 配色（CSS 变量）
+
+**主导色板**（全局 import 用）：
+
+```css
+:root {
+  /* 文本类 */
+  --ink: #1A1A1A;          /* 墨黑 - 主文本 / 主节点 / 强对比连线 */
+  --ink-soft: #4A4A4A;     /* 软墨 - 次级文本 / meta */
+
+  /* 背景类 */
+  --paper: #F4EDE0;        /* 牛皮纸米 - 主背景 */
+  --paper-edge: #E8DCCC;   /* 纸边 - 次背景 / hover 底色 */
+  --paper-shadow: rgba(26, 26, 26, 0.08);  /* 纸张阴影 */
+
+  /* 规则线 */
+  --rule: #D8CCB8;         /* 细分隔线 / 表格边框 */
+
+  /* 强调色（唯一锐利色，仅结构性强调用） */
+  --scholar-red: #8B2635;  /* 学者红 - 章节序号 / 引用块左线 / hover / 重要节点 */
+}
+```
+
+**比例约定**（避 AGENTS.md 第 68 行"温吞均匀调色板"反例）：
+
+- 墨黑 / 文本类：~60% 视觉占比
+- 牛皮纸 / 背景类：~30%
+- 学者红强调：~10%（仅结构性强调，不撒满）
+
+**反 AI slop 检查**：
+
+| 反例 | A 路线对应 |
+|---|---|
+| 紫色渐变 + 白底 | 牛皮纸米 + 墨黑（命中"主导色 + 锐利强调色"模式） |
+| 均匀 5 色调色板 | 60/30/10 锐利比例 |
+| 玻璃态 / 模糊渐变 | 纸张噪点 + 实色 |
+
+### 7.4 5 类节点色编码（替代原 § 3.1 紫蓝橙绿灰，M4 实施基线）
+
+> **变更说明**：design v1.1 用本表替代原 § 3.1 节点系统表里的"紫蓝橙绿灰"色编码。原色编码命中 AI slop "均匀调色板"反例，且鲜艳色跟"学者优先工具"调性冲突。原表中的"颜色"列保留作历史记录但 M4 实施时**以本表为准**。
+
+按 A 学术编辑色调重做，所有色都跟 `--paper` 牛皮纸协调，节点旁有中文 label 辅助识别身份：
+
+| 类型 | 颜色 | Hex | 备注 |
+|---|---|---|---|
+| **人** (Person) | 墨黑实心 | `#1A1A1A` | 主角调，最常出现，等同 `--ink` |
+| **著作** (Work) | 褪色蓝 | `#4A6FA5` | 学者笔记常见色，跟纸张协调 |
+| **事件** (Event) | 学者红 | `#8B2635` | 等同 `--scholar-red`，事件警示感 |
+| **概念** (Concept) | 苔藓绿 | `#5C7148` | 古典自然色，思想生长隐喻，避鲜绿 AI slop |
+| **地点** (Place) | 沙石灰金 | `#9B8B6F` | 跟纸张同色系次级，地理底色 |
+
+**节点视觉规范**（M4 实施基线）：
+
+- **形状**：**圆形**（不是方形 / 六边形 —— 命中 A "退位不抢戏"）
+- **大小**：人 / 主节点 r=22, 其他 r=14（M2 渲染密集时缩到 r=8）
+- **边框**：1px 墨黑（hover 1.5px 学者红）
+- **填充**：M2 默认实心；M4 可选根据节点重要性调（核心概念实心 / 普通节点空心）
+
+### 7.5 8 类关系视觉编码（替代原 § 4.1 紫红绿橙等鲜艳色，M4 实施基线）
+
+> **变更说明**：design v1.1 用本表替代原 § 4.1 关系系统表里的"紫红绿橙"色编码。原色编码同样命中 AI slop 反例。M4 实施时**以本表为准**。
+
+按 A monochrome 主导 + 学者红 / 苔藓绿点缀：
+
+| 关系类型 | 颜色 | 线型 | 粗细 | 箭头 |
+|---|---|---|---|---|
+| 师承 (mentor) | 学者红 `#8B2635` | 实线 | 0.8px | 单向 |
+| 论敌 (opponent) | 学者红 `#8B2635` | 虚线 dash 4 2 | 0.6px | 双向无箭头 |
+| 朋友/合作 (friend_collaborator) | 墨黑 `#1A1A1A` | 实线 | 1px | 双向无箭头 |
+| 影响 (influences) | 墨黑 `#1A1A1A` | 点线 dot | 0.6px | 单向 |
+| 作者 (author) | 墨黑 `#1A1A1A` | 实线 | 0.6px | 单向 |
+| 提出概念 (proposed_concept) | 苔藓绿 `#5C7148` | 实线 | 0.6px | 单向 |
+| 居住 (lived_in) | 沙石灰 `#9B8B6F` | 虚线 dash 3 2 | 0.5px | 单向 |
+| 参与事件 (participated_in) | 学者红 `#8B2635` | 实线 | 0.5px | 单向 |
+
+整体视觉密度低（细线 + 大量纸面），让节点 + 中文 label 成为视觉重心。
+
+### 7.6 氛围细节
+
+| 元素 | 实施规范 |
+|---|---|
+| 全局纸张噪点 | inline SVG noise filter（baseFrequency 0.85 / opacity 0.6 / mix-blend-mode multiply）覆盖整页 |
+| 章节序号 | 大写罗马数字 I / II / III / IV ...（用 Playfair Display italic + 学者红） |
+| 引用块 | 左侧 4px 学者红装饰竖线 + Source Serif italic + 行间距 1.65 |
+| 链接下划线 | text-underline-offset: 3px（学术排版习惯，下划线不贴字） |
+| 节点 hover | 圆变实心学者红 + tooltip 滑入 + 0.2s ease |
+| 关系连线 hover | 粗一档（如 0.6px → 1px）+ 颜色加深 |
+| 页面布局 | grid-template-columns 1fr 380px（主图 + 详情卡侧栏，按 mockup A 已验证） |
+| 节点标签字体 | 中文 Noto Serif SC 600 + 西文 Playfair Display italic（双语对照） |
+| 小型脚注卡 | 节点 hover 出现，含 1-2 行 bio_event_style 摘要 + "查看详情 →"链接 |
+| 主副互换按钮 | 顶栏 italic 学者红 "⇄ 主副互换"，hover 加粗 |
+| 副图小窗 | 右下角，1px 墨黑边 + paper-shadow，标题用 Playfair Display italic |
+
+### 7.7 反 AI slop 自检（AGENTS.md 第 67-69 行）
+
+| 检查 | A 路线是否合规 |
+|---|---|
+| 避开 Inter / Roboto / Arial / Space Grotesk | ✅ Playfair Display + Source Serif 4 + Noto Serif SC |
+| 避开"紫色渐变 + 白底" | ✅ 墨黑 + 牛皮纸米 + 学者红 60/30/10 |
+| 主导色 + 锐利强调色 > 均匀调色板 | ✅ 墨黑主导 + 学者红锐利强调 |
+| 渐变 / 噪点 / 几何图案 / 大阴影 / 自定义光标 / 颗粒感 任选若干 | ✅ 全局纸张噪点 + 学者红装饰 + 罗马数字几何感 |
+| Display vs Body 字体配对要有对比 | ✅ Playfair Display（高对比衬线）vs Source Serif 4（中性衬线） |
+| 高冲击页面加载（staggered reveals） | ⏳ M4 实施时加（节点 fade-in 0.05s stagger） |
+
+### 7.8 实施期召唤双 skill（M4 / M5 / M6 触发）
+
+按 AGENTS.md 第 71-74 行三件套第 3 条 —— 任何视觉相关的 brainstorming 或代码实施第一句话：
+
+```text
+use frontend-design skill
+use ui-ux-pro-max skill
+```
+
+两 skill 不冲突：frontend-design 负责审美方向校正（防 generic AI slop），ui-ux-pro-max 负责工程化检索（字体配对 / 色板 / a11y checklist）。
+
+ui-ux-pro-max Pre-Delivery Checklist（其 SKILL.md）必查：
+
+- [ ] 不用 emoji 作 icon（用 Heroicons / Lucide / SVG）
+- [ ] 所有可点元素加 cursor-pointer
+- [ ] hover 状态平滑过渡 150-300ms
+- [ ] 文本对比度 ≥ 4.5:1（学者红 #8B2635 vs 牛皮米 #F4EDE0 = 5.92:1 ✓）
+- [ ] focus 态可见（学术工具学者会用键盘）
+- [ ] prefers-reduced-motion 尊重
+
+### 7.9 落选 mockup 不删（反向锚定参考）
+
+调研落选的 B/C/D mockup 仍保留在 `public/styles/`：
+
+| URL | 用途 |
+|---|---|
+| https://cdu52802-xx.github.io/marx/styles/a-editorial.html | **选定基线**，M4-M6 视觉实施起点 |
+| https://cdu52802-xx.github.io/marx/styles/b-brutalism.html | 落选，用作"用力过猛"反例锚定 |
+| https://cdu52802-xx.github.io/marx/styles/c-industrial.html | 落选，用作"娱乐化"反例锚定 |
+| https://cdu52802-xx.github.io/marx/styles/d-archive.html | 落选，用作"博物馆陈列化"反例锚定 |
+
+**不删的理由**：未来如果 PM 突然想"再活泼点 / 再有特色点"时，可以把 C/D 拿出来对照 —— "那是娱乐感我们不要" 比"我也说不上来要什么"快得多。
+
+---
+
+## 8. 首屏体验设计 · 命中访谈反馈的 4 条策略
 
 | 策略 | 命中反馈 | 实现方式 |
 |---|---|---|
@@ -278,7 +469,7 @@ SELECT ?work ?workLabel ?pubYear WHERE {
 
 ---
 
-## 8. 验证 / 成功标准
+## 9. 验证 / 成功标准
 
 ### 8.1 量化（继承 PRD v0.2）
 
@@ -299,7 +490,7 @@ SELECT ?work ?workLabel ?pubYear WHERE {
 
 ---
 
-## 9. 远期路线图
+## 10. 远期路线图
 
 ### 9.1 V1（2026-Q3，8-12 周）· 本 design 范围
 
@@ -336,7 +527,7 @@ SELECT ?work ?workLabel ?pubYear WHERE {
 
 ---
 
-## 10. 与 PRD v0.2 的差异（要在 PRD v0.3 落实）
+## 11. 与 PRD 的差异（DR-009~013 已在 PRD v0.3 落实 / DR-014 v1.1 新增待 PRD v0.4 落实）
 
 | 项 | 旧（v0.2） | 新（v0.3 / 本 design） | 对应新 DR |
 |---|---|---|---|
@@ -345,6 +536,7 @@ SELECT ?work ?workLabel ?pubYear WHERE {
 | 数据采集流程 | 笼统 "Wikidata SPARQL + MIA/SEP/MEGA" | **明确 4 阶段（A 骨架 / B 校对 / C 旁注采编 / D JSON）+ 工作量分配** | DR-011 |
 | 远期演化路径 | 隐含 | **明确 V2 故事模式入口 + 著作/概念地理可视化保留路径 + V3+ 不预设结论** | DR-012 |
 | 验证标准 | 量化 + 定性 | **新增 3 条：节点 bio 抽检 / 后来者旁注完整度 / 框架清晰度复述** | DR-013 |
+| 视觉风格定调 | (v0.2-v0.3) 无 | **v1.1 新增 § 7「视觉风格定调」选定方向 A 学术编辑（Editorial Scholar）：Tone（19 世纪学术期刊现代复刻版，视觉退位让内容成主角）/ 字体（Playfair Display + Source Serif 4 + Noto Serif SC + JetBrains Mono）/ 配色 CSS 变量（墨黑 + 牛皮米 + 学者红 60/30/10）/ § 3.1 5 类节点色编码替换为墨黑 / 褪色蓝 / 学者红 / 苔藓绿 / 沙石灰金 / § 4.1 8 类关系视觉编码替换为 monochrome + 学者红 + 苔藓绿点缀 / 氛围细节（纸张噪点 + 罗马数字 + 引用块装饰线）/ 反 AI slop 自检** | **DR-014（待 PRD v0.4 落实）** |
 
 ---
 
