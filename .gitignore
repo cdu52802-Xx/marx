@@ -34,3 +34,7 @@ build/
 *.log
 tmp/
 .cache/
+
+# === Playwright ===
+playwright-report/
+test-results/
