@@ -1,0 +1,9 @@
+node_modules/
+dist/
+playwright-report/
+test-results/
+coverage/
+package-lock.json
+
+# 项目文档不交给 prettier 管（避免按 printWidth 重排破坏作者手写排版）
+*.md
