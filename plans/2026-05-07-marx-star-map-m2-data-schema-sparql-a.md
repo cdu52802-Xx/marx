@@ -8,6 +8,8 @@
 
 **Tech Stack:** 新增依赖：`tsx ^4`（用于本地跑 TypeScript 脚本，不影响产品 build）。复用：Node 内置 fetch（v18+）、TypeScript ^5、Vite ^5、D3 ^7、vitest ^1、Playwright ^1。
 
+**视觉规范**：落 [design doc § 7 视觉风格定调（v1.1，A 学术编辑）](../specs/2026-05-07-marx-star-map-design.md)。M2 引入 Google Fonts CDN（Playfair Display + Source Serif 4 + Noto Serif SC + JetBrains Mono），以 CSS 变量集中管理（`--ink #1A1A1A` + `--paper #F4EDE0` + `--scholar-red #8B2635`）。M2 落地范围限于变量定义 + body 全局样式 + 节点单色（5 色节点编码 + 详情卡 + 时间轴留 M4）。
+
 **Upstream（产品决议）:** [Design doc § 3 节点系统](../specs/2026-05-07-marx-star-map-design.md) / [§ 4 关系系统](../specs/2026-05-07-marx-star-map-design.md) / [§ 6.1-6.3 数据采集流程 + 阶段 A](../specs/2026-05-07-marx-star-map-design.md) / [PRD v0.3](../docs/PRD.md) / [M1 plan](2026-05-07-marx-star-map-m1-project-skeleton.md) / [M1 takeaway 5 个已知坑](../docs/2026-05-07-m1-takeaway.md)
 
 **Downstream:** M3 plan（数据采集阶段 B 人工校对 + C 后来者旁注采编，按 design doc § 6.1）等 M2 完成 + 形态目测后再写
@@ -72,7 +74,7 @@
 ### 5. 手动必做的事（agent 做不了）
 
 - **Task 6 Step 4**：浏览器目测 https://cdu52802-xx.github.io/marx/ 看 ~30-50 紫圆是否真的渲染出来，关系连线是否合理
-- **Task 9 Step 5**：评估 M2 形态是否到 mockup 门槛 → **预期：还不到**（依然只是密集紫圆 + 灰线，没颜色没详情卡），所以不触发提醒系统节点 ②，记录到 takeaway 等 M4-M5 后再评估
+- **Task 9 Step 5**：评估 M2 形态是否到 mockup 门槛 → **预期：还不到**（已套 § 7 视觉骨架 = 牛皮纸 + 墨黑节点 + 衬线字体，但 5 色编码 / 详情卡 / 时间轴留 M4-M5），所以不触发提醒系统节点 ②，记录到 takeaway 等 M4-M5 后再评估
 
 ---
 
@@ -96,8 +98,9 @@ marx/
 │   │   ├── m1-skeleton.ts          ★ 删除 - M1 硬编码已被替代
 │   │   └── nodes_skeleton.json     ★ 新建 - M2 SPARQL 输出（产品资产）
 │   ├── viz/
-│   │   └── relations.ts            ☆ 修改 - 适配新 Node / Relation 类型
-│   └── main.ts                     ☆ 修改 - import JSON 替代 m1-skeleton.ts
+│   │   └── relations.ts            ☆ 修改 - 适配新类型 + 改用 CSS class 接管样式（§ 7 落地）
+│   ├── styles.css                  ★ 新建 - § 7 CSS 变量 + 全局样式 + SVG 节点/关系样式
+│   └── main.ts                     ☆ 修改 - import css + import JSON 替代 m1-skeleton.ts
 ├── tests/
 │   └── unit/
 │       ├── relations.test.ts       ☆ 修改 - 适配新数据规模 + 新类型
@@ -1252,16 +1255,136 @@ git commit -m "data(M2): SPARQL 阶段 A 拉取 ~46 节点 + ~53 关系骨架"
 
 ---
 
-## Task 7: main.ts 切换到 load JSON
+## Task 7: main.ts 切到 load JSON + 落 § 7 视觉骨架
 
 **Files:**
-- Modify: `src/main.ts`
+- Create: `src/styles.css`（M2 引入，含 § 7 CSS 变量 + Google Fonts + 全局样式 + SVG 节点/关系样式）
+- Modify: `src/main.ts`（加 `import './styles.css'` 第一行 + import JSON）
+- Modify: `src/viz/relations.ts`（适配新 Node 类型联合 + 改用 CSS class 接管样式）
 - Delete: `src/data/m1-skeleton.ts`
-- Modify: `src/viz/relations.ts`（适配新 Node 类型联合）
 
-- [ ] **Step 1: 修改 src/viz/relations.ts 适配新 Node 类型**
+> **视觉规范来源**：[design doc § 7 视觉风格定调（v1.1）](../specs/2026-05-07-marx-star-map-design.md)。M2 落地范围：CSS 变量 + Google Fonts 引入 + body 牛皮纸背景 + 节点统一墨黑（5 色节点编码 / 详情卡 / 时间轴留 M4）。完成后线上从「白底紫圆」变「牛皮纸 + 墨黑节点 + 中文衬线 label」，一眼看出是学术工具。
 
-旧 relations.ts 的 `SimNode extends d3.SimulationNodeDatum, Node` 在新 Node 是 union 类型时仍然合法，但 d3 types 跟 union 不太友好——把 SimNode 简化为只关心 id + name_zh：
+- [ ] **Step 1: 创建 src/styles.css（§ 7 视觉变量 + 全局样式）**
+
+```css
+/* Marx 星图全局样式 - 落地 design doc § 7 视觉风格定调（A 学术编辑） */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&family=Noto+Serif+SC:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+:root {
+  /* === 文本类 === */
+  --ink: #1A1A1A;
+  --ink-soft: #4A4A4A;
+
+  /* === 背景类 === */
+  --paper: #F4EDE0;
+  --paper-edge: #E8DCCC;
+  --paper-shadow: rgba(26, 26, 26, 0.08);
+
+  /* === 规则线 === */
+  --rule: #D8CCB8;
+
+  /* === 强调色 === */
+  --scholar-red: #8B2635;
+
+  /* === 5 类节点编码（M4 启用，M2 默认全部用 --node-person 墨黑） === */
+  --node-person: #1A1A1A;
+  --node-work: #4A6FA5;
+  --node-event: #8B2635;
+  --node-concept: #5C7148;
+  --node-place: #9B8B6F;
+
+  /* === 字体 stack === */
+  --serif-display: 'Playfair Display', 'Noto Serif SC', serif;
+  --serif-body: 'Source Serif 4', 'Noto Serif SC', Georgia, serif;
+  --serif-zh: 'Noto Serif SC', 'Songti SC', '宋体', serif;
+  --mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+
+body {
+  font-family: var(--serif-body);
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--ink);
+  background: var(--paper);
+  min-height: 100vh;
+}
+
+main {
+  padding: 32px 56px;
+}
+
+h1 {
+  font-family: var(--serif-display);
+  font-size: 36px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  margin: 0 0 24px;
+  color: var(--ink);
+}
+
+/* 关系图 SVG 容器 */
+svg#relations-svg {
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  display: block;
+  max-width: 100%;
+}
+
+/* SVG 节点圆（M2 默认全用 --node-person 墨黑，M4 按 type 切 class） */
+.node-circle {
+  fill: var(--node-person);
+  stroke: var(--ink);
+  stroke-width: 1;
+}
+
+/* SVG 关系连线 */
+.relation-line {
+  stroke: var(--ink);
+  stroke-width: 0.6;
+  opacity: 0.7;
+}
+
+/* SVG 节点 label（中文宋体） */
+.node-label {
+  font-family: var(--serif-zh);
+  font-size: 12px;
+  fill: var(--ink);
+}
+```
+
+> **注意**：CSS `@import url(...)` 引入 Google Fonts 是 vite + 浏览器都支持的标准用法，**不需要改 index.html**。Vite build 时 css 会被打包到 `dist/assets/index-*.css` 并自动 link 进 dist/index.html。
+
+- [ ] **Step 2: 修改 src/main.ts（加 import css + import JSON + schema 校验）**
+
+```typescript
+import './styles.css';
+import { renderRelations } from './viz/relations.ts';
+import { validateDataset } from './lib/schema.ts';
+import datasetJson from './data/nodes_skeleton.json';
+import type { Dataset } from './types/Node.ts';
+
+console.log('[Marx M2] entry');
+
+const dataset = datasetJson as Dataset;
+
+try {
+  validateDataset(dataset);
+  console.log(`[Marx M2] dataset validated: ${dataset.nodes.length} nodes / ${dataset.relations.length} relations`);
+} catch (err) {
+  console.error('[Marx M2] dataset 校验失败，渲染将中止:', err);
+  throw err;
+}
+
+renderRelations('#relations-svg', dataset);
+```
+
+- [ ] **Step 3: 修改 src/viz/relations.ts（适配新 Node 类型 + 用 CSS class 接管样式）**
+
+旧 relations.ts 的 `SimNode extends d3.SimulationNodeDatum, Node` 在新 Node 是 union 类型时仍然合法，但 d3 types 跟 union 不太友好——把 SimNode 简化为只关心 id + name_zh。同时改用 CSS class 接管 fill / stroke / font，让 § 7 视觉规范统一在 styles.css 里：
 
 ```typescript
 import * as d3 from 'd3';
@@ -1316,8 +1439,7 @@ export function renderRelations(svgSelector: string, dataset: Dataset): void {
     .selectAll<SVGLineElement, SimLink>('line')
     .data(simLinks)
     .join('line')
-    .attr('stroke', '#888')
-    .attr('stroke-width', 1) // 节点变多，连线变细避免视觉混乱
+    .attr('class', 'relation-line')
     .attr('data-testid', 'relation-line');
 
   const nodeGroup = svg
@@ -1326,8 +1448,8 @@ export function renderRelations(svgSelector: string, dataset: Dataset): void {
     .selectAll<SVGCircleElement, SimNode>('circle')
     .data(simNodes)
     .join('circle')
-    .attr('r', 8) // 节点变多，半径减小
-    .attr('fill', '#7c5dbe') // M4 替换为 5 色编码
+    .attr('r', 8) // 节点变多，半径减小（M4 改为按类型分级 r=22 / 14 / 8）
+    .attr('class', 'node-circle')
     .attr('data-testid', 'node-circle')
     .attr('data-node-id', (d) => d.id);
 
@@ -1338,7 +1460,7 @@ export function renderRelations(svgSelector: string, dataset: Dataset): void {
     .data(simNodes)
     .join('text')
     .text((d) => d.name_zh)
-    .attr('font-size', 10) // 节点变多，字号减小
+    .attr('class', 'node-label')
     .attr('text-anchor', 'middle')
     .attr('dy', 18)
     .attr('data-testid', 'node-label');
@@ -1355,36 +1477,15 @@ export function renderRelations(svgSelector: string, dataset: Dataset): void {
 }
 ```
 
-- [ ] **Step 2: 修改 src/main.ts 改为 import JSON + 跑 schema 校验**
+> **样式接管说明**：原 M1 用 inline `.attr('fill', '#7c5dbe')` 等 SVG attribute 写死颜色。新版本改用 `.attr('class', 'node-circle')` 让 styles.css 里的 `.node-circle { fill: var(--node-person); }` 接管，这样 M4 启用 5 色节点编码时只需 styles.css 加 `.node-circle.work { fill: var(--node-work); }` 等子选择器，不必动 relations.ts。
 
-```typescript
-import { renderRelations } from './viz/relations.ts';
-import { validateDataset } from './lib/schema.ts';
-import datasetJson from './data/nodes_skeleton.json';
-import type { Dataset } from './types/Node.ts';
-
-console.log('[Marx M2] entry');
-
-const dataset = datasetJson as Dataset;
-
-try {
-  validateDataset(dataset);
-  console.log(`[Marx M2] dataset validated: ${dataset.nodes.length} nodes / ${dataset.relations.length} relations`);
-} catch (err) {
-  console.error('[Marx M2] dataset 校验失败，渲染将中止:', err);
-  throw err;
-}
-
-renderRelations('#relations-svg', dataset);
-```
-
-- [ ] **Step 3: 删除 src/data/m1-skeleton.ts（已不再使用）**
+- [ ] **Step 4: 删除 src/data/m1-skeleton.ts（已不再使用）**
 
 ```bash
 git rm src/data/m1-skeleton.ts
 ```
 
-- [ ] **Step 4: 调整 vite/tsconfig 允许 import JSON**
+- [ ] **Step 5: 调整 vite/tsconfig 允许 import JSON**
 
 检查 `tsconfig.json` 是否含 `"resolveJsonModule": true`。M1 没显式开启但 TS 默认。如果 `npm run build` 报 "Cannot find module './data/nodes_skeleton.json'"，加上：
 
@@ -1397,29 +1498,35 @@ git rm src/data/m1-skeleton.ts
 }
 ```
 
-- [ ] **Step 5: 跑 dev server 视觉验证**
+- [ ] **Step 6: 跑 dev server 视觉验证（落地 § 7 后）**
 
 ```bash
 npm run dev
 ```
 
 打开 http://localhost:5173/marx/，Expected：
-- 浏览器看到 ~30-50 个紫色小圆 + 力导向布局动画
-- 每个圆下面有中文人名 / 著作名 label
-- 圆之间有灰色连线（关系骨架）
+- **背景从纯白变牛皮纸米**（`#F4EDE0`）
+- **H1 标题用 Playfair Display 衬线字体**
+- **~30-50 个墨黑小圆**（`#1A1A1A`）+ 力导向布局动画
+- **节点 label 用 Noto Serif SC 思源宋体**显示中文人名 / 著作名
+- **关系连线灰墨黑** 0.7 透明（细线，让节点成主角）
 - DevTools console 打印 `[Marx M2] dataset validated: X nodes / Y relations`
 
 如果浏览器空白：
 - Console 看错误信息
 - 最常见：JSON import 类型不匹配 → 看 schema 校验错误
 
+如果背景仍是白色 / 字体仍是默认 sans-serif：
+- 检查 `src/main.ts` 第一行是 `import './styles.css';`
+- 检查 Google Fonts 网络可访问（中国大陆有时被墙——可接受，回退到 `Noto Serif SC` 本地字体或 `Georgia / 宋体` 系统字体仍然 OK）
+
 按 Ctrl+C 停 dev server。
 
-- [ ] **Step 6: Commit 渲染切换**
+- [ ] **Step 7: Commit 渲染切换 + § 7 视觉骨架**
 
 ```bash
-git add src/main.ts src/viz/relations.ts tsconfig.json
-git commit -m "feat(M2): main.ts 切到 load JSON skeleton + 适配密集节点渲染参数"
+git add src/styles.css src/main.ts src/viz/relations.ts tsconfig.json
+git commit -m "feat(M2): main.ts 切到 load JSON + 落 § 7 视觉骨架（牛皮纸 + 墨黑节点 + 衬线字体）"
 ```
 
 ---
