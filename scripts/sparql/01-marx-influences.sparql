@@ -1,0 +1,10 @@
+# Q9061 = Karl Marx
+# P737 = influenced by
+# 拉所有 Marx 直接受影响于的人，含生卒年用于年代过滤
+SELECT ?person ?personLabel ?birthYear ?deathYear WHERE {
+  wd:Q9061 wdt:P737 ?person .
+  OPTIONAL { ?person wdt:P569 ?birthDate . BIND(YEAR(?birthDate) AS ?birthYear) }
+  OPTIONAL { ?person wdt:P570 ?deathDate . BIND(YEAR(?deathDate) AS ?deathYear) }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "zh,en,de,fr" }
+}
+ORDER BY ?birthYear

@@ -1,0 +1,7 @@
+# P1327 = professional or sporting partner / collaborator
+SELECT ?person ?personLabel ?birthYear ?deathYear WHERE {
+  wd:Q9061 wdt:P1327 ?person .
+  OPTIONAL { ?person wdt:P569 ?birthDate . BIND(YEAR(?birthDate) AS ?birthYear) }
+  OPTIONAL { ?person wdt:P570 ?deathDate . BIND(YEAR(?deathDate) AS ?deathYear) }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "zh,en,de" }
+}

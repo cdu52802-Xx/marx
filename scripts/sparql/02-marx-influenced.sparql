@@ -1,0 +1,13 @@
+# Q9061 = Karl Marx, P737 = influenced by
+# 拉所有声明 Marx 影响了自己的人，限制 1900 年前出生避免后世 Marxist 大爆炸
+# (后世马克思主义者属于 M2 阶段 C 后来者旁注范围，不在 M2 关系骨架里)
+SELECT ?person ?personLabel ?birthYear ?deathYear WHERE {
+  ?person wdt:P737 wd:Q9061 .
+  ?person wdt:P569 ?birthDate .
+  BIND(YEAR(?birthDate) AS ?birthYear)
+  OPTIONAL { ?person wdt:P570 ?deathDate . BIND(YEAR(?deathDate) AS ?deathYear) }
+  FILTER (?birthYear < 1900)
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "zh,en,de,fr,ru" }
+}
+ORDER BY ?birthYear
+LIMIT 50

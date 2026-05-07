@@ -1,0 +1,15 @@
+# P802 = student（Marx 的学生）
+# P1066 = student of（Marx 的老师）
+# 用 UNION 合并查询
+SELECT ?person ?personLabel ?birthYear ?deathYear ?relation WHERE {
+  {
+    wd:Q9061 wdt:P802 ?person .
+    BIND("student_of_marx" AS ?relation)
+  } UNION {
+    wd:Q9061 wdt:P1066 ?person .
+    BIND("teacher_of_marx" AS ?relation)
+  }
+  OPTIONAL { ?person wdt:P569 ?birthDate . BIND(YEAR(?birthDate) AS ?birthYear) }
+  OPTIONAL { ?person wdt:P570 ?deathDate . BIND(YEAR(?deathDate) AS ?deathYear) }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "zh,en,de" }
+}

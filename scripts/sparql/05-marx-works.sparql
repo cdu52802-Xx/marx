@@ -1,0 +1,7 @@
+# P800 = notable work
+SELECT ?work ?workLabel ?pubYear WHERE {
+  wd:Q9061 wdt:P800 ?work .
+  OPTIONAL { ?work wdt:P577 ?pubDate . BIND(YEAR(?pubDate) AS ?pubYear) }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "zh,en,de" }
+}
+ORDER BY ?pubYear
