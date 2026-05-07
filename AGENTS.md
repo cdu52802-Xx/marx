@@ -5,10 +5,10 @@
 
 ## 项目状态
 
-- 第一个产品代号：**Marx 星图**；阶段：M1 已上线 / M2 plan 已写 / **视觉风格定调中**（4 风格 mockup 调研反馈待回）→ 待选 Tone → 待 M2 实施
+- 第一个产品代号：**Marx 星图**；阶段：M1 已上线 / M2 plan v1.1 已就绪（含 § 7 视觉骨架）/ **视觉风格定调完成**（A 学术编辑）→ 待 M2 实施（c 阶段）
 - 在线：
   - M1 主 demo：https://cdu52802-xx.github.io/marx/
-  - 风格调研入口：https://cdu52802-xx.github.io/marx/styles/
+  - 风格调研入口（A 已选定，B/C/D 留作反向锚定）：https://cdu52802-xx.github.io/marx/styles/
 - 仓库：`cdu52802-Xx/marx`（**public**，2026-05-07 从 private 改 public 因为 GitHub Pages 免费层不支持私仓）
 - 主用户：0 代码 PM，vibe coding 模式
 - 双机切换：Claude 主力机（`F:\AI\projects\Marx`）+ Codex 主力机（`<盘>:\AI\projects\Marx`）

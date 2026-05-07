@@ -1,8 +1,9 @@
 # Marx · pre-M2 视觉风格 mockup session takeaway
 
 > 完成日期：2026-05-07（M1 完成日同一天的 sub-session）
-> 阶段定位：M1 上线 → M2 实施之间，视觉风格前置补漏
-> 关联：[M1 takeaway](2026-05-07-m1-takeaway.md) / [M2 plan](../plans/2026-05-07-marx-star-map-m2-data-schema-sparql-a.md)
+> **v1.1 更新（同日）**：朋友 1 号反馈回收 → 选定 **A 学术编辑** → design doc v1.1 § 7 视觉风格定调落地 → M2 plan b-1 局部修订完毕 → **c 阶段（M2 实施）就绪**
+> 阶段定位：M1 上线 → M2 实施之间，视觉风格前置补漏 + 落地
+> 关联：[M1 takeaway](2026-05-07-m1-takeaway.md) / [M2 plan v1.1](../plans/2026-05-07-marx-star-map-m2-data-schema-sparql-a.md) / [design doc v1.1](../specs/2026-05-07-marx-star-map-design.md)
 > 在线：
 >   - M1 主 demo（不变）：https://cdu52802-xx.github.io/marx/
 >   - 风格调研入口（本 session 产出）：https://cdu52802-xx.github.io/marx/styles/
@@ -18,6 +19,8 @@
 | C 收尾小坑 | `08cd279` | `.gitattributes` 加 `* text=auto eol=lf` 消 Windows CRLF 噪音（M1 takeaway 教训第 4 条落地） |
 | B M2 plan | `f89fd03` | M2 plan 写完落地（数据 schema + SPARQL 阶段 A，1800 行 9 task） |
 | 视觉前置 | `1bb53a7` | 4 风格 mockup（A 学术编辑 / B 革命粗野 / C 工业历史 / D 档案文献）+ 调研入口落 `public/styles/`，已 push 上线，user 已外发链接征求 3-5 朋友意见 |
+| **a-5/a-6 视觉定调落地** | `4f66d5c` | design doc 升 v1.1，加 § 7 视觉风格定调 9 子节，§ 3.1 / § 4.1 色编码全替换为 § 7 新规范 |
+| **b-1 M2 plan 修订** | `df580b8` | M2 plan Task 7 重构含 § 7 视觉骨架落地（src/styles.css 新建 + Google Fonts + CSS 变量），M2 完成后视觉从「白底紫圆」变「牛皮纸 + 墨黑节点 + 中文衬线 label」 |
 
 ---
 
@@ -62,16 +65,55 @@ M2 实际只填 person + work 两类节点 + 4 类关系，但 TypeScript 类型
 
 两者目标受众和问题都不一样，不冲突。
 
+### 决策 7 · 单点反馈足够 commit（朋友 1 号 → A 学术编辑）
+
+**反馈内容**（2026-05-07 朋友 1 号回收）：
+
+1. **最喜欢 A** —「A 像查字典，非常适合阅读」
+2. **最不喜欢 B** —「冲击力太强，眼睛累」
+3. **C 和 D**「都更有娱乐感，配色像游戏 / 网页游戏 / 迪士尼，让用户感觉没有学习的氛围」 — C「像《苏丹的游戏》/ 同人文学大字典」/ D「像海盗」
+
+**为什么单点足够 commit**（不等其他朋友凑够 3-5 个）：
+
+- 反馈含金量高：功能性理由（"查字典 / 适合阅读 / 没有学习氛围"），不是审美偏好
+- 跟产品定位（design doc § 1 / § 10.4 "工具型 V1 / 学者优先"）高度一致
+- B 用力过猛 / C/D 娱乐感都是**结构性不适配**，不是"差几度可调"
+
+**决策规则**（如果未来再做类似反馈调研）：
+
+- 群体一致 → 落地
+- 群体分裂 → 信号是"目标用户不一致"——回头审产品定位，不是品味问题
+- 群体反对 → 重出候选（保留"反 AI slop / 学术氛围"骨架）
+
+### 决策 8 · 5 类节点 + 8 类关系视觉编码全替换
+
+design doc v1.1 § 7.4 / § 7.5 用新色板**替代**原 § 3.1 / § 4.1 的"紫蓝橙绿灰 / 紫红绿橙"鲜艳色编码——原色板命中 AI slop "均匀调色板"反例，且鲜艳色跟 A 学术编辑调性冲突。
+
+新 5 类节点色：墨黑 / 褪色蓝 / 学者红 / 苔藓绿 / 沙石灰金（全跟牛皮纸协调）。
+新 8 类关系视觉：monochrome 主导 + 学者红 / 苔藓绿点缀 + 0.5-1px 细线。
+
+M4 实施时**以 v1.1 § 7.4 / § 7.5 为准**，原 § 3.1 / § 4.1 表里"颜色"列保留作历史记录。
+
+### 决策 9 · M2 视觉落地范围（不仅做数据切换）
+
+M2 plan Task 7 重构后落地 § 7 子集：CSS 变量 + Google Fonts + body 全局 + 节点单色（5 色 / 详情卡 / 时间轴留 M4）。
+
+**Why 现在做**：CSS 变量 + 字体引入是基础设施级别（一次到位），M2 不做 M3-M4 也得做，M4 大批 UI 工作时再补反而打乱节奏。M2 做了之后线上有真正可视化进展（牛皮纸 + 墨黑节点 + 中文衬线 label），匹配用户工作模式"看到才有想法"。
+
+**M2 不做**：5 类节点按 type 分色 / 详情卡 / 时间轴 / 副图小窗 / hover 交互 / staggered reveals 动画 — 这些是 M4-M6 范围。
+
 ---
 
 ## 当前状态 + 阻塞点
 
 - ✅ M1 已上线（https://cdu52802-xx.github.io/marx/，2 紫圆形态）
-- ✅ M2 plan 已写完已 push（待执行）
-- ✅ 4 风格 mockup 已上线（https://cdu52802-xx.github.io/marx/styles/，待选型）
-- ⏳ **阻塞**：等 user 自己看 + 身边 3-5 朋友风格选型反馈（user 已外发，预计 1-2 天回收）
-- ⏳ 反馈回收后：选 Tone → 写 design doc 视觉风格定调节
-- ⏳ 后续：M2 plan 局部修订（颜色提到 CSS 变量）→ 执行 M2 plan
+- ✅ M2 plan v1.1 已写完已 push（含 § 7 视觉骨架，待执行）
+- ✅ 4 风格 mockup 已上线（https://cdu52802-xx.github.io/marx/styles/）
+- ✅ **风格选型完成**：朋友 1 号反馈回收 → 选定 **A 学术编辑**（决策 7）
+- ✅ design doc v1.1 已 push（含 § 7 视觉风格定调 9 子节 + § 3.1 / § 4.1 色编码全替换）
+- ✅ M2 plan b-1 修订完成（Task 7 含 styles.css + Google Fonts + § 7 视觉骨架）
+- ⏳ **下一步：c 阶段 = 执行 M2 plan**（参照 M1 单 session 3 小时，含 SPARQL 网络风险）
+- 🔚 当前**无阻塞**，可随时启动 c 阶段
 
 ---
 
@@ -79,8 +121,10 @@ M2 实际只填 person + work 两类节点 + 4 类关系，但 TypeScript 类型
 
 新窗口续接时，**优先读本 takeaway 重建上下文**，然后按反馈状态选下面之一：
 
-**情况 1（反馈已回收，选定方向）**：
-> "M1 完成 + M2 plan 已写 + 4 风格 mockup 调研反馈已回，选定方向 [A/B/C/D]。请按 AGENTS.md 第 65 行硬要求把视觉风格定调节加进 `specs/2026-05-07-marx-star-map-design.md`，含 Tone / 字体（含中文配对）/ 配色（CSS 变量列出）/ 氛围细节 4 维。然后做 M2 plan 局部修订（颜色提到 CSS 变量），最后执行 M2 plan 9 个 task。"
+**情况 1（视觉定调落地完成，c 阶段执行 M2 plan）⭐ 当前状态**：
+> "M1 完成 + M2 plan v1.1 已写（含 § 7 视觉骨架）+ 视觉风格定调选定 **A 学术编辑** + design doc v1.1（commit 4f66d5c）/ M2 plan b-1 修订（commit df580b8）都已 push。请按 superpowers:executing-plans skill 一个 task 一个 task 跑 M2 plan 9 个 task。Task 1 前置检查（仓库 public / Node 版本 / Wikidata SPARQL 网络可达性）务必先跑。"
+
+**情况 1-old（v1.0 已完成，仅追溯）**：原模板 "选定方向 [A/B/C/D] → 写 design doc 视觉节 → M2 plan 修订" 已全部完成，落到 commit 4f66d5c / df580b8。
 
 **情况 2（反馈还没回 / 还在等）**：
 > "当前 4 风格 mockup 在线 https://cdu52802-xx.github.io/marx/styles/ 等用户调研反馈。在等的间隙建议：跑一遍 M2 plan 前置检查（Task 1 全部 step），让 SPARQL endpoint 网络可达性 + tsx 装好提前验证。剩下的 8 个 task 等选 Tone 后再开。"
@@ -128,6 +172,19 @@ M2 实际只填 person + work 两类节点 + 4 类关系，但 TypeScript 类型
 
 **修正**：每次进 brainstorming，**第一句话主动**喊「开启 visual companion 模式 + use frontend-design skill + use ui-ux-pro-max skill」，不要默认走 brainstorming flow。本 session 视觉前置已应用此修正。
 
+### 坑 11 · designer 直觉跟用户读图直觉的 gap
+
+**症状**：mockup 调研之前我推荐 "C 工业历史最贴 Marx 时代背景，差异化最强"。朋友实际把 C 读成"游戏配色 / 苏丹的游戏 / 同人文学大字典"，把 D 读成"海盗 / 迪士尼"。我以为颗粒纹理 + 钢蓝锈红 = "19 世纪工业革命氛围"，普通用户读出来 = "娱乐配色"。
+
+**深层原因**：designer-mind 看视觉时做"历史符号 → 时代联想"的解读链路；普通用户（学者目标用户）看视觉时直接做"色彩饱和度 + 视觉刺激度 → 严肃 vs 娱乐"判断。两条链路对同一组视觉元素得出反向结论。
+
+**M3-M6 防御**：
+
+- 推视觉方案时**不只信 designer 直觉**，先列方案再让用户和 3-5 实际目标用户检验
+- "记忆点强 / 差异化强" 是宣传海报 / 消费 app 的标尺，**对学术工具反而是负担**
+- A 类"稳但平庸"的方案对学者优先工具可能就是对的——"不抢戏"是产品价值不是缺陷
+- M4 关系图主视图 / M5 地理图 / M6 UI/UX 优化 实施时，再次提交一两个候选方案给真实用户校验
+
 ---
 
 ## 关键文件路径（本 session 产出 + 触及）
@@ -146,12 +203,22 @@ M2 实际只填 person + work 两类节点 + 4 类关系，但 TypeScript 类型
 | `D:/AI/Claude/.claude/projects/F--AI-projects-Marx/memory/feedback_user_research_threshold.md` | 新建 | 「形态太简陋不调研」memory（session 内确立的反馈门槛） |
 | `D:/AI/Claude/.claude/projects/F--AI-projects-Marx/memory/MEMORY.md` | 修改 | 索引去掉"私仓"过期信息 + 加新 feedback 索引 |
 
+**v1.1 增量改动**（朋友 1 号反馈 → 选定 A → design doc v1.1 + M2 plan b-1 修订）：
+
+| 文件 | 状态 | 备注 |
+|---|---|---|
+| `specs/2026-05-07-marx-star-map-design.md` | v1 → v1.1 | 加 § 7 视觉风格定调 9 子节 + § 3.1 / § 4.1 色编码全替换，commit `4f66d5c` |
+| `plans/2026-05-07-marx-star-map-m2-data-schema-sparql-a.md` | v1 → v1.1 | Task 7 重构含 § 7 视觉骨架落地（styles.css + Google Fonts），commit `df580b8` |
+| `docs/2026-05-07-style-mockup-takeaway.md` | 修改（本文件） | 加决策 7-9 + 阻塞点更新 + 续接入口情况 1 → 当前状态 + 加坑 11 |
+| `AGENTS.md` | 修改 | 项目状态：M2 plan v1.1 已就绪 / 视觉定调完成 → 待 M2 实施 |
+
 ---
 
 ## 给下次 session 的 checklist
 
 - [ ] 优先读本文件（30 秒重建上下文）
-- [ ] 然后视情况读 [M2 plan](../plans/2026-05-07-marx-star-map-m2-data-schema-sparql-a.md) 或 design doc
-- [ ] 续接前先看 user 是否已选 Tone（看本文件「下个 session 续接入口」选情况 1/2/3）
-- [ ] 第一步喊「open visual companion + use frontend-design + use ui-ux-pro-max」（如果涉及视觉相关任务）
-- [ ] 不要主动问"要不要触发提醒节点 ②"（按 user research threshold memory，形态门槛未到）
+- [ ] 然后读 [M2 plan v1.1](../plans/2026-05-07-marx-star-map-m2-data-schema-sparql-a.md)（含 § 7 视觉骨架落地）+ [design doc v1.1 § 7](../specs/2026-05-07-marx-star-map-design.md)
+- [ ] **续接默认走「下个 session 续接入口」情况 1**（视觉定调完成 → c 阶段执行 M2 plan）
+- [ ] M2 实施时第一句喊「use frontend-design skill + use ui-ux-pro-max skill」（虽然 M2 视觉范围有限但仍按 AGENTS.md 三件套规范）
+- [ ] 不要主动问"要不要触发提醒节点 ②"（按 user research threshold memory，M2 形态依然不到 mockup 门槛）
+- [ ] **不要回到 4 mockup 调研做"再选一次"**——A 已选定，B/C/D mockup 不删（design doc § 7.9 反向锚定参考）
