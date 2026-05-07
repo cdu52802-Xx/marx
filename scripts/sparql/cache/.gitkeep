@@ -1,0 +1,5 @@
+# 此目录存放方案 b 离线缓存的 5 个 SPARQL 查询结果 JSON。
+# 命名规则：01.json / 02.json / 03.json / 04.json / 05.json（与 ../NN-*.sparql 文件数字前缀对应）
+# 来源：在 https://query.wikidata.org/ 网页 UI 粘贴 ../NN-*.sparql 内容运行 → 点 Download → JSON
+# 跑法：MARX_USE_CACHE=1 npm run fetch:skeleton
+# 详见 ../../README.md

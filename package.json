@@ -12,7 +12,8 @@
     "e2e": "playwright test",
     "e2e:install": "playwright install chromium",
     "lint": "eslint . --max-warnings=0",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "fetch:skeleton": "tsx scripts/fetch-skeleton.ts"
   },
   "repository": {
     "type": "git",
