@@ -1,0 +1,759 @@
+{
+  "nodes": [
+    {
+      "id": "wd-q9061",
+      "type": "person",
+      "name_zh": "卡尔·马克思",
+      "name_orig": "Karl Marx",
+      "birth_year": 1818,
+      "death_year": 1883,
+      "main_location_lat_lng": [
+        51.5074,
+        -0.1278
+      ],
+      "bio_event_style": [
+        "1818年5月 - 生于普鲁士特里尔",
+        "1841年 - 耶拿大学博士论文",
+        "1844年8月 - 巴黎遇恩格斯，思想合流",
+        "1849年8月 - 流亡伦敦，余生 34 年",
+        "1867年9月 - 《资本论》第一卷出版"
+      ],
+      "citation_urls": [
+        "https://www.marxists.org/archive/marx/",
+        "https://plato.stanford.edu/entries/marx/"
+      ]
+    },
+    {
+      "id": "wd-q1170769",
+      "type": "person",
+      "name_zh": "基督教的本質",
+      "name_orig": "基督教的本質",
+      "birth_year": 0,
+      "death_year": 0,
+      "main_location_lat_lng": [
+        0,
+        0
+      ],
+      "bio_event_style": [],
+      "citation_urls": []
+    },
+    {
+      "id": "wd-q9235",
+      "type": "person",
+      "name_zh": "格奥尔格·威廉·弗里德里希·黑格尔",
+      "name_orig": "格奥尔格·威廉·弗里德里希·黑格尔",
+      "birth_year": 1770,
+      "death_year": 1831,
+      "main_location_lat_lng": [
+        0,
+        0
+      ],
+      "bio_event_style": [],
+      "citation_urls": []
+    },
+    {
+      "id": "wd-q76422",
+      "type": "person",
+      "name_zh": "路德维希·费尔巴哈",
+      "name_orig": "路德维希·费尔巴哈",
+      "birth_year": 1804,
+      "death_year": 1872,
+      "main_location_lat_lng": [
+        0,
+        0
+      ],
+      "bio_event_style": [],
+      "citation_urls": []
+    },
+    {
+      "id": "wd-q76725",
+      "type": "person",
+      "name_zh": "麥克斯·施蒂納",
+      "name_orig": "麥克斯·施蒂納",
+      "birth_year": 1806,
+      "death_year": 1856,
+      "main_location_lat_lng": [
+        0,
+        0
+      ],
+      "bio_event_style": [],
+      "citation_urls": []
+    },
+    {
+      "id": "wd-q5749",
+      "type": "person",
+      "name_zh": "皮埃爾-約瑟夫·普魯東",
+      "name_orig": "皮埃爾-約瑟夫·普魯東",
+      "birth_year": 1809,
+      "death_year": 1865,
+      "main_location_lat_lng": [
+        0,
+        0
+      ],
+      "bio_event_style": [],
+      "citation_urls": []
+    },
+    {
+      "id": "wd-q27645",
+      "type": "person",
+      "name_zh": "米哈伊尔·巴枯宁",
+      "name_orig": "米哈伊尔·巴枯宁",
+      "birth_year": 1814,
+      "death_year": 1876,
+      "main_location_lat_lng": [
+        0,
+        0
+      ],
+      "bio_event_style": [],
+      "citation_urls": []
+    },
+    {
+      "id": "wd-q34787",
+      "type": "person",
+      "name_zh": "弗里德里希·恩格斯",
+      "name_orig": "弗里德里希·恩格斯",
+      "birth_year": 1820,
+      "death_year": 1895,
+      "main_location_lat_lng": [
+        0,
+        0
+      ],
+      "bio_event_style": [],
+      "citation_urls": []
+    },
+    {
+      "id": "wd-q75784",
+      "type": "person",
+      "name_zh": "费迪南德·拉萨尔",
+      "name_orig": "费迪南德·拉萨尔",
+      "birth_year": 1825,
+      "death_year": 1864,
+      "main_location_lat_lng": [
+        0,
+        0
+      ],
+      "bio_event_style": [],
+      "citation_urls": []
+    },
+    {
+      "id": "wd-q548271",
+      "type": "person",
+      "name_zh": "亨利·迈尔斯·海德门",
+      "name_orig": "亨利·迈尔斯·海德门",
+      "birth_year": 1842,
+      "death_year": 1921,
+      "main_location_lat_lng": [
+        0,
+        0
+      ],
+      "bio_event_style": [],
+      "citation_urls": []
+    },
+    {
+      "id": "wd-q136116320",
+      "type": "person",
+      "name_zh": "Alfred Herman",
+      "name_orig": "Alfred Herman",
+      "birth_year": 1842,
+      "death_year": 1890,
+      "main_location_lat_lng": [
+        0,
+        0
+      ],
+      "bio_event_style": [],
+      "citation_urls": []
+    },
+    {
+      "id": "wd-q342730",
+      "type": "person",
+      "name_zh": "安东尼奥·拉布里奥拉",
+      "name_orig": "安东尼奥·拉布里奥拉",
+      "birth_year": 1843,
+      "death_year": 1904,
+      "main_location_lat_lng": [
+        0,
+        0
+      ],
+      "bio_event_style": [],
+      "citation_urls": []
+    },
+    {
+      "id": "wd-q376036",
+      "type": "person",
+      "name_zh": "斯韦托扎尔·马尔科维奇",
+      "name_orig": "斯韦托扎尔·马尔科维奇",
+      "birth_year": 1846,
+      "death_year": 1875,
+      "main_location_lat_lng": [
+        0,
+        0
+      ],
+      "bio_event_style": [],
+      "citation_urls": []
+    },
+    {
+      "id": "wd-q563138",
+      "type": "person",
+      "name_zh": "卡洛·卡菲耶罗",
+      "name_orig": "卡洛·卡菲耶罗",
+      "birth_year": 1846,
+      "death_year": 1892,
+      "main_location_lat_lng": [
+        0,
+        0
+      ],
+      "bio_event_style": [],
+      "citation_urls": []
+    },
+    {
+      "id": "wd-q9375804",
+      "type": "person",
+      "name_zh": "Witold Rola Piekarski",
+      "name_orig": "Witold Rola Piekarski",
+      "birth_year": 1857,
+      "death_year": 1909,
+      "main_location_lat_lng": [
+        0,
+        0
+      ],
+      "bio_event_style": [],
+      "citation_urls": []
+    },
+    {
+      "id": "wd-q185085",
+      "type": "person",
+      "name_zh": "米格尔·德·乌纳穆诺",
+      "name_orig": "米格尔·德·乌纳穆诺",
+      "birth_year": 1864,
+      "death_year": 1936,
+      "main_location_lat_lng": [
+        0,
+        0
+      ],
+      "bio_event_style": [],
+      "citation_urls": []
+    },
+    {
+      "id": "wd-q192348",
+      "type": "person",
+      "name_zh": "贝内德托·克罗齐",
+      "name_orig": "贝内德托·克罗齐",
+      "birth_year": 1866,
+      "death_year": 1952,
+      "main_location_lat_lng": [
+        0,
+        0
+      ],
+      "bio_event_style": [],
+      "citation_urls": []
+    },
+    {
+      "id": "wd-q128494",
+      "type": "person",
+      "name_zh": "Lyubov Axelrod",
+      "name_orig": "Lyubov Axelrod",
+      "birth_year": 1868,
+      "death_year": 1946,
+      "main_location_lat_lng": [
+        0,
+        0
+      ],
+      "bio_event_style": [],
+      "citation_urls": []
+    },
+    {
+      "id": "wd-q836646",
+      "type": "person",
+      "name_zh": "拉蒂斯勞斯·波特凱維茨",
+      "name_orig": "拉蒂斯勞斯·波特凱維茨",
+      "birth_year": 1868,
+      "death_year": 1931,
+      "main_location_lat_lng": [
+        0,
+        0
+      ],
+      "bio_event_style": [],
+      "citation_urls": []
+    },
+    {
+      "id": "wd-q110655615",
+      "type": "person",
+      "name_zh": "Harry Waton",
+      "name_orig": "Harry Waton",
+      "birth_year": 1870,
+      "death_year": 1959,
+      "main_location_lat_lng": [
+        0,
+        0
+      ],
+      "bio_event_style": [],
+      "citation_urls": []
+    },
+    {
+      "id": "wd-q1394",
+      "type": "person",
+      "name_zh": "列宁",
+      "name_orig": "列宁",
+      "birth_year": 1870,
+      "death_year": 1924,
+      "main_location_lat_lng": [
+        0,
+        0
+      ],
+      "bio_event_style": [],
+      "citation_urls": []
+    },
+    {
+      "id": "wd-q332535",
+      "type": "person",
+      "name_zh": "谢尔盖·布尔加科夫",
+      "name_orig": "谢尔盖·布尔加科夫",
+      "birth_year": 1871,
+      "death_year": 1944,
+      "main_location_lat_lng": [
+        0,
+        0
+      ],
+      "bio_event_style": [],
+      "citation_urls": []
+    },
+    {
+      "id": "wd-q347930",
+      "type": "person",
+      "name_zh": "安東尼·潘涅庫克",
+      "name_orig": "安東尼·潘涅庫克",
+      "birth_year": 1873,
+      "death_year": 1960,
+      "main_location_lat_lng": [
+        0,
+        0
+      ],
+      "bio_event_style": [],
+      "citation_urls": []
+    },
+    {
+      "id": "wd-q855",
+      "type": "person",
+      "name_zh": "约瑟夫·斯大林",
+      "name_orig": "约瑟夫·斯大林",
+      "birth_year": 1878,
+      "death_year": 1953,
+      "main_location_lat_lng": [
+        0,
+        0
+      ],
+      "bio_event_style": [],
+      "citation_urls": []
+    },
+    {
+      "id": "wd-q57240",
+      "type": "person",
+      "name_zh": "恩斯特·西蒙·布洛赫",
+      "name_orig": "恩斯特·西蒙·布洛赫",
+      "birth_year": 1885,
+      "death_year": 1977,
+      "main_location_lat_lng": [
+        0,
+        0
+      ],
+      "bio_event_style": [],
+      "citation_urls": []
+    },
+    {
+      "id": "wd-q4305318",
+      "type": "person",
+      "name_zh": "Natalia Moszkowska",
+      "name_orig": "Natalia Moszkowska",
+      "birth_year": 1886,
+      "death_year": 1968,
+      "main_location_lat_lng": [
+        0,
+        0
+      ],
+      "bio_event_style": [],
+      "citation_urls": []
+    },
+    {
+      "id": "wd-q60208",
+      "type": "person",
+      "name_zh": "卡爾·柯爾施",
+      "name_orig": "卡爾·柯爾施",
+      "birth_year": 1886,
+      "death_year": 1961,
+      "main_location_lat_lng": [
+        0,
+        0
+      ],
+      "bio_event_style": [],
+      "citation_urls": []
+    },
+    {
+      "id": "wd-q83003",
+      "type": "person",
+      "name_zh": "安东尼奥·葛兰西",
+      "name_orig": "安东尼奥·葛兰西",
+      "birth_year": 1891,
+      "death_year": 1937,
+      "main_location_lat_lng": [
+        0,
+        0
+      ],
+      "bio_event_style": [],
+      "citation_urls": []
+    },
+    {
+      "id": "wd-q61078",
+      "type": "person",
+      "name_zh": "瓦尔特·本雅明",
+      "name_orig": "瓦尔特·本雅明",
+      "birth_year": 1892,
+      "death_year": 1940,
+      "main_location_lat_lng": [
+        0,
+        0
+      ],
+      "bio_event_style": [],
+      "citation_urls": []
+    },
+    {
+      "id": "wd-q3351937",
+      "type": "person",
+      "name_zh": "羅睺羅•桑克特雅揚",
+      "name_orig": "羅睺羅•桑克特雅揚",
+      "birth_year": 1893,
+      "death_year": 1963,
+      "main_location_lat_lng": [
+        0,
+        0
+      ],
+      "bio_event_style": [],
+      "citation_urls": []
+    },
+    {
+      "id": "wd-q731904",
+      "type": "person",
+      "name_zh": "Valentin Asmus",
+      "name_orig": "Valentin Asmus",
+      "birth_year": 1894,
+      "death_year": 1975,
+      "main_location_lat_lng": [
+        0,
+        0
+      ],
+      "bio_event_style": [],
+      "citation_urls": []
+    },
+    {
+      "id": "wd-q2939300",
+      "type": "person",
+      "name_zh": "Carlos Astrada",
+      "name_orig": "Carlos Astrada",
+      "birth_year": 1894,
+      "death_year": 1970,
+      "main_location_lat_lng": [
+        0,
+        0
+      ],
+      "bio_event_style": [],
+      "citation_urls": []
+    },
+    {
+      "id": "wd-q704931",
+      "type": "person",
+      "name_zh": "埃德蒙·威尔逊",
+      "name_orig": "埃德蒙·威尔逊",
+      "birth_year": 1895,
+      "death_year": 1972,
+      "main_location_lat_lng": [
+        0,
+        0
+      ],
+      "bio_event_style": [],
+      "citation_urls": []
+    },
+    {
+      "id": "wd-q207359",
+      "type": "person",
+      "name_zh": "喬治·巴代伊",
+      "name_orig": "喬治·巴代伊",
+      "birth_year": 1897,
+      "death_year": 1962,
+      "main_location_lat_lng": [
+        0,
+        0
+      ],
+      "bio_event_style": [],
+      "citation_urls": []
+    },
+    {
+      "id": "wd-q69028",
+      "type": "person",
+      "name_zh": "弗里德里希·威爾克",
+      "name_orig": "弗里德里希·威爾克",
+      "birth_year": 1784,
+      "death_year": 1868,
+      "main_location_lat_lng": [
+        0,
+        0
+      ],
+      "bio_event_style": [],
+      "citation_urls": []
+    },
+    {
+      "id": "wd-q40591",
+      "type": "work",
+      "name_zh": "共产党宣言",
+      "name_orig": "共产党宣言",
+      "pub_year": 1848,
+      "author_id": "wd-q9061",
+      "writing_period": "1848",
+      "summary": "M3 阶段 B 人工补充",
+      "citation_urls": []
+    },
+    {
+      "id": "wd-q58784",
+      "type": "work",
+      "name_zh": "资本论",
+      "name_orig": "资本论",
+      "pub_year": 1867,
+      "author_id": "wd-q9061",
+      "writing_period": "1867",
+      "summary": "M3 阶段 B 人工补充",
+      "citation_urls": []
+    },
+    {
+      "id": "wd-q295347",
+      "type": "work",
+      "name_zh": "1844年哲学和经济学手稿",
+      "name_orig": "1844年哲学和经济学手稿",
+      "pub_year": 1932,
+      "author_id": "wd-q9061",
+      "writing_period": "1932",
+      "summary": "M3 阶段 B 人工补充",
+      "citation_urls": []
+    },
+    {
+      "id": "wd-q470600",
+      "type": "work",
+      "name_zh": "德意志意識形態",
+      "name_orig": "德意志意識形態",
+      "pub_year": 1932,
+      "author_id": "wd-q9061",
+      "writing_period": "1932",
+      "summary": "M3 阶段 B 人工补充",
+      "citation_urls": []
+    }
+  ],
+  "relations": [
+    {
+      "source": "wd-q1170769",
+      "target": "wd-q9061",
+      "type": "influences"
+    },
+    {
+      "source": "wd-q9235",
+      "target": "wd-q9061",
+      "type": "influences"
+    },
+    {
+      "source": "wd-q76422",
+      "target": "wd-q9061",
+      "type": "influences"
+    },
+    {
+      "source": "wd-q76725",
+      "target": "wd-q9061",
+      "type": "influences"
+    },
+    {
+      "source": "wd-q76725",
+      "target": "wd-q9061",
+      "type": "influences"
+    },
+    {
+      "source": "wd-q9061",
+      "target": "wd-q5749",
+      "type": "influences"
+    },
+    {
+      "source": "wd-q9061",
+      "target": "wd-q27645",
+      "type": "influences"
+    },
+    {
+      "source": "wd-q9061",
+      "target": "wd-q34787",
+      "type": "influences"
+    },
+    {
+      "source": "wd-q9061",
+      "target": "wd-q75784",
+      "type": "influences"
+    },
+    {
+      "source": "wd-q9061",
+      "target": "wd-q548271",
+      "type": "influences"
+    },
+    {
+      "source": "wd-q9061",
+      "target": "wd-q136116320",
+      "type": "influences"
+    },
+    {
+      "source": "wd-q9061",
+      "target": "wd-q342730",
+      "type": "influences"
+    },
+    {
+      "source": "wd-q9061",
+      "target": "wd-q376036",
+      "type": "influences"
+    },
+    {
+      "source": "wd-q9061",
+      "target": "wd-q563138",
+      "type": "influences"
+    },
+    {
+      "source": "wd-q9061",
+      "target": "wd-q9375804",
+      "type": "influences"
+    },
+    {
+      "source": "wd-q9061",
+      "target": "wd-q185085",
+      "type": "influences"
+    },
+    {
+      "source": "wd-q9061",
+      "target": "wd-q192348",
+      "type": "influences"
+    },
+    {
+      "source": "wd-q9061",
+      "target": "wd-q128494",
+      "type": "influences"
+    },
+    {
+      "source": "wd-q9061",
+      "target": "wd-q836646",
+      "type": "influences"
+    },
+    {
+      "source": "wd-q9061",
+      "target": "wd-q110655615",
+      "type": "influences"
+    },
+    {
+      "source": "wd-q9061",
+      "target": "wd-q1394",
+      "type": "influences"
+    },
+    {
+      "source": "wd-q9061",
+      "target": "wd-q332535",
+      "type": "influences"
+    },
+    {
+      "source": "wd-q9061",
+      "target": "wd-q332535",
+      "type": "influences"
+    },
+    {
+      "source": "wd-q9061",
+      "target": "wd-q110655615",
+      "type": "influences"
+    },
+    {
+      "source": "wd-q9061",
+      "target": "wd-q347930",
+      "type": "influences"
+    },
+    {
+      "source": "wd-q9061",
+      "target": "wd-q855",
+      "type": "influences"
+    },
+    {
+      "source": "wd-q9061",
+      "target": "wd-q57240",
+      "type": "influences"
+    },
+    {
+      "source": "wd-q9061",
+      "target": "wd-q4305318",
+      "type": "influences"
+    },
+    {
+      "source": "wd-q9061",
+      "target": "wd-q60208",
+      "type": "influences"
+    },
+    {
+      "source": "wd-q9061",
+      "target": "wd-q83003",
+      "type": "influences"
+    },
+    {
+      "source": "wd-q9061",
+      "target": "wd-q61078",
+      "type": "influences"
+    },
+    {
+      "source": "wd-q9061",
+      "target": "wd-q3351937",
+      "type": "influences"
+    },
+    {
+      "source": "wd-q9061",
+      "target": "wd-q731904",
+      "type": "influences"
+    },
+    {
+      "source": "wd-q9061",
+      "target": "wd-q2939300",
+      "type": "influences"
+    },
+    {
+      "source": "wd-q9061",
+      "target": "wd-q704931",
+      "type": "influences"
+    },
+    {
+      "source": "wd-q9061",
+      "target": "wd-q207359",
+      "type": "influences"
+    },
+    {
+      "source": "wd-q9061",
+      "target": "wd-q34787",
+      "type": "friend_collaborator"
+    },
+    {
+      "source": "wd-q69028",
+      "target": "wd-q9061",
+      "type": "mentor"
+    },
+    {
+      "source": "wd-q9061",
+      "target": "wd-q40591",
+      "type": "author"
+    },
+    {
+      "source": "wd-q9061",
+      "target": "wd-q58784",
+      "type": "author"
+    },
+    {
+      "source": "wd-q9061",
+      "target": "wd-q295347",
+      "type": "author"
+    },
+    {
+      "source": "wd-q9061",
+      "target": "wd-q470600",
+      "type": "author"
+    }
+  ]
+}
