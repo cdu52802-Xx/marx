@@ -58,10 +58,23 @@ npm run format           # Prettier 格式化
 ### 当前 milestone 进度
 
 - [x] **M1** 项目骨架 + Hello World deploy（2026-05-07）
-- [ ] **M2** 数据 schema + SPARQL 阶段 A（plan 待写）
+- [x] **M2** 数据 schema + SPARQL 阶段 A（2026-05-08）
 - [ ] **M3** 数据采集阶段 B + C（plan 待写）
 - [ ] **M4** 关系图主视图 + 共享元素（plan 待写）
 - [ ] **M5** 地理图画中画副视图（plan 待写）
 - [ ] **M6** UI/UX 优化 + 验证 + ship（plan 待写）
 
 详见 [`specs/2026-05-07-marx-star-map-design.md`](specs/2026-05-07-marx-star-map-design.md)
+
+## M2 数据 schema + SPARQL 阶段 A（已上线）
+
+线上数据从 Wikidata 拉的关系骨架：39 节点（35 人 + 4 著作）+ 42 关系。视觉落 design doc § 7 v1.1 A 学术编辑（牛皮纸背景 + 墨黑节点 + 中文衬线 label）。
+
+### 数据采集
+
+```bash
+npm run fetch:skeleton                    # 拉 Wikidata SPARQL，覆盖 src/data/nodes_skeleton.json
+MARX_USE_CACHE=1 npm run fetch:skeleton   # 方案 b 离线缓存（中国大陆 wikidata 不通时走这条）
+```
+
+详见 [`scripts/README.md`](scripts/README.md)。
