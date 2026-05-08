@@ -24,20 +24,6 @@
       ]
     },
     {
-      "id": "wd-q1170769",
-      "type": "person",
-      "name_zh": "基督教的本質",
-      "name_orig": "基督教的本質",
-      "birth_year": 0,
-      "death_year": 0,
-      "main_location_lat_lng": [
-        0,
-        0
-      ],
-      "bio_event_style": [],
-      "citation_urls": []
-    },
-    {
       "id": "wd-q9235",
       "type": "person",
       "name_zh": "格奥尔格·威廉·弗里德里希·黑格尔",
@@ -545,11 +531,6 @@
     }
   ],
   "relations": [
-    {
-      "source": "wd-q1170769",
-      "target": "wd-q9061",
-      "type": "influences"
-    },
     {
       "source": "wd-q9235",
       "target": "wd-q9061",
