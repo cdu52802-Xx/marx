@@ -5,7 +5,7 @@
 
 ## 项目状态
 
-- 第一个产品代号：**Marx 星图**；阶段：**M1 + M2 已上线**（M2 = 数据 schema + SPARQL 阶段 A，39 节点 / 42 关系 + § 7 视觉骨架：牛皮纸 + 墨黑节点 + 衬线字体）→ 下一步 M3 plan（数据采集阶段 B 人工校对 + C 后来者旁注，复用 M2 方案 b 离线缓存模式拉 SEP）
+- 第一个产品代号：**Marx 星图**；阶段：**M1 + M2 已上线 + M3 进行中**（Task 4/17 卡 PM 复核 33 个 AI 填的 name_orig 草稿；38 节点 / 41 关系，Task 3 删了 Q1170769 误分类）→ 续接专用锚点 [`docs/2026-05-08-m3-progress-anchor.md`](docs/2026-05-08-m3-progress-anchor.md)
 - 在线：
   - 主 demo（M2 形态）：https://cdu52802-xx.github.io/marx/
   - 风格调研入口（A 已选定，B/C/D 留作反向锚定）：https://cdu52802-xx.github.io/marx/styles/
@@ -17,9 +17,10 @@
 
 每次新 session 开始（特别是新窗口、新机器、`/clear` 之后）：
 
-- **优先读 `docs/` 下最新的 `YYYY-MM-DD-*-takeaway.md`**——阶段续接锚点（含「下次入口」「已知坑」「关键决策」「context 保护提醒」）
-- **当前最新** ⭐：[`docs/2026-05-08-m2-takeaway.md`](docs/2026-05-08-m2-takeaway.md)（**M2 已上线** + 9 task commit hash 表 + 6 个关键决策 + 5 个新坑 13-17 + 形态门槛评估 + M3 入口建议开场白）
-- 上一阶段（视觉风格调研 + M2 plan 就绪）：[`docs/2026-05-07-style-mockup-takeaway.md`](docs/2026-05-07-style-mockup-takeaway.md)（4 mockup + A 学术编辑选定 + § 7 视觉风格定调，仅追溯）
+- **优先读 `docs/` 下最新的续接锚点**（阶段进行中是 progress-anchor，阶段完结是 takeaway）
+- **当前最新** ⭐：[`docs/2026-05-08-m3-progress-anchor.md`](docs/2026-05-08-m3-progress-anchor.md)（**M3 进行中** + 17 task 进度表 + 3 关键决策 A 模式/Q1170769 删除/hybrid AI 草稿 + Task 4 PM 待复核清单 + 新窗口开场白模板 + 5+2 已知坑）
+- 上一阶段（M2 完结）：[`docs/2026-05-08-m2-takeaway.md`](docs/2026-05-08-m2-takeaway.md)（M2 已上线 + 9 task commit hash + 6 关键决策 + 5 新坑 13-17，仅追溯）
+- 更早（视觉风格调研）：[`docs/2026-05-07-style-mockup-takeaway.md`](docs/2026-05-07-style-mockup-takeaway.md)（4 mockup + A 学术编辑选定，仅追溯）
 - 更早（M1 完成）：[`docs/2026-05-07-m1-takeaway.md`](docs/2026-05-07-m1-takeaway.md)（M1 hello world 上线，仅追溯）
 - 最早（brainstorming）：[`docs/2026-05-07-session-takeaway.md`](docs/2026-05-07-session-takeaway.md)（brainstorming 完成 + M1 plan 就绪，仅追溯）
 - 这是元-6 阶段落文 + 跨窗口持续性原则的实操形式，30 秒重建上下文比每次重新摸索高效
