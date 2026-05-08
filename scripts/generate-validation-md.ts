@@ -101,9 +101,7 @@ function genWorkChecklist(works: WorkNode[]): string {
     lines.push(`**待补**:`);
     lines.push('');
     const filledOrig =
-      w.name_orig && w.name_orig !== w.name_zh
-        ? w.name_orig
-        : '<在这里填原文标题，如 Das Kapital>';
+      w.name_orig && w.name_orig !== w.name_zh ? w.name_orig : '<在这里填原文标题，如 Das Kapital>';
     lines.push(`- name_orig: ${filledOrig}`);
     lines.push(
       `- writing_period: ${w.writing_period && w.writing_period.length > 0 ? w.writing_period : '<写作时段，如 "1857-1867">'}`,
