@@ -1,7 +1,11 @@
 import * as d3 from 'd3';
 import type { Dataset, Node, Relation } from '../types/Node.ts';
 
-interface SimNode extends d3.SimulationNodeDatum, Node {}
+interface SimNode extends d3.SimulationNodeDatum {
+  id: string;
+  name_zh: string;
+  type: Node['type'];
+}
 interface SimLink extends d3.SimulationLinkDatum<SimNode> {
   type: Relation['type'];
 }
@@ -15,10 +19,13 @@ export function renderRelations(svgSelector: string, dataset: Dataset): void {
   const width = +(svg.attr('width') ?? 600);
   const height = +(svg.attr('height') ?? 400);
 
-  // 清空已有内容（M2+ 重新渲染时需要）
   svg.selectAll('*').remove();
 
-  const simNodes: SimNode[] = dataset.nodes.map((n) => ({ ...n }));
+  const simNodes: SimNode[] = dataset.nodes.map((n) => ({
+    id: n.id,
+    name_zh: n.name_zh,
+    type: n.type,
+  }));
   const simLinks: SimLink[] = dataset.relations.map((r) => ({
     source: r.source,
     target: r.target,
@@ -32,9 +39,9 @@ export function renderRelations(svgSelector: string, dataset: Dataset): void {
       d3
         .forceLink<SimNode, SimLink>(simLinks)
         .id((d) => d.id)
-        .distance(150),
+        .distance(80), // 节点变多，连线缩短
     )
-    .force('charge', d3.forceManyBody().strength(-300))
+    .force('charge', d3.forceManyBody().strength(-150)) // 节点变多，斥力减小避免炸开
     .force('center', d3.forceCenter(width / 2, height / 2));
 
   const linkGroup = svg
@@ -43,8 +50,7 @@ export function renderRelations(svgSelector: string, dataset: Dataset): void {
     .selectAll<SVGLineElement, SimLink>('line')
     .data(simLinks)
     .join('line')
-    .attr('stroke', '#888')
-    .attr('stroke-width', 2)
+    .attr('class', 'relation-line')
     .attr('data-testid', 'relation-line');
 
   const nodeGroup = svg
@@ -53,8 +59,8 @@ export function renderRelations(svgSelector: string, dataset: Dataset): void {
     .selectAll<SVGCircleElement, SimNode>('circle')
     .data(simNodes)
     .join('circle')
-    .attr('r', 20)
-    .attr('fill', '#7c5dbe') // M4 会替换为 5 色编码（M1 暂用单一紫色）
+    .attr('r', 8) // 节点变多，半径减小（M4 改为按类型分级 r=22 / 14 / 8）
+    .attr('class', 'node-circle')
     .attr('data-testid', 'node-circle')
     .attr('data-node-id', (d) => d.id);
 
@@ -65,9 +71,9 @@ export function renderRelations(svgSelector: string, dataset: Dataset): void {
     .data(simNodes)
     .join('text')
     .text((d) => d.name_zh)
-    .attr('font-size', 12)
+    .attr('class', 'node-label')
     .attr('text-anchor', 'middle')
-    .attr('dy', 35)
+    .attr('dy', 18)
     .attr('data-testid', 'node-label');
 
   simulation.on('tick', () => {
