@@ -31,6 +31,9 @@ async function runQuery(sparqlFile: string): Promise<SparqlBinding[]> {
 }
 
 // 方案 b：读 scripts/sparql/cache/<num>.json（user 在能上 wikidata 的网络网页 UI 跑后下载的 JSON）
+// 兼容两种格式：
+//   (a) simplified flat array：[{"key": "value", ...}, ...]                    ← Wikidata Query Service 网页 UI Download → JSON 默认格式
+//   (b) 标准 SPARQL Result：{"head": {...}, "results": {"bindings": [...]}}  ← 选 "JSON（详细）" 才会得到这个
 function runQueryFromCache(sparqlFile: string): SparqlBinding[] {
   const num = sparqlFile.match(/^\d+/)?.[0];
   if (!num) {
@@ -39,9 +42,31 @@ function runQueryFromCache(sparqlFile: string): SparqlBinding[] {
   const cachePath = resolve(CACHE_DIR, `${num}.json`);
   console.log(`[cache] ${sparqlFile} ← cache/${num}.json`);
   const raw = readFileSync(cachePath, 'utf-8');
-  const json = JSON.parse(raw) as SparqlResult;
-  console.log(`  ← ${json.results.bindings.length} rows (cached)`);
-  return json.results.bindings;
+  const parsed = JSON.parse(raw) as unknown;
+
+  let bindings: SparqlBinding[];
+  if (Array.isArray(parsed)) {
+    // simplified flat array → 转成内部 SparqlBinding 格式
+    bindings = (parsed as Record<string, string>[]).map(flatToBinding);
+  } else if (typeof parsed === 'object' && parsed !== null && 'results' in parsed) {
+    // 标准 SPARQL Result format
+    bindings = (parsed as SparqlResult).results.bindings;
+  } else {
+    throw new Error(`fetch-skeleton: unknown cache format in ${cachePath}`);
+  }
+  console.log(`  ← ${bindings.length} rows (cached)`);
+  return bindings;
+}
+
+// simplified flat object → SparqlBinding（脚本内部期望的 W3C SPARQL JSON Result format）
+function flatToBinding(flat: Record<string, string>): SparqlBinding {
+  const binding: SparqlBinding = {};
+  for (const [key, value] of Object.entries(flat)) {
+    if (typeof value !== 'string') continue;
+    const isUri = value.startsWith('http://') || value.startsWith('https://');
+    binding[key] = isUri ? { type: 'uri', value } : { type: 'literal', value };
+  }
+  return binding;
 }
 
 // 默认：调 Wikidata SPARQL endpoint
