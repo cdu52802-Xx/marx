@@ -45,7 +45,7 @@ function parseChecklist(md: string): ParsedNode[] {
     if (!current) continue;
 
     // 单行字段，如 "- name_orig: Karl Marx"
-    const single = line.match(/^- ([a-z_]+): (.+)$/);
+    const single = line.match(/^- ([a-z_]+): (\S.*)$/);
     if (single) {
       const [, key, value] = single;
       if (!isUnfilled(value.trim())) {
@@ -71,7 +71,7 @@ function parseChecklist(md: string): ParsedNode[] {
         if (!isUnfilled(value)) {
           (current.fields[listField] as string[]).push(value);
         }
-      } else if (line.trim() === '' || line.startsWith('---')) {
+      } else if (line.startsWith('---')) {
         listField = null;
       }
     }
