@@ -13,7 +13,8 @@
     "e2e:install": "playwright install chromium",
     "lint": "eslint . --max-warnings=0",
     "format": "prettier --write .",
-    "fetch:skeleton": "tsx scripts/fetch-skeleton.ts"
+    "fetch:skeleton": "tsx scripts/fetch-skeleton.ts",
+    "m3:gen-md": "tsx scripts/generate-validation-md.ts"
   },
   "repository": {
     "type": "git",

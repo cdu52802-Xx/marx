@@ -41,3 +41,9 @@ MARX_USE_CACHE=1 npm run fetch:skeleton
 - Marx 的 Wikidata QID = `Q9061`
 - 所有查询通过 `wikibase:label` 服务拿中文 label，回退英 / 德 / 法
 - Wikidata SPARQL endpoint rate limit 5 query/s 非登录用户，脚本里 sleep 一下避免被 throttle
+
+## M3 阶段 B 校对辅助脚本
+
+- `generate-validation-md.ts` (`npm run m3:gen-md`) - 读 nodes_skeleton.json 生成 PM 校对用 Markdown 清单到 `docs/m3-validation/`
+- `apply-validation-md.ts` (`npm run m3:apply-md`) - 读 PM 填好的 Markdown 回填 nodes_skeleton.json（Task 4 引入）
+- 工作流详见 [M3 plan § 阶段 B 工作流](../plans/2026-05-08-marx-star-map-m3-validate-concept-notes.md)
