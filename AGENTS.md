@@ -5,9 +5,9 @@
 
 ## 项目状态
 
-- 第一个产品代号：**Marx 星图**；阶段：M1 已上线 / M2 plan v1.1 已就绪（含 § 7 视觉骨架）/ **视觉风格定调完成**（A 学术编辑）→ 待 M2 实施（c 阶段）
+- 第一个产品代号：**Marx 星图**；阶段：**M1 + M2 已上线**（M2 = 数据 schema + SPARQL 阶段 A，39 节点 / 42 关系 + § 7 视觉骨架：牛皮纸 + 墨黑节点 + 衬线字体）→ 下一步 M3 plan（数据采集阶段 B 人工校对 + C 后来者旁注，复用 M2 方案 b 离线缓存模式拉 SEP）
 - 在线：
-  - M1 主 demo：https://cdu52802-xx.github.io/marx/
+  - 主 demo（M2 形态）：https://cdu52802-xx.github.io/marx/
   - 风格调研入口（A 已选定，B/C/D 留作反向锚定）：https://cdu52802-xx.github.io/marx/styles/
 - 仓库：`cdu52802-Xx/marx`（**public**，2026-05-07 从 private 改 public 因为 GitHub Pages 免费层不支持私仓）
 - 主用户：0 代码 PM，vibe coding 模式
@@ -18,9 +18,10 @@
 每次新 session 开始（特别是新窗口、新机器、`/clear` 之后）：
 
 - **优先读 `docs/` 下最新的 `YYYY-MM-DD-*-takeaway.md`**——阶段续接锚点（含「下次入口」「已知坑」「关键决策」「context 保护提醒」）
-- **当前最新**：[`docs/2026-05-07-style-mockup-takeaway.md`](docs/2026-05-07-style-mockup-takeaway.md)（**视觉风格调研中** + M2 plan 已就绪 + 4 mockup 在线，含 5 个新已知坑 + 3 种续接情况开场白）
-- 上一阶段（M1 完成）：[`docs/2026-05-07-m1-takeaway.md`](docs/2026-05-07-m1-takeaway.md)（**M1 已上线** https://cdu52802-xx.github.io/marx/，含 5 个已知坑 + M2 入口开场白）
-- 更早（brainstorming）：[`docs/2026-05-07-session-takeaway.md`](docs/2026-05-07-session-takeaway.md)（brainstorming 完成 + M1 plan 就绪，仅追溯）
+- **当前最新** ⭐：[`docs/2026-05-08-m2-takeaway.md`](docs/2026-05-08-m2-takeaway.md)（**M2 已上线** + 9 task commit hash 表 + 6 个关键决策 + 5 个新坑 13-17 + 形态门槛评估 + M3 入口建议开场白）
+- 上一阶段（视觉风格调研 + M2 plan 就绪）：[`docs/2026-05-07-style-mockup-takeaway.md`](docs/2026-05-07-style-mockup-takeaway.md)（4 mockup + A 学术编辑选定 + § 7 视觉风格定调，仅追溯）
+- 更早（M1 完成）：[`docs/2026-05-07-m1-takeaway.md`](docs/2026-05-07-m1-takeaway.md)（M1 hello world 上线，仅追溯）
+- 最早（brainstorming）：[`docs/2026-05-07-session-takeaway.md`](docs/2026-05-07-session-takeaway.md)（brainstorming 完成 + M1 plan 就绪，仅追溯）
 - 这是元-6 阶段落文 + 跨窗口持续性原则的实操形式，30 秒重建上下文比每次重新摸索高效
 - 不需要每个文件都读，最新 1 份通常够用；如有交叉引用再延伸
 
