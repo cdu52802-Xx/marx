@@ -10,6 +10,13 @@
 
 > **节点数**：34
 
+> **PM 复核状态（2026-05-11）**：本轮 PM 容量不足，转入 opportunistic 复核模式（详见 [anchor 决策 4](../2026-05-08-m3-progress-anchor.md)）。
+>
+> - ✅ 28 个高把握 + 3 个学术敏感节点 name_orig 已入库（详见 `src/data/nodes_skeleton.json`）
+> - ⏳ 3 个 `<不确定>` 节点 name_orig 保持空待复核：**Q136116320** Alfred Herman / **Q110655615** Harry Waton / **Q69028** 弗里德里希·威爾克
+> - ⏳ 3 个学术敏感节点 AI default 已入库，PM 复核时可改本名：**Q1394** 列宁 / **Q855** 斯大林 / **Q57240** Ernst Bloch
+> - latlng / bio / citations 三字段 Task 5-7 才填（默认同 opportunistic 模式）
+
 ---
 
 ### Q9061 卡尔·马克思

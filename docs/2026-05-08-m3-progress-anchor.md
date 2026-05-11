@@ -1,6 +1,6 @@
 # Marx M3 续接锚点 · Task 4 等 PM review name_orig
 
-> **状态**：M3 进行中 · Task 1-3 完成 + Task 4 卡在 PM 复核 33 个 AI 填的 name_orig 草稿
+> **状态**：M3 进行中 · Task 1-4 完成（决策 4 opportunistic 复核模式落地） · Task 5 待启动
 > **本文件用途**：跨窗口/跨机器续接锚点，新窗口读 AGENTS.md + 本文件即可 30 秒重建上下文（不需要读 plan / M2 takeaway 等 1000+ 行长文档）
 > **关联**：[plans/2026-05-08-marx-star-map-m3-validate-concept-notes.md](../plans/2026-05-08-marx-star-map-m3-validate-concept-notes.md) / [M2 takeaway](2026-05-08-m2-takeaway.md) / [design doc v1.1](../specs/2026-05-07-marx-star-map-design.md)
 
@@ -12,7 +12,7 @@
 |---|---|---|
 | M1（项目骨架） | ✅ 已上线 | https://cdu52802-xx.github.io/marx/ |
 | M2（数据 schema + SPARQL 阶段 A） | ✅ 已上线 | 39 节点 + § 7 视觉骨架 |
-| **M3（数据采集阶段 B 校对 + C 后来者旁注）** | **🔄 进行中（Task 4/17，5-17 待办）** | 见下表 |
+| **M3（数据采集阶段 B 校对 + C 后来者旁注）** | **🔄 进行中（Task 5/17，6-17 待办）** | 见下表 |
 | M4（5 色编码 + 详情卡 + hover）| ⏳ 待办 | — |
 | M5+ | ⏳ 待办 | — |
 
@@ -25,7 +25,7 @@
 | 1 | 写阶段 B acceptance test（先 RED） | ✅ DONE | `546584a` |
 | 2 | 校对辅助工具 generate-validation-md.ts | ✅ DONE | `e539144` + `ac676cd`（prettier fix）|
 | 3 | 删除误分类节点 基督教的本質 (Q1170769) | ✅ DONE | `cc91723` |
-| 4 | apply-validation-md.ts + PM 校对 34 person · name_orig | 🔄 **卡在 PM 复核** | `14b3e1c` + `acce50b`（robustness fix）+ `46c6367`（AI 草稿入库）|
+| 4 | apply-validation-md.ts + 31 AI 草稿 name_orig 入库（3 `<不确定>` 保留 opportunistic 复核） | ✅ DONE | `14b3e1c` + `acce50b` + `46c6367` + 本轮 apply commit |
 | 5 | PM 校对 34 person · main_location_lat_lng | ⏳ pending | — |
 | 6 | PM 校对 34 person · bio_event_style | ⏳ pending | — |
 | 7 | PM 校对 34 person · citation_urls | ⏳ pending | — |
@@ -87,47 +87,67 @@
 - Task 14（SuccessorNote 旁注内容）也走同模式：AI 总结 SEP → PM 复核
 - 不确定的内容 AI 标 `<不确定: ...>` 让 PM 重点查证
 
+### 决策 4 · 转向 opportunistic 复核（2026-05-11）
+
+**问题**：决策 3 默认 PM 100% 复核 hybrid AI 草稿。本轮 PM 容量不足，无法逐项核对 33 个 name_orig（每节点查 Wikidata + 比对原文需 1-3 分钟）。
+
+**决策**：接受 AI 草稿入库（apply 脚本自动跳过 `<不确定>` 标记，不注入垃圾）。复核延后到任何 PM 有时间的窗口（M3 阶段 B 验收前 / M4 之前 / PM 单独抽时间）。
+
+**Why**：
+- PM 显式说"按当前成果继续推进，后续过程再复核调整"
+- `<不确定>` 被 apply 自动跳过 → 3 个不确定 name_orig 保持空，不污染数据
+- 31 个明确草稿是 AI 用 Marx 思想史专业知识填的，质量远高于空字段
+- 阻塞 Task 5-17 比"先 ship 后补复核"风险更大
+- 后续 PM 复核可基于 `git diff` person-checklist.md + nodes_skeleton.json 比对
+
+**How to apply 后续 task**：
+- Task 5-8（latlng / bio / citations / work 全字段）默认走同模式：AI 草稿 → 直接 apply → 待 opportunistic 复核
+- Task 14（SuccessorNote）默认走同模式
+- 待复核清单累计到 `docs/m3-validation/person-checklist.md` 头部 Status block 持续追踪
+- M3 takeaway 评估是否在 M4 启动前补一波集中复核
+
+**⚠ Test 设计缺陷提醒**：`tests/unit/stage-b-validated.test.ts:32` 用 `expect(name_orig).not.toBe(name_zh)` 只能 catch "误填中文 = name_zh"，**不能 catch "未填 null/empty"**。3 个不确定 name_orig 空着 test 不报错，不要误以为 test PASS = 数据完整。M3 takeaway 时考虑补一个 `expect(name_orig).toBeTruthy()`（但要等所有 name_orig 都填好再加，否则 Task 1 RED 数会从 3 变 4）。
+
 ---
 
-## Task 4 PM 待复核清单（卡在这里）
+## Task 4 残留待复核（opportunistic 模式延后）
 
-文件：[docs/m3-validation/person-checklist.md](../docs/m3-validation/person-checklist.md)
+文件：[docs/m3-validation/person-checklist.md](../docs/m3-validation/person-checklist.md) 头部 Status block 持续追踪。
 
-PM 操作：打开文件，重点 review 下面 33 个节点的 `- name_orig: ...` 行。其他字段（latlng / bio / citations）保留占位（Task 5-7 才填）。
+PM 有任意时间窗口时，重点查这 6 个：
 
-### 🔴 3 个 `<不确定>` 节点 · 优先查 Wikidata 链接核对
+### 🔴 3 个 `<不确定>` · name_orig 仍为空（apply 跳过未写入 JSON）
 
-| QID | 中文名 | AI 草稿 |
+| QID | 中文名 | AI 标注 |
 |---|---|---|
-| Q136116320 | Alfred Herman | `<不确定: name_zh 已是英文，请核对原文是 Alfred Hermann 还是其他>` |
-| Q110655615 | Harry Waton | `<不确定: 请核对 Wikidata 原文>` |
-| Q69028 | 弗里德里希·威爾克 | `<不确定: 译名歧义，候选 Friedrich Wilcke / Vielke / Wielke>` |
+| Q136116320 | Alfred Herman | name_zh 已是英文，请核对原文是 Alfred Hermann 还是其他 |
+| Q110655615 | Harry Waton | 请核对 Wikidata 原文 |
+| Q69028 | 弗里德里希·威爾克 | 译名歧义，候选 Friedrich Wilcke / Vielke / Wielke |
 
-### 🟡 3 个学术敏感节点 · PM 决定要不要改 AI default
+### 🟡 3 个学术敏感节点 · AI 用了通用译名（已入库），PM 可换本名
 
-| QID | 中文名 | AI 选了 | 替代选项 |
+| QID | 中文名 | AI 选了（已入库） | 替代选项 |
 |---|---|---|---|
 | Q1394 | 列宁 | `Vladimir Lenin` | `Vladimir Ilyich Ulyanov`（本名）/ `Vladimir Ilyich Lenin`（笔名带父名）|
 | Q855 | 约瑟夫·斯大林 | `Joseph Stalin` | `Iosif Vissarionovich Dzhugashvili`（本名）|
 | Q57240 | 恩斯特·西蒙·布洛赫 | `Ernst Simon Bloch` | `Ernst Bloch`（不带 Simon）|
 
-### 🟢 27 个高把握节点 · PM 视觉扫一眼
+### 🟢 28 个高把握节点 · 已入库 + 默认可信
 
-详见 person-checklist.md 各 H3 节点。
+PM 复核时如有时间可视觉扫 `docs/m3-validation/person-checklist.md` 各 H3 节点（参考 `git diff src/data/nodes_skeleton.json`）。
 
-### PM 完成后告诉 controller 什么
+### PM 想做复核时告诉 controller 什么
 
-PM 复核完保存文件后回："name_orig review 完了"。
+回"我要 review person 数据"，controller 把 person-checklist.md + 当前 JSON 内 name_orig 列表抓出来对照。
 
 ---
 
-## PM 复核完后 controller 要做什么（Task 4 余下步骤）
+## Task 4 完成记录（2026-05-11）
 
-1. 跑 `npm run m3:apply-person` 把 .md 草稿回填进 nodes_skeleton.json
-2. 跑 `npm test -- tests/unit/stage-b-validated.test.ts -t "name_orig"` 确认 person 4 字段 test 错误信息从 name_orig 消失（仍 FAIL 是因为 latlng/bio/citations 待 Task 5-7 填）
-3. 跑 `npm test`（全套）确认 21 tests 仍 18 PASS + 3 FAIL（Task 1 RED 维持）
-4. commit（按 -F 模式）+ 不 push（Task 4 完成后跟下一个 task 一起 push 时机更好）
-5. mark Task 4 complete + 进 Task 5（latlng，同 hybrid 模式）
+- ✅ 跑 `npm run m3:apply-person` 影响 26 个节点（其余 5 个 M2 SPARQL 已填 name_orig 无变化 + 3 个 `<不确定>` 自动跳过）
+- ✅ 跑 `npm test` 维持 21 tests / 18 PASS / 3 FAIL（与决策 3/4 预期一致：latlng / work / 12 concept 三个 RED 维持）
+- ✅ commit + 不 push（等 Task 5 完成一起 push 减少远端 churn）
+- ⏭️ Task 5 待启动（latlng，决策 4 默认走 AI 草稿直接 apply 模式）
 
 ---
 
@@ -156,16 +176,15 @@ PM 复核完保存文件后回："name_orig review 完了"。
 
 请先 git pull origin main 同步远端，然后按顺序读：
 1. AGENTS.md
-2. docs/2026-05-08-m3-progress-anchor.md（M3 续接锚点，含完整 Task 进度 + 关键决策 + 待 PM review 清单 + 已知坑）
+2. docs/2026-05-08-m3-progress-anchor.md（M3 续接锚点，含完整 Task 进度 + 决策 1-4 + 已知坑）
 
-读完后：
-- 如果我已经在 docs/m3-validation/person-checklist.md 改完 name_orig，告诉你 "name_orig review 完了"，你跑 apply 回填 + test + commit + 进 Task 5
-- 如果我还没改完，等我
+当前位置：Task 4 已完成（决策 4 opportunistic 复核模式），Task 5 待启动（latlng）。
 
-Task 5 起继续按 hybrid AI 草稿 + PM 复核模式跑（详见 anchor 决策 3）。
+Task 5+ 默认走决策 4 模式：AI 出草稿 → 直接 apply → 待 opportunistic 复核。
+如果想中途插入复核，说"我要 review person 数据"即可。
 
 注意：
-- M3 plan 文件还是旧版 B 模式描述，按 anchor 决策 1 走 A 模式（inline successor_notes）
+- M3 plan 文件还是旧版 B 模式 + 100% 复核描述，按 anchor 决策 1（A 模式）+ 决策 4（opportunistic）覆盖
 - 实施期视觉相关 task 仍按 AGENTS.md 三件套召唤双 skill（use frontend-design + ui-ux-pro-max）
 ```
 
