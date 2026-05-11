@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import data from '../../src/data/claims.json';
 import type { ClaimNode } from '../../src/types/Claim.ts';
 import { validateClaim } from '../../src/lib/claim-schema.ts';
+import { filterValidCats } from '../../scripts/import-denizcemonduygu-marx.ts';
 
 describe('Task 2 · Marx 19 obs 入库 acceptance', () => {
   const claims = (data.claims ?? []) as ClaimNode[];
@@ -29,5 +30,20 @@ describe('Task 2 · Marx 19 obs 入库 acceptance', () => {
   it('Marx claim 至少 5 条 cats 含 "po"（政治哲学是 Marx 主线）', () => {
     const poCount = marxClaims.filter((c) => c.cats.includes('po')).length;
     expect(poCount).toBeGreaterThanOrEqual(5);
+  });
+});
+
+describe('Task 2 · filterValidCats helper', () => {
+  it('过滤 ba 保留 me/po 等 11 类', () => {
+    expect(filterValidCats(['me', 'ba', 'po'])).toEqual(['me', 'po']);
+  });
+  it('保留顺序', () => {
+    expect(filterValidCats(['po', 'me', 'ba', 'et'])).toEqual(['po', 'me', 'et']);
+  });
+  it('全部合法不丢', () => {
+    expect(filterValidCats(['me', 'ep', 'lo'])).toEqual(['me', 'ep', 'lo']);
+  });
+  it('全部非法返回空', () => {
+    expect(filterValidCats(['ba', 'foo', 'bar'])).toEqual([]);
   });
 });

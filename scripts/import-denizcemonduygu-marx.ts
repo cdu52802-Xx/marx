@@ -3,7 +3,9 @@ import { readFileSync, writeFileSync, mkdirSync } from 'fs';
 import type { ClaimNode, ClaimCategory } from '../src/types/Claim.ts';
 import { CLAIM_CATEGORIES } from '../src/types/Claim.ts';
 
-const DENIZ_DATA_PATH = 'C:/Users/xuzequan/Desktop/denizcemonduygu-data.json';
+// PM 三台机器之间路径不同，支持 DENIZ_DATA_PATH 环境变量 override。
+const DENIZ_DATA_PATH =
+  process.env.DENIZ_DATA_PATH ?? 'C:/Users/xuzequan/Desktop/denizcemonduygu-data.json';
 const MARX_PERSON_ID_DENIZ = 57;
 const MARX_AUTHOR_ID_MARX = 'wd-q9061';
 const CLAIMS_JSON_PATH = 'src/data/claims.json';
@@ -14,8 +16,18 @@ const VALID_CATS: ReadonlySet<string> = new Set(CLAIM_CATEGORIES);
 // denizcemonduygu data 里有 'ba' (Basics) 等不属于 Marx 11 类 ClaimCategory 的 marker。
 // 'ba' 是 denizcemonduygu 用来标"代表性观点"的次级 tag，已经跟主 cat 共存（如 me,ba）。
 // import 时 filter 掉 'ba' 等非 11 类 cat，保留主 cat 即可。
-function filterValidCats(cats: string[]): ClaimCategory[] {
-  return cats.filter((c) => VALID_CATS.has(c)) as ClaimCategory[];
+// Named export 便于单测调用。
+export function filterValidCats(cats: string[]): ClaimCategory[] {
+  const dropped: string[] = [];
+  const valid: ClaimCategory[] = [];
+  for (const c of cats) {
+    if (VALID_CATS.has(c)) valid.push(c as ClaimCategory);
+    else dropped.push(c);
+  }
+  if (dropped.length > 0) {
+    console.log(`  (dropped non-11-class cats: ${dropped.join(', ')})`);
+  }
+  return valid;
 }
 
 interface DenizRecord {
@@ -40,7 +52,16 @@ interface DenizData {
 }
 
 function importMarx() {
-  const denizData = JSON.parse(readFileSync(DENIZ_DATA_PATH, 'utf-8')) as DenizData;
+  let denizData: DenizData;
+  try {
+    denizData = JSON.parse(readFileSync(DENIZ_DATA_PATH, 'utf-8')) as DenizData;
+  } catch (e) {
+    console.error(`❌ 无法读取 denizcemonduygu data: ${DENIZ_DATA_PATH}`);
+    console.error(`   修法: 设环境变量 DENIZ_DATA_PATH 指向 data.json 路径，或把文件放到默认位置`);
+    console.error(`   原始错误: ${(e as Error).message}`);
+    process.exit(1);
+  }
+
   const marxRecords = denizData.records.filter((r) => r.person === MARX_PERSON_ID_DENIZ);
   console.log(`Found ${marxRecords.length} Marx records in denizcemonduygu`);
 
@@ -121,4 +142,10 @@ function generateDenizPersonLookup(denizData: DenizData) {
   console.log(`Wrote deniz person id map (1 entry: Marx) to scripts/data/deniz-person-id-map.json`);
 }
 
-importMarx();
+// ESM CLI 入口判断：仅当脚本被 tsx / node 直接执行时跑 importMarx()，
+// 被 test 文件 import 时不触发。Windows backslash 路径需 pathToFileURL 规范化。
+if (import.meta.url.startsWith('file:')) {
+  const { pathToFileURL } = await import('url');
+  const entryHref = pathToFileURL(process.argv[1] ?? '').href;
+  if (import.meta.url === entryHref) importMarx();
+}

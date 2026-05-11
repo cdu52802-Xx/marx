@@ -13,8 +13,7 @@
       ],
       "keywords": "historicism",
       "reference": "Magee, B. (1998). The Story of Philosophy. DK Pub.",
-      "derived_from_denizcemonduygu_record_id": 599,
-      "source_work_id": "-"
+      "derived_from_denizcemonduygu_record_id": 599
     },
     {
       "id": "claim-marx-002",
@@ -30,8 +29,7 @@
         "et"
       ],
       "reference": "Magee, B. (1998). The Story of Philosophy. DK Pub.",
-      "derived_from_denizcemonduygu_record_id": 600,
-      "source_work_id": "-"
+      "derived_from_denizcemonduygu_record_id": 600
     },
     {
       "id": "claim-marx-003",
@@ -46,8 +44,7 @@
       ],
       "keywords": "dialectical materialism",
       "reference": "Magee, B. (1998). The Story of Philosophy. DK Pub.; Marx, K. & Engels, F. (1844) The Holy Family. Foreign Languages Publishing House, Moscow. 1956.",
-      "derived_from_denizcemonduygu_record_id": 601,
-      "source_work_id": "-"
+      "derived_from_denizcemonduygu_record_id": 601
     },
     {
       "id": "claim-marx-004",
@@ -62,8 +59,7 @@
         "po"
       ],
       "reference": "Marx, K. (1845). Theses On Feuerbach.",
-      "derived_from_denizcemonduygu_record_id": 602,
-      "source_work_id": "-"
+      "derived_from_denizcemonduygu_record_id": 602
     },
     {
       "id": "claim-marx-005",
@@ -78,8 +74,7 @@
         "po"
       ],
       "reference": "Magee, B. (1998). The Story of Philosophy. DK Pub.",
-      "derived_from_denizcemonduygu_record_id": 603,
-      "source_work_id": "-"
+      "derived_from_denizcemonduygu_record_id": 603
     },
     {
       "id": "claim-marx-006",
@@ -94,8 +89,7 @@
       ],
       "keywords": "historical materialism",
       "reference": "Magee, B. (1998). The Story of Philosophy. DK Pub.",
-      "derived_from_denizcemonduygu_record_id": 604,
-      "source_work_id": "-"
+      "derived_from_denizcemonduygu_record_id": 604
     },
     {
       "id": "claim-marx-007",
@@ -125,8 +119,7 @@
       ],
       "keywords": "materialism",
       "reference": "Magee, B. (1998). The Story of Philosophy. DK Pub.",
-      "derived_from_denizcemonduygu_record_id": 606,
-      "source_work_id": "-"
+      "derived_from_denizcemonduygu_record_id": 606
     },
     {
       "id": "claim-marx-009",
@@ -141,8 +134,7 @@
         "po"
       ],
       "reference": "Marx, K. (1843). Critique of Hegel’s Philosophy of Right.",
-      "derived_from_denizcemonduygu_record_id": 607,
-      "source_work_id": "-"
+      "derived_from_denizcemonduygu_record_id": 607
     },
     {
       "id": "claim-marx-010",
@@ -156,8 +148,7 @@
         "po"
       ],
       "reference": "Magee, B. (1998). The Story of Philosophy. DK Pub.",
-      "derived_from_denizcemonduygu_record_id": 608,
-      "source_work_id": "-"
+      "derived_from_denizcemonduygu_record_id": 608
     },
     {
       "id": "claim-marx-011",
@@ -279,8 +270,7 @@
       ],
       "keywords": "communism, historical determinism",
       "reference": "Magee, B. (1998). The Story of Philosophy. DK Pub.",
-      "derived_from_denizcemonduygu_record_id": 616,
-      "source_work_id": "-"
+      "derived_from_denizcemonduygu_record_id": 616
     },
     {
       "id": "claim-marx-019",
@@ -295,8 +285,7 @@
         "mp"
       ],
       "reference": "Marx, K. (1845). Theses On Feuerbach.",
-      "derived_from_denizcemonduygu_record_id": 617,
-      "source_work_id": "-"
+      "derived_from_denizcemonduygu_record_id": 617
     }
   ],
   "relations": []
