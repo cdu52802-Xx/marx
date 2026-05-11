@@ -15,9 +15,10 @@
     "format": "prettier --write .",
     "fetch:skeleton": "tsx scripts/fetch-skeleton.ts",
     "m3:gen-md": "tsx scripts/generate-validation-md.ts",
-    "m3:apply-md": "tsx scripts/apply-validation-md.ts both",
+    "m3:apply-md": "tsx scripts/apply-validation-md.ts all",
     "m3:apply-person": "tsx scripts/apply-validation-md.ts person",
-    "m3:apply-work": "tsx scripts/apply-validation-md.ts work"
+    "m3:apply-work": "tsx scripts/apply-validation-md.ts work",
+    "m3:apply-concept": "tsx scripts/apply-validation-md.ts concept"
   },
   "repository": {
     "type": "git",

@@ -15,6 +15,7 @@ const ROOT = resolve(__dirname, '..');
 const JSON_PATH = resolve(ROOT, 'src/data/nodes_skeleton.json');
 const PERSON_MD = resolve(ROOT, 'docs/m3-validation/person-checklist.md');
 const WORK_MD = resolve(ROOT, 'docs/m3-validation/work-checklist.md');
+const CONCEPT_MD = resolve(ROOT, 'docs/m3-validation/concept-checklist.md');
 
 type ParsedNode = {
   id: string;
@@ -34,11 +35,15 @@ function parseChecklist(md: string): ParsedNode[] {
   let listField: string | null = null;
 
   for (const line of lines) {
-    const h3 = line.match(/^### (Q\d+) /);
+    // H3 支持两种 ID 格式：
+    // - Q<num>（Wikidata QID，如 Q9061）→ 转 `wd-q<num>`（person / work）
+    // - 其他非空白（如 concept-alienation）→ 直接用作 ID（concept）
+    const h3 = line.match(/^### (\S+) /);
     if (h3) {
       if (current) nodes.push(current);
-      const wdId = `wd-${h3[1].toLowerCase()}`;
-      current = { id: wdId, fields: {} };
+      const rawId = h3[1];
+      const id = /^Q\d+$/.test(rawId) ? `wd-${rawId.toLowerCase()}` : rawId;
+      current = { id, fields: {} };
       listField = null;
       continue;
     }
@@ -104,6 +109,15 @@ function applyToNode(node: Node, parsed: ParsedNode): boolean {
       }
       continue;
     }
+    // proposed_year 是 number 字段（concept 节点）
+    if (key === 'proposed_year') {
+      const year = Number(value);
+      if (!isNaN(year) && (node as Record<string, unknown>)[key] !== year) {
+        (node as Record<string, unknown>)[key] = year;
+        changed = true;
+      }
+      continue;
+    }
     if ((node as Record<string, unknown>)[key] !== value) {
       (node as Record<string, unknown>)[key] = value;
       changed = true;
@@ -112,14 +126,15 @@ function applyToNode(node: Node, parsed: ParsedNode): boolean {
   return changed;
 }
 
-function main(target: 'person' | 'work' | 'both'): void {
+function main(target: 'person' | 'work' | 'concept' | 'both' | 'all'): void {
   const data = JSON.parse(readFileSync(JSON_PATH, 'utf-8')) as {
     nodes: Node[];
     relations: unknown[];
   };
   let touched = 0;
+  let created = 0;
 
-  if (target === 'person' || target === 'both') {
+  if (target === 'person' || target === 'both' || target === 'all') {
     const parsed = parseChecklist(readFileSync(PERSON_MD, 'utf-8'));
     for (const p of parsed) {
       const node = data.nodes.find((n) => n.id === p.id);
@@ -130,7 +145,7 @@ function main(target: 'person' | 'work' | 'both'): void {
       if (applyToNode(node, p)) touched++;
     }
   }
-  if (target === 'work' || target === 'both') {
+  if (target === 'work' || target === 'both' || target === 'all') {
     const parsed = parseChecklist(readFileSync(WORK_MD, 'utf-8'));
     for (const p of parsed) {
       const node = data.nodes.find((n) => n.id === p.id);
@@ -141,10 +156,37 @@ function main(target: 'person' | 'work' | 'both'): void {
       if (applyToNode(node, p)) touched++;
     }
   }
+  if (target === 'concept' || target === 'all') {
+    const parsed = parseChecklist(readFileSync(CONCEPT_MD, 'utf-8'));
+    for (const p of parsed) {
+      let node = data.nodes.find((n) => n.id === p.id);
+      if (!node) {
+        // concept 节点不存在则新建（Task 9 schema 扩展）
+        node = {
+          id: p.id,
+          type: 'concept',
+          name_zh: '',
+          name_orig: '',
+          proposed_year: 0,
+          proposed_work_id: '',
+          definition_plain: '',
+          citation_urls: [],
+          successor_notes: [],
+        } as Node;
+        data.nodes.push(node);
+        created++;
+      }
+      if (applyToNode(node, p)) touched++;
+    }
+  }
 
   writeFileSync(JSON_PATH, JSON.stringify(data, null, 2) + '\n', 'utf-8');
-  console.log(`✓ 回填完成，影响 ${touched} 个节点`);
+  if (created > 0) {
+    console.log(`✓ 回填完成，影响 ${touched} 个节点（新建 ${created} 个）`);
+  } else {
+    console.log(`✓ 回填完成，影响 ${touched} 个节点`);
+  }
 }
 
-const target = (process.argv[2] ?? 'both') as 'person' | 'work' | 'both';
+const target = (process.argv[2] ?? 'all') as 'person' | 'work' | 'concept' | 'both' | 'all';
 main(target);

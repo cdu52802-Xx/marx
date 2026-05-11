@@ -802,6 +802,174 @@
         "https://www.marxists.org/chinese/marx/02/index.htm",
         "https://www.marxists.org/archive/marx/works/1845/german-ideology/"
       ]
+    },
+    {
+      "id": "concept-alienation",
+      "type": "concept",
+      "name_zh": "异化",
+      "name_orig": "Entfremdung",
+      "proposed_year": 1844,
+      "proposed_work_id": "wd-q295347",
+      "definition_plain": "工人在资本主义生产中与劳动产品、劳动过程、自身类本质、他人疏离 / 劳动从自我实现变成被迫的外在活动 / Marx 在 1844 手稿借鉴黑格尔 + 费尔巴哈但批判性发展",
+      "citation_urls": [
+        "https://www.marxists.org/chinese/marx/1844/index.htm",
+        "https://plato.stanford.edu/entries/alienation/"
+      ],
+      "successor_notes": []
+    },
+    {
+      "id": "concept-surplus-value",
+      "type": "concept",
+      "name_zh": "剩余价值",
+      "name_orig": "Mehrwert",
+      "proposed_year": 1867,
+      "proposed_work_id": "wd-q58784",
+      "definition_plain": "工人创造的价值超过劳动力价值（工资）的部分 / 被资本家无偿占有 / 资本主义剥削的核心机制",
+      "citation_urls": [
+        "https://www.marxists.org/chinese/marx/01/index.htm",
+        "https://plato.stanford.edu/entries/exploitation/"
+      ],
+      "successor_notes": []
+    },
+    {
+      "id": "concept-historical-materialism",
+      "type": "concept",
+      "name_zh": "历史唯物主义",
+      "name_orig": "Historischer Materialismus",
+      "proposed_year": 1846,
+      "proposed_work_id": "wd-q470600",
+      "definition_plain": "社会发展由物质生产方式决定 / 生产力 + 生产关系矛盾推动历史变迁 / 物质生活资料生产是一切历史前提",
+      "citation_urls": [
+        "https://www.marxists.org/chinese/marx/02/index.htm",
+        "https://plato.stanford.edu/entries/marx/"
+      ],
+      "successor_notes": []
+    },
+    {
+      "id": "concept-class-struggle",
+      "type": "concept",
+      "name_zh": "阶级斗争",
+      "name_orig": "Klassenkampf",
+      "proposed_year": 1848,
+      "proposed_work_id": "wd-q40591",
+      "definition_plain": "\"一切迄今为止的社会历史都是阶级斗争史\"（宣言开篇）/ 自由民与奴隶 / 贵族与平民 / 资产阶级与无产阶级的对抗",
+      "citation_urls": [
+        "https://www.marxists.org/chinese/marx-engels/01/index.htm",
+        "https://plato.stanford.edu/entries/marxism-class/"
+      ],
+      "successor_notes": []
+    },
+    {
+      "id": "concept-commodity-fetishism",
+      "type": "concept",
+      "name_zh": "商品拜物教",
+      "name_orig": "Warenfetischismus",
+      "proposed_year": 1867,
+      "proposed_work_id": "wd-q58784",
+      "definition_plain": "商品掩盖了人与人的社会劳动关系 / 呈现为物与物的关系（\"价格\"似乎是物的固有属性）/ 资本主义意识形态的核心幻象",
+      "citation_urls": [
+        "https://www.marxists.org/chinese/marx/01/index.htm",
+        "https://en.wikipedia.org/wiki/Commodity_fetishism"
+      ],
+      "successor_notes": []
+    },
+    {
+      "id": "concept-ideology",
+      "type": "concept",
+      "name_zh": "意识形态",
+      "name_orig": "Ideologie",
+      "proposed_year": 1846,
+      "proposed_work_id": "wd-q470600",
+      "definition_plain": "统治阶级的思想是占统治地位的思想 / 意识形态是颠倒的世界观（如照相机暗箱）/ 维护现存生产关系的精神工具",
+      "citation_urls": [
+        "https://www.marxists.org/chinese/marx/02/index.htm",
+        "https://en.wikipedia.org/wiki/German_ideology"
+      ],
+      "successor_notes": []
+    },
+    {
+      "id": "concept-mode-of-production",
+      "type": "concept",
+      "name_zh": "生产方式",
+      "name_orig": "Produktionsweise",
+      "proposed_year": 1846,
+      "proposed_work_id": "wd-q470600",
+      "definition_plain": "生产力 + 生产关系的统一 / 原始 → 奴隶 → 封建 → 资本主义 → 共产主义 五种依次更替（\"五形态论\"）/ 决定社会经济形态",
+      "citation_urls": [
+        "https://www.marxists.org/chinese/marx/02/index.htm",
+        "https://en.wikipedia.org/wiki/Mode_of_production"
+      ],
+      "successor_notes": []
+    },
+    {
+      "id": "concept-base-superstructure",
+      "type": "concept",
+      "name_zh": "经济基础 / 上层建筑",
+      "name_orig": "Basis / Überbau",
+      "proposed_year": 1846,
+      "proposed_work_id": "wd-q470600",
+      "definition_plain": "经济基础（生产关系总和）决定政治 / 法律 / 意识形态上层建筑 / 上层建筑反作用于基础 / 1859 政治经济学批判序言系统化阐述",
+      "citation_urls": [
+        "https://www.marxists.org/chinese/marx/02/index.htm",
+        "https://en.wikipedia.org/wiki/Base_and_superstructure"
+      ],
+      "successor_notes": []
+    },
+    {
+      "id": "concept-communism",
+      "type": "concept",
+      "name_zh": "共产主义",
+      "name_orig": "Kommunismus",
+      "proposed_year": 1848,
+      "proposed_work_id": "wd-q40591",
+      "definition_plain": "消灭私有制 + 消灭阶级 / 国家逐步消亡 / \"各尽所能 按需分配\"的社会形态",
+      "citation_urls": [
+        "https://www.marxists.org/chinese/marx-engels/01/index.htm",
+        "https://plato.stanford.edu/entries/communism/"
+      ],
+      "successor_notes": []
+    },
+    {
+      "id": "concept-revolution",
+      "type": "concept",
+      "name_zh": "革命",
+      "name_orig": "Revolution",
+      "proposed_year": 1848,
+      "proposed_work_id": "wd-q40591",
+      "definition_plain": "无产阶级推翻资产阶级统治的政治行动 / \"暴力是新社会从旧社会母腹脱出的助产婆\" / 革命后建立无产阶级专政作为过渡",
+      "citation_urls": [
+        "https://www.marxists.org/chinese/marx-engels/01/index.htm",
+        "https://en.wikipedia.org/wiki/Marxist_revolution"
+      ],
+      "successor_notes": []
+    },
+    {
+      "id": "concept-labor-theory-of-value",
+      "type": "concept",
+      "name_zh": "劳动价值论",
+      "name_orig": "Arbeitswerttheorie",
+      "proposed_year": 1867,
+      "proposed_work_id": "wd-q58784",
+      "definition_plain": "商品价值由社会必要劳动时间决定 / 继承 Smith + Ricardo 古典经济学并批判性发展 / 区分\"劳动\" vs \"劳动力\"是 Marx 突破",
+      "citation_urls": [
+        "https://www.marxists.org/chinese/marx/01/index.htm",
+        "https://plato.stanford.edu/entries/marx/"
+      ],
+      "successor_notes": []
+    },
+    {
+      "id": "concept-state",
+      "type": "concept",
+      "name_zh": "国家",
+      "name_orig": "Staat",
+      "proposed_year": 1848,
+      "proposed_work_id": "wd-q40591",
+      "definition_plain": "阶级压迫的工具 / 资产阶级国家是\"管理资产阶级共同事务的委员会\" / 共产主义革命后国家逐步消亡",
+      "citation_urls": [
+        "https://www.marxists.org/chinese/marx-engels/01/index.htm",
+        "https://plato.stanford.edu/entries/marxism-political/"
+      ],
+      "successor_notes": []
     }
   ],
   "relations": [
