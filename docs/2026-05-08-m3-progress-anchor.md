@@ -33,7 +33,7 @@
 | 9 | 12 concept 节点新建 + apply 脚本扩展 + concept-checklist.md 创建 | ✅ DONE | 本轮 commit |
 | 10 | 阶段 B 验收 + 中点 review · PM demo 反馈拿到 | 🔄 in progress（视觉重设计延 M4） | 本轮 commit |
 | 11 | 写阶段 C 旁注 acceptance test | ✅ DONE | `1bd2dee` |
-| 12 | 准备 SEP URL 清单 | ✅ DONE | 本轮 commit |
+| 12 | 准备 SEP URL 清单 | ✅ DONE | `f42c384` |
 | 13 | PM 第三机操作回传 SEP HTML | ⏳ pending | — |
 | 14 | 主力机生成 SuccessorNote inline 写入 | ⏳ pending | — |
 | 15 | PM 校对 ~40 条 SuccessorNote | ⏳ pending | — |
