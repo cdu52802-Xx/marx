@@ -12,6 +12,7 @@ describe('Task 3 · 12 concept 升级 claim acceptance', () => {
   });
 
   it('每个升级 claim 的 derived_from_concept_id 在 M3 12 concept 集合', () => {
+    expect(conceptClaims.length, '需先跑 npm run m4:apply-md').toBeGreaterThan(0);
     const validConceptIds = new Set([
       'concept-alienation',
       'concept-surplus-value',
@@ -32,6 +33,7 @@ describe('Task 3 · 12 concept 升级 claim acceptance', () => {
   });
 
   it('每个升级 claim 通过 schema 校验', () => {
+    expect(conceptClaims.length, '需先跑 npm run m4:apply-md').toBeGreaterThan(0);
     for (const c of conceptClaims) {
       expect(validateClaim(c)).toEqual([]);
     }

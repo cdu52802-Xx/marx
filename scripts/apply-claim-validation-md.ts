@@ -2,6 +2,39 @@
 import { readFileSync, writeFileSync } from 'fs';
 import type { ClaimNode } from '../src/types/Claim.ts';
 import type { ClaimCategory } from '../src/types/Claim.ts';
+import { CLAIM_CATEGORIES } from '../src/types/Claim.ts';
+
+// C1: 白名单 Set，从 CLAIM_CATEGORIES readonly array 构建
+const VALID_CATS_SET = new Set<string>(CLAIM_CATEGORIES);
+
+// C2: 12 concept ID 白名单（vision-frozen，spec 已锁定）
+const VALID_CONCEPT_IDS = new Set<string>([
+  'concept-alienation',
+  'concept-surplus-value',
+  'concept-historical-materialism',
+  'concept-class-struggle',
+  'concept-commodity-fetishism',
+  'concept-ideology',
+  'concept-mode-of-production',
+  'concept-base-superstructure',
+  'concept-communism',
+  'concept-revolution',
+  'concept-labor-theory-of-value',
+  'concept-state',
+]);
+
+/**
+ * I3: 共享字段提取 helper — 统一 non-greedy regex + 行尾 anchor + 4 种 placeholder guard。
+ * 返回 undefined 表示字段为空/placeholder/dash，调用方无需重复检查。
+ */
+function extractField(body: string, fieldName: string): string | undefined {
+  const escaped = fieldName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const m = body.match(new RegExp(`\\*\\*${escaped}\\*\\*[^:]*:[ \\t]*([^\\n]+?)[ \\t]*$`, 'm'));
+  if (!m) return undefined;
+  const v = m[1].trim();
+  if (v === '' || v === '-' || v === '<待 AI 草稿>' || v === '<待翻译>') return undefined;
+  return v;
+}
 
 const CHECKLIST_PATH = 'docs/m4-validation/marx-19-claims-checklist.md';
 const CONCEPT_CHECKLIST_PATH = 'docs/m4-validation/concept-12-claims-checklist.md';
@@ -79,61 +112,50 @@ export function applyConceptChecklistMd(
     const id = sections[i].trim();
     const body = sections[i + 1];
 
-    // claim_text: hardened regex — non-greedy + 行尾 anchor
-    const claimTextMatch = body.match(/\*\*claim_text\*\*[^:]*:[ \t]*([^\n]+?)[ \t]*$/m);
-    if (
-      !claimTextMatch ||
-      claimTextMatch[1].trim() === '' ||
-      claimTextMatch[1].trim() === '<待 AI 草稿>'
-    ) {
+    // I3: 用 extractField helper 统一提取（非贪婪 + 行尾 anchor + 4 种 placeholder guard）
+    const claim_text = extractField(body, 'claim_text');
+    if (claim_text === undefined) {
       skipped++;
       continue;
     }
-    const claim_text = claimTextMatch[1].trim();
 
-    // year
-    let year = 1850; // safe default
-    const yearMatch = body.match(/\*\*year\*\*[^:]*:[ \t]*(\d+)/);
-    if (yearMatch) year = parseInt(yearMatch[1]);
+    // year: 数字字段单独处理（extractField 返回字符串，需转 int）
+    const yearStr = extractField(body, 'year');
+    const year = yearStr ? parseInt(yearStr) : 1850;
 
-    // source_work_id: non-greedy + 行尾 anchor + "-" guard
-    let source_work_id: string | undefined;
-    const swMatch = body.match(/\*\*source_work_id\*\*[^:]*:[ \t]*([\w-]+?)[ \t]*$/m);
-    if (swMatch && swMatch[1].trim() !== '' && swMatch[1].trim() !== '-') {
-      source_work_id = swMatch[1].trim();
-    }
+    // source_work_id
+    const source_work_id = extractField(body, 'source_work_id');
 
-    // cats: 逗号分隔多选，hardened (行尾 anchor 防 - 腐败)
-    let cats: ClaimCategory[] = ['po'];
-    const catsMatch = body.match(/\*\*cats\*\*[^:]*:[ \t]*([^\n]+?)[ \t]*$/m);
-    if (catsMatch && catsMatch[1].trim() !== '') {
-      const parsed = catsMatch[1]
-        .trim()
-        .split(',')
-        .map((s) => s.trim())
-        .filter(Boolean) as ClaimCategory[];
-      if (parsed.length > 0) cats = parsed;
-    }
+    // C1: cats — extractField 已处理 "-" guard，再过白名单 filter 非法 cat
+    const catsStr = extractField(body, 'cats');
+    const cats: ClaimCategory[] = catsStr
+      ? (catsStr
+          .split(',')
+          .map((s) => s.trim())
+          .filter((s) => s !== '' && VALID_CATS_SET.has(s)) as ClaimCategory[])
+      : [];
+    // 若 filter 后为空（全非法），用默认值 ['po']
+    if (cats.length === 0) cats.push('po');
 
     // keywords
-    let keywords: string | undefined;
-    const kwMatch = body.match(/\*\*keywords\*\*[^:]*:[ \t]*([^\n]+?)[ \t]*$/m);
-    if (kwMatch && kwMatch[1].trim() !== '' && kwMatch[1].trim() !== '-') {
-      keywords = kwMatch[1].trim();
-    }
+    const keywords = extractField(body, 'keywords');
 
-    // name_orig (from checklist, not nodes_skeleton — single responsibility)
-    let name_orig = '';
-    const origMatch = body.match(/\*\*name_orig\*\*[^:]*:[ \t]*([^\n]+?)[ \t]*$/m);
-    if (origMatch && origMatch[1].trim() !== '' && origMatch[1].trim() !== '-') {
-      name_orig = origMatch[1].trim();
-    }
+    // name_orig
+    const name_orig = extractField(body, 'name_orig') ?? '';
 
-    // derived_from_concept_id (readonly field written by generator)
+    // C2: derived_from_concept_id — 白名单硬校验，typo → console.warn + skip entry
+    const derivedCandidate = extractField(body, 'derived_from_concept_id');
     let derived_from_concept_id: string | undefined;
-    const derivedMatch = body.match(/\*\*derived_from_concept_id\*\*[^:]*:[ \t]*([\w-]+?)[ \t]*$/m);
-    if (derivedMatch && derivedMatch[1].trim() !== '' && derivedMatch[1].trim() !== '-') {
-      derived_from_concept_id = derivedMatch[1].trim();
+    if (derivedCandidate !== undefined) {
+      if (VALID_CONCEPT_IDS.has(derivedCandidate)) {
+        derived_from_concept_id = derivedCandidate;
+      } else {
+        console.warn(
+          `  ⚠️ derived_from_concept_id 非法 (white-list miss): ${derivedCandidate} — entry skip`,
+        );
+        skipped++;
+        continue;
+      }
     }
 
     // Check if this claim already exists (idempotent apply)

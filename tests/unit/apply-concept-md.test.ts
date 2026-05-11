@@ -145,4 +145,67 @@ describe('Task 3 · applyConceptChecklistMd pure function', () => {
     expect(dataset.claims.map((c) => c.id)).toContain('claim-cpt-alienation');
     expect(dataset.claims.map((c) => c.id)).toContain('claim-cpt-state');
   });
+
+  // ── Regression tests for C1 / C2 ──────────────────────────────────────────
+
+  it('cats = "-" 不被写入 (regression C1)', () => {
+    const md = [
+      `## claim-cpt-alienation`,
+      ``,
+      `- **claim_text**（PM 复核 / 改）: 异化`,
+      `- **year**（PM 推断 / 默认 proposed_year）: 1844`,
+      `- **cats**（AI 建议，PM 可改）: -`,
+      `- **derived_from_concept_id**（只读）: concept-alienation`,
+      ``,
+    ].join('\n');
+    const { dataset } = applyConceptChecklistMd(md, emptyDataset());
+    const c = dataset.claims.find((cl) => cl.id === 'claim-cpt-alienation');
+    expect(c?.cats).not.toContain('-');
+    expect(c?.cats).toEqual(['po']); // default fallback
+  });
+
+  it('cats 含非法 cat 时被 filter (regression C1)', () => {
+    const md = [
+      `## claim-cpt-alienation`,
+      ``,
+      `- **claim_text**（PM 复核 / 改）: 异化`,
+      `- **year**（PM 推断 / 默认 proposed_year）: 1844`,
+      `- **cats**（AI 建议，PM 可改）: po, xxx, me`,
+      `- **derived_from_concept_id**（只读）: concept-alienation`,
+      ``,
+    ].join('\n');
+    const { dataset } = applyConceptChecklistMd(md, emptyDataset());
+    const c = dataset.claims.find((cl) => cl.id === 'claim-cpt-alienation');
+    expect(c?.cats).toEqual(['po', 'me']);
+  });
+
+  it('derived_from_concept_id typo 被 reject + entry skip (regression C2)', () => {
+    const md = [
+      `## claim-cpt-alienation`,
+      ``,
+      `- **claim_text**（PM 复核 / 改）: 异化`,
+      `- **year**（PM 推断 / 默认 proposed_year）: 1844`,
+      `- **cats**（AI 建议，PM 可改）: me`,
+      `- **derived_from_concept_id**（只读）: concept-alianation`,
+      ``,
+    ].join('\n');
+    const { dataset, skipped } = applyConceptChecklistMd(md, emptyDataset());
+    expect(dataset.claims.find((cl) => cl.id === 'claim-cpt-alienation')).toBeUndefined();
+    expect(skipped).toBeGreaterThanOrEqual(1);
+  });
+
+  it('derived_from_concept_id 合法值正常写入 (positive case)', () => {
+    const md = [
+      `## claim-cpt-alienation`,
+      ``,
+      `- **claim_text**（PM 复核 / 改）: 异化`,
+      `- **year**（PM 推断 / 默认 proposed_year）: 1844`,
+      `- **cats**（AI 建议，PM 可改）: me`,
+      `- **derived_from_concept_id**（只读）: concept-alienation`,
+      ``,
+    ].join('\n');
+    const { dataset } = applyConceptChecklistMd(md, emptyDataset());
+    const c = dataset.claims.find((cl) => cl.id === 'claim-cpt-alienation');
+    expect(c?.derived_from_concept_id).toBe('concept-alienation');
+  });
 });
