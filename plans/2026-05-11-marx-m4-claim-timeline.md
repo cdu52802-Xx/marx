@@ -20,7 +20,7 @@
 - ClaimNode 节点 type 新增 + 3 类 claim → claim 关系（agreement_with / disagreement_with / extends）
 - denizcemonduygu Marx 19 obs seed 抓取 + 中文翻译 + 入库
 - 12 concept.definition_plain → claim_text 升级
-- 30 person × 3-5 quote 补采（hybrid AI 草稿 + 100% PM 复核）
+- 33 person × 3-5 quote 补采（hybrid AI 草稿 + 100% PM 复核）
 - claim → claim 关系采集（borrow denizcemonduygu Marx 涉及 202 link 子集）
 - 主画布 layout（斜向流 + obs 横跨 + 半圆弧 + 颜色方向规则）
 - 底部横向时间轴（独立参考维度，不强坐标映射）
@@ -122,7 +122,7 @@ docs/
 └── m4-validation/
     ├── marx-19-claims-checklist.md         ★ 新建 - PM 复核 Marx 19 obs 翻译
     ├── concept-12-claims-checklist.md      ★ 新建 - PM 复核 concept 升级
-    └── person-quote-checklist.md           ★ 新建 - PM 复核 30 person × 3-5 quote
+    └── person-quote-checklist.md           ★ 新建 - PM 复核 33 person × 3-5 quote
 ```
 
 ### 修改文件
@@ -131,7 +131,8 @@ docs/
 src/
 ├── types/
 │   └── Node.ts                             ☆ 修改 - RelationType 加 'agreement_with' / 'disagreement_with' / 'extends'
-├── main.ts                                 ☆ 修改 - 完全重写主 view，从 force-directed person-network 改为 claim-on-timeline
+├── main.ts                                 ☆ 修改 - 完全重写主 view，从 M2 简版 renderRelations 改为 claim-on-timeline
+├── styles.css                              ☆ 修改 - 加 M4 layout 全局样式（米白底 / EB Garamond）
 .gitignore                                  ☆ 修改 - 加 docs/m4-validation/*-checklist-backup.md（PM 复核 backup 不入库）
 package.json                                ☆ 修改 - 加 npm scripts: m4:import-marx / m4:gen-md / m4:apply-md
 index.html                                  ☆ 修改 - title / meta description 更新为 "Marx 思想史 · claim-on-timeline"
@@ -145,6 +146,84 @@ index.html                                  ☆ 修改 - title / meta descriptio
 ---
 
 ## 6. Tasks
+
+### Task 0: M3 demo 存档（T1 之前 · prerequisite）
+
+**Files:**
+- Create: `public/m3-archive/` 目录（含 M3/M2 现状 build 产物）
+- Modify: `.gitignore`（确保 `public/m3-archive/` 入库 = 不要 ignore）
+- Git: 打 tag `m3-final` 标记 M3 阶段末状态
+
+**目的:** M4 后续 task 会重写 `src/main.ts`（T6）+ 改 `index.html`（T6 Step 5），届时 M3 demo 代码已经被替换。**T11 想"M3 demo URL 保留作存档"必须在动手前先 snapshot**。否则到 T11 已无源可拷。
+
+**为什么单独拆 T0**：spec § 2.2 决策 9 = M3 demo URL 保留（PM approve）；plan 原 T11 来时 M3 代码已没了，是顺序 bug。
+
+- [ ] **Step 1: 当前状态 build + snapshot**
+
+```bash
+git status   # 必须 clean
+npm run build   # 当前 main.ts 是 M2 简版 (renderRelations) + M3 校对脚本，build 出来就是"M3 阶段 demo"
+ls dist/   # 看 build 出了什么
+```
+
+- [ ] **Step 2: 拷贝 dist 到 public/m3-archive/**
+
+```bash
+mkdir -p public/m3-archive
+cp -r dist/* public/m3-archive/
+```
+
+- [ ] **Step 3: 改 m3-archive index.html base path（让它在 /m3/ URL 下能跑）**
+
+vite build 默认 asset path 是相对的，但 base URL 可能假设 `/marx/`。检查 `public/m3-archive/index.html`，如果有 `/marx/assets/xxx.js`，改为 `/marx/m3/assets/xxx.js`：
+
+```bash
+# 如果发现路径问题，sed 替换（或手动改）：
+# sed -i 's|"/marx/|"/marx/m3/|g' public/m3-archive/index.html
+```
+
+PM 不熟命令行可以让 subagent 改；只是文本替换。
+
+- [ ] **Step 4: 打 git tag 标记 M3 final state**
+
+```bash
+git tag -a m3-final -m "M3 阶段末状态 · M4 重构前快照"
+git push origin m3-final
+```
+
+这样即使 `public/m3-archive/` 出问题，也能从 git tag `m3-final` checkout 原始代码 rebuild。
+
+- [ ] **Step 5: commit**
+
+```bash
+git add public/m3-archive/
+```
+
+写 `.commit-msg.tmp`：
+```
+chore(M4): Task 0 完成 - M3 demo 存档到 public/m3-archive/
+
+T1 启动前 snapshot M3 阶段末 build 产物，避免 T6 重写 main.ts
+后 T11 无源可存档。同时打 git tag m3-final 作 codebase 标记。
+
+dist/ → public/m3-archive/ (M3 demo 完整快照)
+git tag m3-final (M3 阶段末 codebase snapshot)
+
+T11 来时只需改主页指向 M4，存档已在此 task 完成。
+```
+
+```bash
+git commit -F .commit-msg.tmp
+git push origin main
+rm .commit-msg.tmp
+```
+
+**验收**：
+- [ ] `ls public/m3-archive/index.html` 存在
+- [ ] `git tag --list m3-final` 显示 tag
+- [ ] 本地 `npm run preview` 后访问 `http://localhost:4173/marx/m3/` 能看到 M3 demo（如果 base path 配置正确）
+
+---
 
 ### Task 1: 数据 schema 扩展（ClaimNode + 新 relation type）
 
@@ -524,6 +603,42 @@ function importMarx() {
   mkdirSync('docs/m4-validation', { recursive: true });
   writeFileSync(CHECKLIST_PATH, md);
   console.log(`Wrote checklist to ${CHECKLIST_PATH}`);
+
+  // ★ M4 v2 patch (建议改 1)：同时输出 deniz person lookup 表
+  // 给 T4 generate-person-quote-md 用：让 PM 复核 quote 时可选填 deniz_person_id
+  // 让 T5 import-marx-links 拿到 person-level fallback mapping
+  generateDenizPersonLookup(denizData);
+}
+
+function generateDenizPersonLookup(denizData: any) {
+  // 输出 scripts/data/deniz-person-lookup.md (PM 在 T4 查 id 用)
+  // + scripts/data/deniz-person-id-map.json (T5 import 用，初始只含 Marx)
+  const persons = denizData.people as Array<{ id: number; name: string; time?: string; loc?: string }>;
+  const recordCounts = new Map<number, number>();
+  for (const r of denizData.records) {
+    recordCounts.set(r.person, (recordCounts.get(r.person) ?? 0) + 1);
+  }
+
+  // 按 records 数排序（话语权高的在前），便于 PM 优先映射重要人物
+  const sorted = [...persons].sort((a, b) => (recordCounts.get(b.id) ?? 0) - (recordCounts.get(a.id) ?? 0));
+
+  let lookup = `# denizcemonduygu Person Lookup · T4/T5 用\n\n`;
+  lookup += `> 188 个 denizcemonduygu person id ↔ name 表 + records 数（按话语权排序）\n`;
+  lookup += `> **用途**：T4 PM 复核 quote 时，可选填 \`deniz_person_id\` 让 T5 拿到 cross-person 关系 link\n`;
+  lookup += `> Marx 项目 PersonNode id（wd-q<N>）已在 src/data/nodes_skeleton.json，PM 自行对应\n\n`;
+  lookup += `| deniz id | name | time | records 数 |\n`;
+  lookup += `|---|---|---|---|\n`;
+  for (const p of sorted) {
+    lookup += `| ${p.id} | ${p.name} | ${p.time ?? ''} | ${recordCounts.get(p.id) ?? 0} |\n`;
+  }
+  mkdirSync('scripts/data', { recursive: true });
+  writeFileSync('scripts/data/deniz-person-lookup.md', lookup);
+  console.log(`Wrote deniz person lookup (${persons.length} persons) to scripts/data/deniz-person-lookup.md`);
+
+  // T5 用的初始 mapping JSON（PM 在 T4 期间逐步填）
+  const initialMap = { [MARX_PERSON_ID_DENIZ]: MARX_AUTHOR_ID_MARX };
+  writeFileSync('scripts/data/deniz-person-id-map.json', JSON.stringify(initialMap, null, 2));
+  console.log(`Wrote deniz person id map (1 entry: Marx) to scripts/data/deniz-person-id-map.json`);
 }
 
 importMarx();
@@ -910,19 +1025,19 @@ git add + commit + push 同 Task 2。
 
 ---
 
-### Task 4: 30 person × 3-5 quote 补采
+### Task 4: 33 person × 3-5 quote 补采
 
 **Files:**
-- Modify: `src/data/claims.json`（追加 90-150 ClaimNode）
+- Modify: `src/data/claims.json`（追加 99-165 ClaimNode）
 - Create: `docs/m4-validation/person-quote-checklist.md`
 - Create: `scripts/generate-person-quote-md.ts`
 - Modify: `scripts/apply-claim-validation-md.ts`（加 person quote 分支）
 
-**目的:** 30 个 PersonNode（M3 ship 数据）每人补采 3-5 条代表性 quote 作为 ClaimNode 入库。这是 M4 数据采集大头（90-150 条）。
+**目的:** 33 个 PersonNode（nodes_skeleton.json 实际 34 含 Marx → 33 非 Marx）每人补采 3-5 条代表性 quote 作为 ClaimNode 入库。这是 M4 数据采集大头（99-165 条）。
 
 **M3 决策 3 模式：AI 草稿 + PM 100% 复核**（spec § 9.2，编造引文风险高）
 
-⚠ **本 task 是 M4 工时大头**（PM 复核估计 5-10 小时）。建议拆 sub-task 按 person 类别（Marx 同时代 / 前驱 / 后继）逐批做。
+⚠ **本 task 是 M4 工时大头**（PM 复核估计 6-12 小时）。建议拆 sub-task 按 person 类别（Marx 同时代 / 前驱 / 后继）逐批做。
 
 - [ ] **Step 1: 写 acceptance test**
 
@@ -988,7 +1103,7 @@ function generate() {
   const targetPersons = persons.filter((p) => p.id !== 'wd-q9061');
 
   let md = `# Person Quote 补采复核清单\n\n`;
-  md += `> 30 person × 3-5 quote = 90-150 条 ClaimNode\n`;
+  md += `> 33 person × 3-5 quote = 99-165 条 ClaimNode\n`;
   md += `> AI 草稿 + PM 100% 复核（spec § 9.2 决策 3）\n`;
   md += `> 编造引文风险高 — 必须有真实 reference 文献支撑\n\n`;
   md += `---\n\n`;
@@ -1007,7 +1122,8 @@ function generate() {
       md += `- **cats**（po/me/et/re/mp 等）: po\n`;
       md += `- **keywords**（思想流派）: \n`;
       md += `- **reference**（出处文献）: \n`;
-      md += `- **author_id**: ${p.id}\n\n`;
+      md += `- **author_id**: ${p.id}\n`;
+      md += `- **deniz_person_id**（可选，查 scripts/data/deniz-person-lookup.md 找对应 id；填了 T5 能拿到 cross-person link）: \n\n`;
       md += `---\n\n`;
     }
   }
@@ -1030,9 +1146,9 @@ generate();
 npm run m4:gen-person-md
 ```
 
-Expected: `Wrote ~87 person quotes to docs/m4-validation/person-quote-checklist.md`（29 person × 3 = 87）
+Expected: `Wrote 99 person quotes to docs/m4-validation/person-quote-checklist.md`（33 person × 3 = 99）
 
-- [ ] **Step 5: AI 用 Marx 思想史专业知识填 ~87 条 quote 草稿**
+- [ ] **Step 5: AI 用 Marx 思想史专业知识填 99 条 quote 草稿**
 
 按 person 类别填：
 - Marx 同时代（Engels / 蒲鲁东 / Bakunin / Lassalle 等）
@@ -1043,12 +1159,12 @@ Expected: `Wrote ~87 person quotes to docs/m4-validation/person-quote-checklist.
 
 - [ ] **Step 6: PM 100% 复核（M4 工时大头）**
 
-PM 逐条复核 ~87 quote。重点检查：
+PM 逐条复核 99 quote。重点检查：
 - 译名准确（拼写 + 通行译法）
 - claim_text 是否真的是该 person 主张（不是别人的）
 - reference 是否真实（marxists.org / SEP / Wikipedia 链接可访问）
 
-**估计工时**：5-10 小时（每条 4-6 分钟）。建议分批做（如每天 20 条 × 4 天）。
+**估计工时**：6-12 小时（每条 4-6 分钟）。建议分批做（如每天 20 条 × 4 天）。
 
 - [ ] **Step 7: 扩展 apply 脚本支持 person quote**
 
@@ -1060,7 +1176,7 @@ PM 逐条复核 ~87 quote。重点检查：
 npm run m4:apply-md
 ```
 
-Expected: `Person quote claims: ~87 added, 0 updated`（首次）
+Expected: `Person quote claims: 99 added, 0 updated`（首次）
 
 ```bash
 npx vitest run tests/unit/person-quote.test.ts
@@ -1078,17 +1194,17 @@ Expected: 43/40/3 (累计)
 
 commit msg：
 ```
-feat(M4): Task 4 完成 - 30 person × 3 quote 补采入库 (~87 条)
+feat(M4): Task 4 完成 - 33 person × 3 quote 补采入库 (99 条)
 
-scripts/generate-person-quote-md.ts 生成 PM 复核清单 (~87 entry)
-docs/m4-validation/person-quote-checklist.md（PM 100% 复核 5-10 小时）
+scripts/generate-person-quote-md.ts 生成 PM 复核清单 (99 entry)
+docs/m4-validation/person-quote-checklist.md（PM 100% 复核 6-12 小时）
 扩展 scripts/apply-claim-validation-md.ts 支持 claim-q\d+-\d+
-src/data/claims.json 新增 ~87 person quote ClaimNode
+src/data/claims.json 新增 99 person quote ClaimNode
 
 每条 quote 必须有 reference 文献支撑 (避免 AI 幻觉编造引文)
 不确定 reference 标 <不确定: 待 PM 查证>，apply 跳过
 
-总 ClaimNode 数: 19 (Marx) + 12 (concept) + 87 (person) = 118 (M4 minimum 80 ✓)
+总 ClaimNode 数: 19 (Marx) + 12 (concept) + 99 (person) = 130 (M4 minimum 80 ✓ / stretch 150 待 quote 加到 5/person)
 总测试 40/37/3 → 43/40/3
 ```
 
@@ -1161,41 +1277,85 @@ function importLinks() {
   const dataset = JSON.parse(readFileSync(CLAIMS_JSON_PATH, 'utf-8'));
   const claims: ClaimNode[] = dataset.claims;
 
-  // 建立 denizcemonduygu record_id → Marx ClaimNode.id 的 mapping
+  // ★ M4 v2 patch (建议改 1): 读 T2 输出的 deniz person id map (PM 在 T4 期间可能扩展过)
+  let denizPersonMap: Record<number, string> = {};
+  try {
+    denizPersonMap = JSON.parse(readFileSync('scripts/data/deniz-person-id-map.json', 'utf-8'));
+  } catch {
+    console.warn('scripts/data/deniz-person-id-map.json 不存在，只走 record-level mapping (link 数会少)');
+  }
+  console.log(`deniz person mapping size: ${Object.keys(denizPersonMap).length} persons`);
+
+  // 精确级：record_id → claim_id (T2 import Marx 19 obs 时填的)
   const recordIdToClaimId = new Map<number, string>();
   for (const c of claims) {
     if (c.derived_from_denizcemonduygu_record_id !== undefined) {
       recordIdToClaimId.set(c.derived_from_denizcemonduygu_record_id, c.id);
     }
   }
-  console.log(`Mapped ${recordIdToClaimId.size} denizcemonduygu records to Marx claims`);
 
-  // 抽 Marx 涉及的 link（任一端是 Marx record）
+  // Person-level fallback：author_id → first claim_id of that author
+  // (如果 record 没精确映射但所属 person 在 map 里，取该 person 任一 claim 作为 link endpoint)
+  const authorIdToFirstClaim = new Map<string, string>();
+  for (const c of claims) {
+    if (!authorIdToFirstClaim.has(c.author_id)) authorIdToFirstClaim.set(c.author_id, c.id);
+  }
+  console.log(`Mapped: ${recordIdToClaimId.size} records (precise) / ${authorIdToFirstClaim.size} authors (fallback)`);
+
+  // 抽 Marx 涉及的 link
   const marxRecordIds = new Set(
     Array.from(recordIdToClaimId.keys()).filter((rid) => {
       const rec = denizData.records.find((r: any) => r.id === rid);
-      return rec?.person === 57;  // Marx denizcemonduygu id
+      return rec?.person === 57;
     })
   );
   const marxLinks = denizData.links.filter(
     (l: any) => marxRecordIds.has(l.l0) || marxRecordIds.has(l.l1)
   );
-  console.log(`Found ${marxLinks.length} links involving Marx`);
+  console.log(`Found ${marxLinks.length} links involving Marx records`);
 
-  // 转换为 ClaimRelation（只保留两端都已 mapping 的 link）
-  const relations: ClaimRelation[] = [];
-  for (const l of marxLinks) {
-    const sourceId = recordIdToClaimId.get(l.l0);
-    const targetId = recordIdToClaimId.get(l.l1);
-    if (!sourceId || !targetId) continue;  // 至少一端不在 Marx 项目（前驱/后继 person 没全部入库）
-    if (sourceId === targetId) continue;  // 自环
-    relations.push({
-      source: sourceId,
-      target: targetId,
-      type: l.type === 'p' ? 'agreement_with' : 'disagreement_with',
-    });
+  // record_id → claim_id (精确) 或 record.person → Marx author_id → first claim (fallback)
+  function mapEndpoint(recordId: number): { id: string; precise: boolean } | null {
+    const precise = recordIdToClaimId.get(recordId);
+    if (precise) return { id: precise, precise: true };
+    const rec = denizData.records.find((r: any) => r.id === recordId);
+    if (!rec) return null;
+    const marxAuthorId = denizPersonMap[rec.person];
+    if (!marxAuthorId) return null;
+    const firstClaim = authorIdToFirstClaim.get(marxAuthorId);
+    return firstClaim ? { id: firstClaim, precise: false } : null;
   }
-  console.log(`Mapped to ${relations.length} ClaimRelation`);
+
+  // 转换 + dedup (按 (source, target, type) 三元组去重)
+  const seen = new Set<string>();
+  const relations: ClaimRelation[] = [];
+  const unmappedPersons = new Set<number>();
+  let preciseCount = 0, fallbackCount = 0;
+  for (const l of marxLinks) {
+    const s = mapEndpoint(l.l0);
+    const t = mapEndpoint(l.l1);
+    if (!s || !t) {
+      for (const rid of [l.l0, l.l1]) {
+        const rec = denizData.records.find((r: any) => r.id === rid);
+        if (rec && !denizPersonMap[rec.person]) unmappedPersons.add(rec.person);
+      }
+      continue;
+    }
+    if (s.id === t.id) continue;
+    const type = l.type === 'p' ? 'agreement_with' : 'disagreement_with';
+    const key = `${s.id}|${t.id}|${type}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    relations.push({ source: s.id, target: t.id, type });
+    if (s.precise && t.precise) preciseCount++; else fallbackCount++;
+  }
+  console.log(`Mapped to ${relations.length} ClaimRelation (precise: ${preciseCount} / person-fallback: ${fallbackCount})`);
+
+  if (unmappedPersons.size > 0) {
+    console.log(`\n⚠ Unmapped deniz person ids (填 scripts/data/deniz-person-id-map.json 可拿到更多 link):`);
+    console.log(`  ${[...unmappedPersons].sort((a, b) => a - b).join(', ')}`);
+    console.log(`  查 scripts/data/deniz-person-lookup.md 找对应 name + 时代`);
+  }
 
   dataset.relations = relations;
   writeFileSync(CLAIMS_JSON_PATH, JSON.stringify(dataset, null, 2));
@@ -1204,7 +1364,12 @@ function importLinks() {
 importLinks();
 ```
 
-注意：Task 5 工作量取决于 Task 4 person quote 补采的覆盖度。如果 Task 4 只采 Marx 同时代 + 主要前驱（覆盖 denizcemonduygu 50% 涉 Marx 的 person），Task 5 mapping 后 relations 数可能只 50-100 条。**可能要回 Task 4 补采更多 person**。
+⚠ **如果 import 完 relations 数 < 100**（acceptance test fail），有 2 条恢复路径：
+
+1. **补 PM person mapping**（推荐，工时小）：根据 import 脚本输出的 `Unmapped deniz person ids` 列表，查 `scripts/data/deniz-person-lookup.md` 找对应名字 + 时代，对照 `src/data/nodes_skeleton.json` 里的 Marx PersonNode，编辑 `scripts/data/deniz-person-id-map.json` 加 `{ <deniz_id>: "wd-q<...>" }` 条目。每个 person mapping 加约 10-30 个 link。重跑 `npm run m4:import-marx-links`。
+2. **回 T4 补采更多 person × 5 quote**（工时大，6-12 小时）：Task 4 默认 3 quote/person，提到 5 能给 T5 更多 record-level 精确映射。但 PM 100% 复核工时几乎翻倍。
+
+PM 二选一即可，不强制。
 
 - [ ] **Step 3: 加 npm script + 跑 import**
 
@@ -1241,7 +1406,8 @@ commit msg + push 同 Task 2-4。
 **Files:**
 - Create: `src/components/claim-layout.ts`
 - Create: `tests/unit/claim-layout.test.ts`
-- Modify: `src/main.ts`（替换 force-directed 为 ClaimLayout）
+- Modify: `src/main.ts`（替换 M2 简版 renderRelations 为 ClaimLayout）
+- Modify: `index.html`（加 `<div id="app">` 容器 · plan v1 漏写）
 
 **目的:** M4 视觉核心组件。计算 person section 斜向流坐标 + obs 行 X 偏移 + 半圆弧 SVG path（按 PM 反馈规范：起止落圆点 + 绿左下 / 红右上）。
 
@@ -1450,9 +1616,37 @@ npx vitest run tests/unit/claim-layout.test.ts
 
 Expected: PASS（5 tests / 5 passed）
 
-- [ ] **Step 5: 重写 src/main.ts 为 claim-on-timeline 主 view**
+- [ ] **Step 5a: 改 index.html 加 #app 容器（M4 主入口）**
 
-⚠ 大重写。先 backup `cp src/main.ts src/main.ts.m3-backup`（之后可删）。
+⚠ 关键 patch（plan v1 漏写）：当前 index.html 只有 `<svg id="relations-svg">`（M2 简版），但 T6/T7/T8/T9 多处 `document.getElementById('app')` 假设有 `<div id="app">`。**不改 index.html 整个 M4 主画布就黑屏 + console 报错 null**。
+
+修改 `index.html`：
+
+```html
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Marx 思想史 · claim-on-timeline</title>
+    <meta name="description" content="Marx 思想史 visualized · claim-on-timeline · 灵感来自 denizcemonduygu.com/philo" />
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
+```
+
+去掉原来的 `<h1>Marx 星图 · M1 项目骨架原型</h1>` + `<svg id="relations-svg">` + `<main>` 包裹（M4 由 main.ts 直接渲染整个 layout）。原 svg 留在 m3-archive 里，源码不需要保留。
+
+⚠ 副作用：M2 的 e2e test 如果有断言 `[data-testid="relations-svg"]` 会破。M4 用 e2e test（T12）会重写。
+
+- [ ] **Step 5b: 重写 src/main.ts 为 claim-on-timeline 主 view**
+
+当前 `src/main.ts` 是 **M2 简版 21 行**（只调 `renderRelations('#relations-svg', dataset)`），不是 plan v1 误述的"M3 force-directed person-network"。M3 阶段 B/C 只加了数据校对脚本，没动主画布。
+
+M3 阶段末状态已在 **T0 存档**到 `public/m3-archive/` + `git tag m3-final`，**不需要本地 backup**（删除 plan v1 写的 `cp src/main.ts src/main.ts.m3-backup`，那是冗余动作）。
 
 新 `src/main.ts` 大致结构（略写，T6 implementation 时具体实现）：
 
@@ -1575,11 +1769,7 @@ npm run dev
 - obs 行横跨画布
 - 弧线方向正确（绿左下 / 红右上）
 
-- [ ] **Step 7: ⚠ PM checkpoint（spec § 12.2 risk 2 mitigation）**
-
-T6 完成后**强制停下来等 PM 看真效果再开 T7**。如果 PM 反馈视觉跟想象差异大，回 brainstorm 调整 layout 算法。
-
-- [ ] **Step 8: prettier + commit + push**
+- [ ] **Step 7: prettier + commit + push**
 
 commit msg：
 ```
@@ -1594,18 +1784,43 @@ src/components/claim-layout.ts:
   - 灰 (extends) 微弯向右 (同 person 自延)
 - getArcStyle: 颜色 / stroke / opacity / dasharray
 
-src/main.ts 重写为 claim-on-timeline 主 view (M3 force-directed
-person-network 不再使用,M3 demo URL 保留作存档,T11 处理)
+index.html 改 `<div id="app">` 容器 (plan v1 漏写,T6 Step 5a 补)
+src/main.ts 重写为 claim-on-timeline 主 view (M3 阶段末状态已在
+T0 存档到 public/m3-archive/ + git tag m3-final)
 
 tests/unit/claim-layout.test.ts: 5 it / 全 GREEN
 - 弧线方向规范 unit test 显式断言 control point 偏移方向 (M4 坑 23 防御)
 
 总测试 46/43/3 → 51/48/3
 
-⚠ T6 完成 = PM checkpoint。等 PM 看真数据视觉再开 T7。
+⛔ STOP HERE — T6 = PM checkpoint (spec § 12.2 risk 2)
+subagent 跑完此 commit 必须 return 主 session
+不能自动进 T7
 ```
 
 git add + commit + push 同前 task。
+
+- [ ] **Step 8: ⛔ STOP HERE — subagent 必须 return + 主 session 等 PM 视觉确认**
+
+subagent-driven 执行模式下，T6 完成 = 当前 subagent 跑完 Step 7 commit + push 后**必须 return 主 session**。**绝对不能自动进 T7**。这条是 plan v1 漏的 explicit control flow 指令（plan v1 只在 § 4 文字提了"T6 完成后停"，subagent 看不到那段）。
+
+**T6 subagent 返回时必须包含**：
+- ✅ T6 7 Step 全部完成
+- ✅ Commit hash + push 已 done
+- ✅ 总测试数 51/48/3
+- 📍 等待 PM 视觉确认才能开 T7
+
+**主 session 收到 subagent return 后必须做的事**：
+1. **启动 `npm run dev`**（不是 subagent 做，主 session 跟 PM 一起）
+2. 浏览器打开 `http://localhost:5173/marx/`，让 PM 看真数据视觉
+3. PM 反馈分支：
+   - ✅ "OK，视觉跟想象一致" → 主 session 派 T7 subagent
+   - ⚠ "视觉跟想象有差异（密度太高 / 弧线错 / 数据太挤）" → 主 session 跟 PM 讨论：调 T6 layout 参数（如 `MAX_OBS_PER_SECTION` / `PERSON_X_OFFSET` 改值）还是回 brainstorm 改 vision
+   - ⏸ "PM 没空看" → 挂起 M4，不继续 T7。**不允许默认 OK 继续**
+4. PM 确认 + 主 session 决定继续后，调用 T7 subagent
+
+⚠ **给将来 T6 subagent 的明确指令**（如果是 subagent-driven 模式，写在 dispatch prompt 里）：
+> "T6 完成后必须 return 主 session，不要尝试继续 T7。Return message 包含 commit hash + 测试数 + 'waiting for PM visual check' 字样。"
 
 ---
 

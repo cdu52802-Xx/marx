@@ -7,3 +7,8 @@ package-lock.json
 
 # 项目文档不交给 prettier 管（避免按 printWidth 重排破坏作者手写排版）
 *.md
+
+# M4: 脚本生成的 JSON 数据用 JSON.stringify(..., null, 2) 输出
+# 跟 prettier 默认格式可能不一致（trailing newline / 缩进），交给脚本管理
+src/data/claims.json
+scripts/data/
