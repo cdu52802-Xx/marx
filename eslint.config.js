@@ -15,6 +15,14 @@ export default [
   },
   prettierConfig,
   {
-    ignores: ['dist/', 'node_modules/', 'playwright-report/', 'test-results/', 'coverage/'],
+    ignores: [
+      'dist/',
+      'node_modules/',
+      'playwright-report/',
+      'test-results/',
+      'coverage/',
+      // M4 T0: M3 demo 存档是 vite build 产物 (minified JS / map),不应被 lint
+      'public/m3-archive/',
+    ],
   },
 ];
