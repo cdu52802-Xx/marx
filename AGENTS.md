@@ -22,8 +22,6 @@
 每次新 session 开始（特别是新窗口、新机器、`/clear` 之后）：
 
 - **优先读 `docs/` 下最新的续接锚点**（阶段进行中是 progress-anchor，阶段完结是 takeaway）
-- ⚠ **同时扫一次 backlog**（unscheduled vision item，跨阶段不忘）：[`docs/backlog-unscheduled.md`](docs/backlog-unscheduled.md)
-  - 当前最大项：**地理图画布**（PRD V1 必做但 M4 vision pivot 时漏掉，待 M5+ 专项 / M4 中期插入 / V2 推迟 三选一，2026-05-12 PM 提醒）
 - **当前最新** ⭐：[`docs/2026-05-11-m4-progress-anchor.md`](docs/2026-05-11-m4-progress-anchor.md)（**M4 准备 implementation** + brainstorm v3-v7 历程 + 10 关键决策 + denizcemonduygu data.json 关键发现 + 13 task 进度表 + M4 5 个新坑 20-24 + 新窗口开场白模板）
 - M4 spec：[`specs/2026-05-11-m4-claim-timeline-design.md`](specs/2026-05-11-m4-claim-timeline-design.md)（602 行 / 15 章 + 附录，commit 1fc5cb8）
 - M4 plan：[`plans/2026-05-11-marx-m4-claim-timeline.md`](plans/2026-05-11-marx-m4-claim-timeline.md)（2640 行 / 13 task，commit 74c43af）
