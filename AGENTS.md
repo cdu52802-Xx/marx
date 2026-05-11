@@ -5,16 +5,12 @@
 
 ## 项目状态
 
-- 第一个产品代号：**Marx 星图 + Marx 思想史**；阶段：**M1+M2 已上线 + M3 暂停（Task 1-12 完成）+ M4 implementation 进行中（T0-T3 代码完成 / T3 等 PM 复核 checklist md + apply / T4 待启动）**
-  - M4 vision 大调整：从 person-network 星图 → **claim-on-timeline 思想史**（observation 一句话 + 半圆弧关系 + 底部时间轴），借鉴 denizcemonduygu.com/philo
-  - M3 暂停原因：Task 13-17 阶段 C 需要 PM 第三机操作有窗口（30-60 分钟），M4 brainstorm session PM 选先做 M4
-  - 续接专用锚点（**实时更新**）：[`docs/2026-05-11-m4-progress-anchor.md`](docs/2026-05-11-m4-progress-anchor.md)（含 2026-05-12 update）
-  - M3 暂停 anchor（Task 13-17 待续）：[`docs/2026-05-08-m3-progress-anchor.md`](docs/2026-05-08-m3-progress-anchor.md)
+- **Marx 项目**（原代号"Marx 星图"，后定位"Marx 思想史"）—— 中文 Marx 思想可视化 web app；**当前进展见 `docs/` 下最新 anchor / takeaway** ⭐
 - 在线：
-  - 主 demo（M2 / M3 形态）：https://cdu52802-xx.github.io/marx/
-  - M3 阶段存档：https://cdu52802-xx.github.io/marx/m3-archive/
-  - 风格调研入口（A 已选定，B/C/D 留作反向锚定）：https://cdu52802-xx.github.io/marx/styles/
-- 仓库：`cdu52802-Xx/marx`（**public**，2026-05-07 从 private 改 public 因为 GitHub Pages 免费层不支持私仓）
+  - 主 demo：https://cdu52802-xx.github.io/marx/
+  - 阶段存档：https://cdu52802-xx.github.io/marx/m3-archive/
+  - 风格调研入口：https://cdu52802-xx.github.io/marx/styles/
+- 仓库：`cdu52802-Xx/marx`（**public**——免费 GH Pages 不支持私仓）
 - 主用户：0 代码 PM，vibe coding 模式
 - 双机切换：Claude 主力机（`F:\AI\projects\Marx`）+ Codex 主力机（`<盘>:\AI\projects\Marx`）
 
@@ -22,15 +18,10 @@
 
 每次新 session 开始（特别是新窗口、新机器、`/clear` 之后）：
 
-- **优先读 `docs/` 下最新的续接锚点**（阶段进行中是 progress-anchor，阶段完结是 takeaway）
-- **当前最新** ⭐：[`docs/2026-05-11-m4-progress-anchor.md`](docs/2026-05-11-m4-progress-anchor.md)（**M4 implementation 进行中** + 2026-05-12 update T0+T1+T2 完成 + brainstorm v3-v7 历程 + 10 关键决策 + denizcemonduygu data 关键发现 + 13 task 进度表 + 新窗口开场白）
-- M4 spec：[`specs/2026-05-11-m4-claim-timeline-design.md`](specs/2026-05-11-m4-claim-timeline-design.md)（602 行 / 15 章 + 附录，commit 1fc5cb8）
-- M4 plan：[`plans/2026-05-11-marx-m4-claim-timeline.md`](plans/2026-05-11-marx-m4-claim-timeline.md)（2640 行 / 13 task，commit 74c43af）
-- M3 暂停 anchor：[`docs/2026-05-08-m3-progress-anchor.md`](docs/2026-05-08-m3-progress-anchor.md)（M3 Task 1-12 完成，Task 13-17 待 PM 第三机操作有窗口）
-- 上一阶段（M2 完结）：[`docs/2026-05-08-m2-takeaway.md`](docs/2026-05-08-m2-takeaway.md)（M2 已上线 + 9 task commit hash + 6 关键决策 + 5 新坑 13-17，仅追溯）
-- 更早（视觉风格调研）：[`docs/2026-05-07-style-mockup-takeaway.md`](docs/2026-05-07-style-mockup-takeaway.md)（4 mockup + A 学术编辑选定，仅追溯）
-- 更早（M1 完成）：[`docs/2026-05-07-m1-takeaway.md`](docs/2026-05-07-m1-takeaway.md)（M1 hello world 上线，仅追溯）
-- 最早（brainstorming）：[`docs/2026-05-07-session-takeaway.md`](docs/2026-05-07-session-takeaway.md)（brainstorming 完成 + M1 plan 就绪，仅追溯）
+- **优先读 `docs/` 下最新的续接锚点**（阶段进行中是 `*-progress-anchor.md`，阶段完结是 `*-takeaway.md`）
+- `ls docs/` 按日期找最新 1 份通常够用；它含当前位置 + 决策追溯 + task 进度 + 新窗口开场白
+- spec / plan 入口在 `specs/` 和 `plans/`，同样按文件名日期找最新
+- PRD / 实施状态在 `docs/PRD.md`
 - 这是元-6 阶段落文 + 跨窗口持续性原则的实操形式，30 秒重建上下文比每次重新摸索高效
 - 不需要每个文件都读，最新 1 份通常够用；如有交叉引用再延伸
 

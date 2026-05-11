@@ -334,7 +334,7 @@ const redArc = (x1, y1, x2, y2) => {
 |---|---|---|---|
 | **denizcemonduygu Marx 19 obs**（已抓数据 source）| 19 | 极小（英→中翻译 + 抽查） | AI 翻译 + PM 抽查 5 条（opportunistic 决策 4） |
 | **M3 12 concept 升级为 claim_text** | 12 | 小（改写主张式） | AI 草稿 + PM 100% 复核（决策 3） |
-| **30 person × 3-5 quote 补采**（前驱 + 后继 + Marx 同时代）| 90-150 | 大（hybrid AI 草稿） | AI 草稿 + PM 100% 复核（决策 3） |
+| **33 person × 3-5 quote 补采**（前驱 + 后继 + Marx 同时代）| 99-165 | 大（hybrid AI 草稿） | AI 草稿 + PM 100% 复核（决策 3） |
 | **4 work 核心 claim**（每本著作 1 句）| 4 | 极小 | AI 草稿 + PM 100% 复核 |
 
 **总数**：125-185 个 claim（M4 minimum 80 / stretch 150）
@@ -372,7 +372,7 @@ denizcemonduygu links 数据库 8684 条 link，Marx 涉及 202 条（121 agreem
 | T1 | 数据 schema 扩展（src/types/Node.ts 加 ClaimNode + relation 加 agreement_with / disagreement_with / extends + 校验函数） | 中 | — |
 | T2 | denizcemonduygu Marx 19 obs 抓取脚本 + 中文翻译 + 入库 | 小 | T1 |
 | T3 | 12 concept.definition_plain → claim_text 升级（AI 草稿 + PM 100% 复核） | 中 | T1 |
-| T4 | 30 person × 3-5 quote 补采（hybrid AI 草稿 + PM 100% 复核） | 大 | T1 |
+| T4 | 33 person × 3-5 quote 补采（hybrid AI 草稿 + PM 100% 复核） | 大 | T1 |
 | T5 | claim → claim 关系采集（borrow denizcemonduygu Marx 涉及 202 link） | 中 | T2-T4 |
 | T6 | 主画布 layout 算法（斜向流 person section + obs 堆叠 + 半圆弧 + 颜色方向规则） | 大 | T1 |
 | T7 | 底部横向时间轴组件 + 游标拖动 + 播放动画 | 中 | T6 |
@@ -392,7 +392,7 @@ denizcemonduygu links 数据库 8684 条 link，Marx 涉及 202 条（121 agreem
 M4 上线时必须满足：
 
 ### 11.1 数据完整度
-- [ ] ClaimNode ≥ 80（含 Marx 19 + 12 concept 升级 + 30 person × 至少 1 = 61 起，PM 复核完成额外 person quote 后达 100+）
+- [ ] ClaimNode ≥ 80（含 Marx 19 + 12 concept 升级 + 33 person × 至少 1 = 64 起，PM 复核完成额外 person quote 后达 100+）
 - [ ] agreement / disagreement relations ≥ 100
 - [ ] 12 concept claim_text 升级 100% 完成
 - [ ] Marx 19 obs 中文翻译 100% 完成 + PM 抽查 5 条
@@ -424,7 +424,7 @@ M4 上线时必须满足：
 
 ### 12.1 风险 1 · claim 数据采集质量
 
-**问题**：90-150 条 person quote 由 AI 草稿生成，存在编造引文风险（学术敏感）。
+**问题**：99-165 条 person quote 由 AI 草稿生成，存在编造引文风险（学术敏感）。
 **Mitigation**：100% PM 复核（决策 3 模式覆盖 M3 决策 4 opportunistic）；尤其前驱 / 后继的 quote 必须有 reference 文献支撑。
 **Trade-off**：PM 工时大（按 M3 经验 ~5-10 小时），但学术信誉不可妥协。
 
