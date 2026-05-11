@@ -5,13 +5,14 @@
 
 ## 项目状态
 
-- 第一个产品代号：**Marx 星图 + Marx 思想史**；阶段：**M1 + M2 已上线 + M3 暂停（Task 1-12 完成）+ M4 brainstorm + spec + plan 完成（implementation 待启动）**
+- 第一个产品代号：**Marx 星图 + Marx 思想史**；阶段：**M1+M2 已上线 + M3 暂停（Task 1-12 完成）+ M4 implementation 进行中（T0+T1+T2 完成 / T3 待启动）**
   - M4 vision 大调整：从 person-network 星图 → **claim-on-timeline 思想史**（observation 一句话 + 半圆弧关系 + 底部时间轴），借鉴 denizcemonduygu.com/philo
   - M3 暂停原因：Task 13-17 阶段 C 需要 PM 第三机操作有窗口（30-60 分钟），M4 brainstorm session PM 选先做 M4
-  - 续接专用锚点（M4 implementation 准备）：[`docs/2026-05-11-m4-progress-anchor.md`](docs/2026-05-11-m4-progress-anchor.md)
+  - 续接专用锚点（**实时更新**）：[`docs/2026-05-11-m4-progress-anchor.md`](docs/2026-05-11-m4-progress-anchor.md)（含 2026-05-12 update）
   - M3 暂停 anchor（Task 13-17 待续）：[`docs/2026-05-08-m3-progress-anchor.md`](docs/2026-05-08-m3-progress-anchor.md)
 - 在线：
-  - 主 demo（M2 形态）：https://cdu52802-xx.github.io/marx/
+  - 主 demo（M2 / M3 形态）：https://cdu52802-xx.github.io/marx/
+  - M3 阶段存档：https://cdu52802-xx.github.io/marx/m3-archive/
   - 风格调研入口（A 已选定，B/C/D 留作反向锚定）：https://cdu52802-xx.github.io/marx/styles/
 - 仓库：`cdu52802-Xx/marx`（**public**，2026-05-07 从 private 改 public 因为 GitHub Pages 免费层不支持私仓）
 - 主用户：0 代码 PM，vibe coding 模式
@@ -22,7 +23,7 @@
 每次新 session 开始（特别是新窗口、新机器、`/clear` 之后）：
 
 - **优先读 `docs/` 下最新的续接锚点**（阶段进行中是 progress-anchor，阶段完结是 takeaway）
-- **当前最新** ⭐：[`docs/2026-05-11-m4-progress-anchor.md`](docs/2026-05-11-m4-progress-anchor.md)（**M4 准备 implementation** + brainstorm v3-v7 历程 + 10 关键决策 + denizcemonduygu data.json 关键发现 + 13 task 进度表 + M4 5 个新坑 20-24 + 新窗口开场白模板）
+- **当前最新** ⭐：[`docs/2026-05-11-m4-progress-anchor.md`](docs/2026-05-11-m4-progress-anchor.md)（**M4 implementation 进行中** + 2026-05-12 update T0+T1+T2 完成 + brainstorm v3-v7 历程 + 10 关键决策 + denizcemonduygu data 关键发现 + 13 task 进度表 + 新窗口开场白）
 - M4 spec：[`specs/2026-05-11-m4-claim-timeline-design.md`](specs/2026-05-11-m4-claim-timeline-design.md)（602 行 / 15 章 + 附录，commit 1fc5cb8）
 - M4 plan：[`plans/2026-05-11-marx-m4-claim-timeline.md`](plans/2026-05-11-marx-m4-claim-timeline.md)（2640 行 / 13 task，commit 74c43af）
 - M3 暂停 anchor：[`docs/2026-05-08-m3-progress-anchor.md`](docs/2026-05-08-m3-progress-anchor.md)（M3 Task 1-12 完成，Task 13-17 待 PM 第三机操作有窗口）
