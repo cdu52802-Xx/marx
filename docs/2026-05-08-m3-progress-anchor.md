@@ -1,7 +1,10 @@
-# Marx M3 续接锚点 · 阶段 C SEP URL 清单就绪
+# Marx M3 续接锚点 · 阶段 C SEP URL 清单就绪 · ⏸ 暂停（M4 brainstorm 优先）
 
-> **状态**：M3 进行中 · Task 1-12 完成（阶段 C SEP URL 清单 + sep-cache 占位 + .gitignore 排除就绪） · Task 13 待启动（PM 第三机操作回传 11 个 SEP HTML）
-> **本文件用途**：跨窗口/跨机器续接锚点，新窗口读 AGENTS.md + 本文件即可 30 秒重建上下文（不需要读 plan / M2 takeaway 等 1000+ 行长文档）
+> **状态**：⏸ **M3 暂停** · Task 1-12 完成 · Task 13-17 待 PM 第三机操作有窗口
+> **暂停原因**：M3 Task 10 PM demo 反馈触发 M4 vision 大调整，2026-05-11 PM 选"先做 M4"。Task 13 需要 PM 第三机操作 30-60 分钟物理窗口
+> **M4 当前最新 anchor**：[`2026-05-11-m4-progress-anchor.md`](2026-05-11-m4-progress-anchor.md) ⭐（M4 brainstorm + spec + plan 完成，implementation 待启动）
+> **M3 续完时机**：M4 完成后回头评估 — 选项 A 完成 Task 13-17 闭环 / 选项 B 永久跳过（successor_notes 在 M4 形态被 claim 取代）
+> **本文件用途**：M3 暂停期 reference + Task 13-17 续接基础（如未来续做）
 > **关联**：[plans/2026-05-08-marx-star-map-m3-validate-concept-notes.md](../plans/2026-05-08-marx-star-map-m3-validate-concept-notes.md) / [M2 takeaway](2026-05-08-m2-takeaway.md) / [design doc v1.1](../specs/2026-05-07-marx-star-map-design.md)
 
 ---

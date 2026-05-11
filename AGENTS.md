@@ -5,7 +5,11 @@
 
 ## 项目状态
 
-- 第一个产品代号：**Marx 星图**；阶段：**M1 + M2 已上线 + M3 进行中**（Task 4/17 卡 PM 复核 33 个 AI 填的 name_orig 草稿；38 节点 / 41 关系，Task 3 删了 Q1170769 误分类）→ 续接专用锚点 [`docs/2026-05-08-m3-progress-anchor.md`](docs/2026-05-08-m3-progress-anchor.md)
+- 第一个产品代号：**Marx 星图 + Marx 思想史**；阶段：**M1 + M2 已上线 + M3 暂停（Task 1-12 完成）+ M4 brainstorm + spec + plan 完成（implementation 待启动）**
+  - M4 vision 大调整：从 person-network 星图 → **claim-on-timeline 思想史**（observation 一句话 + 半圆弧关系 + 底部时间轴），借鉴 denizcemonduygu.com/philo
+  - M3 暂停原因：Task 13-17 阶段 C 需要 PM 第三机操作有窗口（30-60 分钟），M4 brainstorm session PM 选先做 M4
+  - 续接专用锚点（M4 implementation 准备）：[`docs/2026-05-11-m4-progress-anchor.md`](docs/2026-05-11-m4-progress-anchor.md)
+  - M3 暂停 anchor（Task 13-17 待续）：[`docs/2026-05-08-m3-progress-anchor.md`](docs/2026-05-08-m3-progress-anchor.md)
 - 在线：
   - 主 demo（M2 形态）：https://cdu52802-xx.github.io/marx/
   - 风格调研入口（A 已选定，B/C/D 留作反向锚定）：https://cdu52802-xx.github.io/marx/styles/
@@ -18,7 +22,10 @@
 每次新 session 开始（特别是新窗口、新机器、`/clear` 之后）：
 
 - **优先读 `docs/` 下最新的续接锚点**（阶段进行中是 progress-anchor，阶段完结是 takeaway）
-- **当前最新** ⭐：[`docs/2026-05-08-m3-progress-anchor.md`](docs/2026-05-08-m3-progress-anchor.md)（**M3 进行中** + 17 task 进度表 + 3 关键决策 A 模式/Q1170769 删除/hybrid AI 草稿 + Task 4 PM 待复核清单 + 新窗口开场白模板 + 5+2 已知坑）
+- **当前最新** ⭐：[`docs/2026-05-11-m4-progress-anchor.md`](docs/2026-05-11-m4-progress-anchor.md)（**M4 准备 implementation** + brainstorm v3-v7 历程 + 10 关键决策 + denizcemonduygu data.json 关键发现 + 13 task 进度表 + M4 5 个新坑 20-24 + 新窗口开场白模板）
+- M4 spec：[`specs/2026-05-11-m4-claim-timeline-design.md`](specs/2026-05-11-m4-claim-timeline-design.md)（602 行 / 15 章 + 附录，commit 1fc5cb8）
+- M4 plan：[`plans/2026-05-11-marx-m4-claim-timeline.md`](plans/2026-05-11-marx-m4-claim-timeline.md)（2640 行 / 13 task，commit 74c43af）
+- M3 暂停 anchor：[`docs/2026-05-08-m3-progress-anchor.md`](docs/2026-05-08-m3-progress-anchor.md)（M3 Task 1-12 完成，Task 13-17 待 PM 第三机操作有窗口）
 - 上一阶段（M2 完结）：[`docs/2026-05-08-m2-takeaway.md`](docs/2026-05-08-m2-takeaway.md)（M2 已上线 + 9 task commit hash + 6 关键决策 + 5 新坑 13-17，仅追溯）
 - 更早（视觉风格调研）：[`docs/2026-05-07-style-mockup-takeaway.md`](docs/2026-05-07-style-mockup-takeaway.md)（4 mockup + A 学术编辑选定，仅追溯）
 - 更早（M1 完成）：[`docs/2026-05-07-m1-takeaway.md`](docs/2026-05-07-m1-takeaway.md)（M1 hello world 上线，仅追溯）
