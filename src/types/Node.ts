@@ -6,13 +6,13 @@
 
 // === 节点类型 ===
 
-export type NodeType = 'person' | 'work' | 'event' | 'concept' | 'place';
+export type NodeType = 'person' | 'work' | 'event' | 'concept' | 'place' | 'claim';
 
 // 经纬度坐标对（地理图用），[lat, lng] 格式
 export type LatLng = [number, number];
 
 // 共同字段
-interface NodeBase {
+export interface NodeBase {
   id: string;
   type: NodeType;
   name_zh: string;
@@ -102,7 +102,10 @@ export type RelationType =
   | 'author' // 作者，蓝色实线，单向 例：Marx → 资本论
   | 'proposed_concept' // 提出概念，深绿实线，单向 例：Marx → 异化
   | 'lived_in' // 居住，灰色虚线，单向 例：Marx → 伦敦
-  | 'participated_in'; // 参与事件，橙色实线，单向 例：Marx → 第一国际
+  | 'participated_in' // 参与事件，橙色实线，单向 例：Marx → 第一国际
+  | 'agreement_with' // M4 加 · claim → claim 同意
+  | 'disagreement_with' // M4 加 · claim → claim 反对
+  | 'extends'; // M4 加 · claim → claim 延伸（同 person 自延）
 
 export interface Relation {
   source: string; // 节点 id
