@@ -1,0 +1,338 @@
+{
+  "$schema_note": "M3 阶段 C 离线缓存清单 · A 模式字段（按 anchor 决策 1 跟 src/types/Node.ts SuccessorNote 对齐）",
+  "$usage": "Task 13 PM 第三机操作 input + Task 14 AI 抽取脚本 input",
+  "$dedup_count": 11,
+  "$dedup_note": "12 concept × 平均 3.08 后来者 = 37 条旁注，去重 URL 11 个（Marx 主页 1 + 后来者池 10）",
+  "$successor_pool": [
+    "卢卡奇 / 葛兰西 / 阿尔都塞 / 哈贝马斯 / 卢森堡 / 列宁 / 马尔库塞 / 哈维 / 詹姆逊 / 巴利巴尔"
+  ],
+  "$source_choice": "SEP entries 优先，无 SEP entry 的（lenin / harvey / jameson / balibar）退化到 Wikipedia",
+  "concepts": [
+    {
+      "concept_id": "concept-alienation",
+      "concept_name_zh": "异化",
+      "sep_concept_url": "https://plato.stanford.edu/entries/marx/",
+      "successors": [
+        {
+          "successor_name_zh": "卢卡奇",
+          "successor_name_orig": "György Lukács",
+          "sep_url": "https://plato.stanford.edu/entries/lukacs/"
+        },
+        {
+          "successor_name_zh": "马尔库塞",
+          "successor_name_orig": "Herbert Marcuse",
+          "sep_url": "https://plato.stanford.edu/entries/marcuse/"
+        },
+        {
+          "successor_name_zh": "阿尔都塞",
+          "successor_name_orig": "Louis Althusser",
+          "sep_url": "https://plato.stanford.edu/entries/althusser/"
+        },
+        {
+          "successor_name_zh": "哈贝马斯",
+          "successor_name_orig": "Jürgen Habermas",
+          "sep_url": "https://plato.stanford.edu/entries/habermas/"
+        }
+      ]
+    },
+    {
+      "concept_id": "concept-surplus-value",
+      "concept_name_zh": "剩余价值",
+      "sep_concept_url": "https://plato.stanford.edu/entries/marx/",
+      "successors": [
+        {
+          "successor_name_zh": "卢森堡",
+          "successor_name_orig": "Rosa Luxemburg",
+          "sep_url": "https://plato.stanford.edu/entries/luxemburg/"
+        },
+        {
+          "successor_name_zh": "哈维",
+          "successor_name_orig": "David Harvey",
+          "sep_url": "https://en.wikipedia.org/wiki/David_Harvey"
+        },
+        {
+          "successor_name_zh": "阿尔都塞",
+          "successor_name_orig": "Louis Althusser",
+          "sep_url": "https://plato.stanford.edu/entries/althusser/"
+        }
+      ]
+    },
+    {
+      "concept_id": "concept-historical-materialism",
+      "concept_name_zh": "历史唯物主义",
+      "sep_concept_url": "https://plato.stanford.edu/entries/marx/",
+      "successors": [
+        {
+          "successor_name_zh": "阿尔都塞",
+          "successor_name_orig": "Louis Althusser",
+          "sep_url": "https://plato.stanford.edu/entries/althusser/"
+        },
+        {
+          "successor_name_zh": "葛兰西",
+          "successor_name_orig": "Antonio Gramsci",
+          "sep_url": "https://plato.stanford.edu/entries/gramsci/"
+        },
+        {
+          "successor_name_zh": "巴利巴尔",
+          "successor_name_orig": "Étienne Balibar",
+          "sep_url": "https://en.wikipedia.org/wiki/%C3%89tienne_Balibar"
+        }
+      ]
+    },
+    {
+      "concept_id": "concept-class-struggle",
+      "concept_name_zh": "阶级斗争",
+      "sep_concept_url": "https://plato.stanford.edu/entries/marx/",
+      "successors": [
+        {
+          "successor_name_zh": "列宁",
+          "successor_name_orig": "Vladimir Lenin",
+          "sep_url": "https://en.wikipedia.org/wiki/Vladimir_Lenin"
+        },
+        {
+          "successor_name_zh": "卢森堡",
+          "successor_name_orig": "Rosa Luxemburg",
+          "sep_url": "https://plato.stanford.edu/entries/luxemburg/"
+        },
+        {
+          "successor_name_zh": "葛兰西",
+          "successor_name_orig": "Antonio Gramsci",
+          "sep_url": "https://plato.stanford.edu/entries/gramsci/"
+        }
+      ]
+    },
+    {
+      "concept_id": "concept-commodity-fetishism",
+      "concept_name_zh": "商品拜物教",
+      "sep_concept_url": "https://plato.stanford.edu/entries/marx/",
+      "successors": [
+        {
+          "successor_name_zh": "卢卡奇",
+          "successor_name_orig": "György Lukács",
+          "sep_url": "https://plato.stanford.edu/entries/lukacs/"
+        },
+        {
+          "successor_name_zh": "詹姆逊",
+          "successor_name_orig": "Fredric Jameson",
+          "sep_url": "https://en.wikipedia.org/wiki/Fredric_Jameson"
+        },
+        {
+          "successor_name_zh": "马尔库塞",
+          "successor_name_orig": "Herbert Marcuse",
+          "sep_url": "https://plato.stanford.edu/entries/marcuse/"
+        }
+      ]
+    },
+    {
+      "concept_id": "concept-ideology",
+      "concept_name_zh": "意识形态",
+      "sep_concept_url": "https://plato.stanford.edu/entries/marx/",
+      "successors": [
+        {
+          "successor_name_zh": "阿尔都塞",
+          "successor_name_orig": "Louis Althusser",
+          "sep_url": "https://plato.stanford.edu/entries/althusser/"
+        },
+        {
+          "successor_name_zh": "葛兰西",
+          "successor_name_orig": "Antonio Gramsci",
+          "sep_url": "https://plato.stanford.edu/entries/gramsci/"
+        },
+        {
+          "successor_name_zh": "哈贝马斯",
+          "successor_name_orig": "Jürgen Habermas",
+          "sep_url": "https://plato.stanford.edu/entries/habermas/"
+        }
+      ]
+    },
+    {
+      "concept_id": "concept-mode-of-production",
+      "concept_name_zh": "生产方式",
+      "sep_concept_url": "https://plato.stanford.edu/entries/marx/",
+      "successors": [
+        {
+          "successor_name_zh": "阿尔都塞",
+          "successor_name_orig": "Louis Althusser",
+          "sep_url": "https://plato.stanford.edu/entries/althusser/"
+        },
+        {
+          "successor_name_zh": "巴利巴尔",
+          "successor_name_orig": "Étienne Balibar",
+          "sep_url": "https://en.wikipedia.org/wiki/%C3%89tienne_Balibar"
+        },
+        {
+          "successor_name_zh": "哈维",
+          "successor_name_orig": "David Harvey",
+          "sep_url": "https://en.wikipedia.org/wiki/David_Harvey"
+        }
+      ]
+    },
+    {
+      "concept_id": "concept-base-superstructure",
+      "concept_name_zh": "经济基础与上层建筑",
+      "sep_concept_url": "https://plato.stanford.edu/entries/marx/",
+      "successors": [
+        {
+          "successor_name_zh": "葛兰西",
+          "successor_name_orig": "Antonio Gramsci",
+          "sep_url": "https://plato.stanford.edu/entries/gramsci/"
+        },
+        {
+          "successor_name_zh": "阿尔都塞",
+          "successor_name_orig": "Louis Althusser",
+          "sep_url": "https://plato.stanford.edu/entries/althusser/"
+        },
+        {
+          "successor_name_zh": "哈贝马斯",
+          "successor_name_orig": "Jürgen Habermas",
+          "sep_url": "https://plato.stanford.edu/entries/habermas/"
+        }
+      ]
+    },
+    {
+      "concept_id": "concept-communism",
+      "concept_name_zh": "共产主义",
+      "sep_concept_url": "https://plato.stanford.edu/entries/marx/",
+      "successors": [
+        {
+          "successor_name_zh": "列宁",
+          "successor_name_orig": "Vladimir Lenin",
+          "sep_url": "https://en.wikipedia.org/wiki/Vladimir_Lenin"
+        },
+        {
+          "successor_name_zh": "卢森堡",
+          "successor_name_orig": "Rosa Luxemburg",
+          "sep_url": "https://plato.stanford.edu/entries/luxemburg/"
+        },
+        {
+          "successor_name_zh": "葛兰西",
+          "successor_name_orig": "Antonio Gramsci",
+          "sep_url": "https://plato.stanford.edu/entries/gramsci/"
+        }
+      ]
+    },
+    {
+      "concept_id": "concept-revolution",
+      "concept_name_zh": "革命",
+      "sep_concept_url": "https://plato.stanford.edu/entries/marx/",
+      "successors": [
+        {
+          "successor_name_zh": "列宁",
+          "successor_name_orig": "Vladimir Lenin",
+          "sep_url": "https://en.wikipedia.org/wiki/Vladimir_Lenin"
+        },
+        {
+          "successor_name_zh": "卢森堡",
+          "successor_name_orig": "Rosa Luxemburg",
+          "sep_url": "https://plato.stanford.edu/entries/luxemburg/"
+        },
+        {
+          "successor_name_zh": "葛兰西",
+          "successor_name_orig": "Antonio Gramsci",
+          "sep_url": "https://plato.stanford.edu/entries/gramsci/"
+        }
+      ]
+    },
+    {
+      "concept_id": "concept-labor-theory-of-value",
+      "concept_name_zh": "劳动价值论",
+      "sep_concept_url": "https://plato.stanford.edu/entries/marx/",
+      "successors": [
+        {
+          "successor_name_zh": "卢森堡",
+          "successor_name_orig": "Rosa Luxemburg",
+          "sep_url": "https://plato.stanford.edu/entries/luxemburg/"
+        },
+        {
+          "successor_name_zh": "哈维",
+          "successor_name_orig": "David Harvey",
+          "sep_url": "https://en.wikipedia.org/wiki/David_Harvey"
+        },
+        {
+          "successor_name_zh": "阿尔都塞",
+          "successor_name_orig": "Louis Althusser",
+          "sep_url": "https://plato.stanford.edu/entries/althusser/"
+        }
+      ]
+    },
+    {
+      "concept_id": "concept-state",
+      "concept_name_zh": "国家",
+      "sep_concept_url": "https://plato.stanford.edu/entries/marx/",
+      "successors": [
+        {
+          "successor_name_zh": "葛兰西",
+          "successor_name_orig": "Antonio Gramsci",
+          "sep_url": "https://plato.stanford.edu/entries/gramsci/"
+        },
+        {
+          "successor_name_zh": "阿尔都塞",
+          "successor_name_orig": "Louis Althusser",
+          "sep_url": "https://plato.stanford.edu/entries/althusser/"
+        },
+        {
+          "successor_name_zh": "列宁",
+          "successor_name_orig": "Vladimir Lenin",
+          "sep_url": "https://en.wikipedia.org/wiki/Vladimir_Lenin"
+        }
+      ]
+    }
+  ],
+  "$dedup_url_list": [
+    {
+      "url": "https://plato.stanford.edu/entries/marx/",
+      "filename": "marx.html",
+      "purpose": "12 concept 段落原文"
+    },
+    {
+      "url": "https://plato.stanford.edu/entries/lukacs/",
+      "filename": "lukacs.html",
+      "purpose": "卢卡奇旁注（异化 / 商品拜物教）"
+    },
+    {
+      "url": "https://plato.stanford.edu/entries/gramsci/",
+      "filename": "gramsci.html",
+      "purpose": "葛兰西旁注（历史唯物主义 / 阶级斗争 / 意识形态 / 经济基础与上层建筑 / 共产主义 / 革命 / 国家）"
+    },
+    {
+      "url": "https://plato.stanford.edu/entries/althusser/",
+      "filename": "althusser.html",
+      "purpose": "阿尔都塞旁注（异化 / 剩余价值 / 历史唯物主义 / 意识形态 / 生产方式 / 经济基础与上层建筑 / 劳动价值论 / 国家）"
+    },
+    {
+      "url": "https://plato.stanford.edu/entries/habermas/",
+      "filename": "habermas.html",
+      "purpose": "哈贝马斯旁注（异化 / 意识形态 / 经济基础与上层建筑）"
+    },
+    {
+      "url": "https://plato.stanford.edu/entries/luxemburg/",
+      "filename": "luxemburg.html",
+      "purpose": "卢森堡旁注（剩余价值 / 阶级斗争 / 共产主义 / 革命 / 劳动价值论）"
+    },
+    {
+      "url": "https://plato.stanford.edu/entries/marcuse/",
+      "filename": "marcuse.html",
+      "purpose": "马尔库塞旁注（异化 / 商品拜物教）"
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/Vladimir_Lenin",
+      "filename": "lenin.html",
+      "purpose": "列宁旁注（阶级斗争 / 共产主义 / 革命 / 国家）"
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/Fredric_Jameson",
+      "filename": "jameson.html",
+      "purpose": "詹姆逊旁注（商品拜物教）"
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/David_Harvey",
+      "filename": "harvey.html",
+      "purpose": "哈维旁注（剩余价值 / 生产方式 / 劳动价值论）"
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/%C3%89tienne_Balibar",
+      "filename": "balibar.html",
+      "purpose": "巴利巴尔旁注（历史唯物主义 / 生产方式）"
+    }
+  ]
+}

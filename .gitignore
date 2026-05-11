@@ -38,3 +38,7 @@ tmp/
 # === Playwright ===
 playwright-report/
 test-results/
+
+# === M3 阶段 C SEP HTML 临时缓存（版权 + 体积，不入库）===
+scripts/sep-cache/*.html
+!scripts/sep-cache/.gitkeep
