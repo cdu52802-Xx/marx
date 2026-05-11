@@ -1,0 +1,303 @@
+{
+  "claims": [
+    {
+      "id": "claim-marx-001",
+      "type": "claim",
+      "name_zh": "现实是历经异化的辩证历史进程",
+      "name_orig": "Reality is a historical dialec",
+      "claim_text": "现实是历经异化的辩证历史进程",
+      "author_id": "wd-q9061",
+      "year": 1850,
+      "cats": [
+        "me"
+      ],
+      "keywords": "historicism",
+      "reference": "Magee, B. (1998). The Story of Philosophy. DK Pub.",
+      "derived_from_denizcemonduygu_record_id": 599,
+      "source_work_id": "-"
+    },
+    {
+      "id": "claim-marx-002",
+      "type": "claim",
+      "name_zh": "唯有终结异化，人才能在有机社会中获得自由",
+      "name_orig": "Only when alienations end will",
+      "claim_text": "唯有终结异化，人才能在有机社会中获得自由",
+      "author_id": "wd-q9061",
+      "year": 1850,
+      "cats": [
+        "me",
+        "po",
+        "et"
+      ],
+      "reference": "Magee, B. (1998). The Story of Philosophy. DK Pub.",
+      "derived_from_denizcemonduygu_record_id": 600,
+      "source_work_id": "-"
+    },
+    {
+      "id": "claim-marx-003",
+      "type": "claim",
+      "name_zh": "世界与辩证变迁由物质而非精神构成；历史即",
+      "name_orig": "The world and the dialectical ",
+      "claim_text": "世界与辩证变迁由物质而非精神构成；历史即人追求目的之活动",
+      "author_id": "wd-q9061",
+      "year": 1845,
+      "cats": [
+        "me"
+      ],
+      "keywords": "dialectical materialism",
+      "reference": "Magee, B. (1998). The Story of Philosophy. DK Pub.; Marx, K. & Engels, F. (1844) The Holy Family. Foreign Languages Publishing House, Moscow. 1956.",
+      "derived_from_denizcemonduygu_record_id": 601,
+      "source_work_id": "-"
+    },
+    {
+      "id": "claim-marx-004",
+      "type": "claim",
+      "name_zh": "人的本质不是抽象，而是一切社会关系的总和",
+      "name_orig": "The human essence is no abstra",
+      "claim_text": "人的本质不是抽象，而是一切社会关系的总和",
+      "author_id": "wd-q9061",
+      "year": 1845,
+      "cats": [
+        "me",
+        "po"
+      ],
+      "reference": "Marx, K. (1845). Theses On Feuerbach.",
+      "derived_from_denizcemonduygu_record_id": 602,
+      "source_work_id": "-"
+    },
+    {
+      "id": "claim-marx-005",
+      "type": "claim",
+      "name_zh": "个人由其与生产资料的关系所定义，由此产生",
+      "name_orig": "The defining characteristic of",
+      "claim_text": "个人由其与生产资料的关系所定义，由此产生阶级",
+      "author_id": "wd-q9061",
+      "year": 1850,
+      "cats": [
+        "me",
+        "po"
+      ],
+      "reference": "Magee, B. (1998). The Story of Philosophy. DK Pub.",
+      "derived_from_denizcemonduygu_record_id": 603,
+      "source_work_id": "-"
+    },
+    {
+      "id": "claim-marx-006",
+      "type": "claim",
+      "name_zh": "辩证法运行于生产力发展与阶级冲突之中",
+      "name_orig": "The dialectic works with the d",
+      "claim_text": "辩证法运行于生产力发展与阶级冲突之中",
+      "author_id": "wd-q9061",
+      "year": 1850,
+      "cats": [
+        "po"
+      ],
+      "keywords": "historical materialism",
+      "reference": "Magee, B. (1998). The Story of Philosophy. DK Pub.",
+      "derived_from_denizcemonduygu_record_id": 604,
+      "source_work_id": "-"
+    },
+    {
+      "id": "claim-marx-007",
+      "type": "claim",
+      "name_zh": "任何时代统治阶级的思想，即是这时代的统治",
+      "name_orig": "The ideas of the ruling class ",
+      "claim_text": "任何时代统治阶级的思想，即是这时代的统治思想",
+      "author_id": "wd-q9061",
+      "year": 1846,
+      "cats": [
+        "po"
+      ],
+      "reference": "Marx, K. & Engels, F. (1845–46) The German Ideology. In Marx-Engels, Collected Works, Vol. 5, Lawrence & Wishart, London.",
+      "derived_from_denizcemonduygu_record_id": 605,
+      "source_work_id": "wd-q470600"
+    },
+    {
+      "id": "claim-marx-008",
+      "type": "claim",
+      "name_zh": "上层建筑由经济基础所决定",
+      "name_orig": "Institutions, religions, philo",
+      "claim_text": "上层建筑由经济基础所决定",
+      "author_id": "wd-q9061",
+      "year": 1850,
+      "cats": [
+        "po"
+      ],
+      "keywords": "materialism",
+      "reference": "Magee, B. (1998). The Story of Philosophy. DK Pub.",
+      "derived_from_denizcemonduygu_record_id": 606,
+      "source_work_id": "-"
+    },
+    {
+      "id": "claim-marx-009",
+      "type": "claim",
+      "name_zh": "宗教是人民的鸦片；废除虚幻幸福，方能要求",
+      "name_orig": "Religion is the opium of the p",
+      "claim_text": "宗教是人民的鸦片；废除虚幻幸福，方能要求真实幸福",
+      "author_id": "wd-q9061",
+      "year": 1844,
+      "cats": [
+        "re",
+        "po"
+      ],
+      "reference": "Marx, K. (1843). Critique of Hegel’s Philosophy of Right.",
+      "derived_from_denizcemonduygu_record_id": 607,
+      "source_work_id": "-"
+    },
+    {
+      "id": "claim-marx-010",
+      "type": "claim",
+      "name_zh": "工业资本主义社会是辩证法历史的最后阶段",
+      "name_orig": "The Industrialist Capitalist s",
+      "claim_text": "工业资本主义社会是辩证法历史的最后阶段",
+      "author_id": "wd-q9061",
+      "year": 1850,
+      "cats": [
+        "po"
+      ],
+      "reference": "Magee, B. (1998). The Story of Philosophy. DK Pub.",
+      "derived_from_denizcemonduygu_record_id": 608,
+      "source_work_id": "-"
+    },
+    {
+      "id": "claim-marx-011",
+      "type": "claim",
+      "name_zh": "动物只在必需中生产，人却在自由中作为自觉",
+      "name_orig": "Unlike animals, humans produce",
+      "claim_text": "动物只在必需中生产，人却在自由中作为自觉存在去生产",
+      "author_id": "wd-q9061",
+      "year": 1844,
+      "cats": [
+        "me"
+      ],
+      "reference": "Marx, K. (1844). Economic and Philosophical Manuscripts.",
+      "derived_from_denizcemonduygu_record_id": 609,
+      "source_work_id": "wd-q295347"
+    },
+    {
+      "id": "claim-marx-012",
+      "type": "claim",
+      "name_zh": "商品的价值由生产它所必需的社会劳动时间决",
+      "name_orig": "The value of a commodity is de",
+      "claim_text": "商品的价值由生产它所必需的社会劳动时间决定",
+      "author_id": "wd-q9061",
+      "year": 1867,
+      "cats": [
+        "po"
+      ],
+      "keywords": "labor theory of value",
+      "reference": "Wolff, J. & Leopold, D. (n.d.). “Karl Marx”. The Stanford Encyclopedia of Philosophy, Edward N. Zalta (ed.). https://plato.stanford.edu/entries/marx/",
+      "derived_from_denizcemonduygu_record_id": 610,
+      "source_work_id": "wd-q58784"
+    },
+    {
+      "id": "claim-marx-013",
+      "type": "claim",
+      "name_zh": "异化劳动使工人与产品、劳动过程、类本质和",
+      "name_orig": "Estranged labor (factories, di",
+      "claim_text": "异化劳动使工人与产品、劳动过程、类本质和自己相异化",
+      "author_id": "wd-q9061",
+      "year": 1844,
+      "cats": [
+        "po",
+        "me"
+      ],
+      "reference": "Marx, K. (1844). Economic and Philosophical Manuscripts.; Marx, K. & Engels, F. (1848). The Communist Manifesto.",
+      "derived_from_denizcemonduygu_record_id": 611,
+      "source_work_id": "wd-q295347"
+    },
+    {
+      "id": "claim-marx-014",
+      "type": "claim",
+      "name_zh": "商品交换中，交换价值完全独立于使用价值",
+      "name_orig": "When commodities are in the re",
+      "claim_text": "商品交换中，交换价值完全独立于使用价值",
+      "author_id": "wd-q9061",
+      "year": 1867,
+      "cats": [
+        "po"
+      ],
+      "reference": "Marx, K. (1867). Capital: A Critique of Political Economy.",
+      "derived_from_denizcemonduygu_record_id": 612,
+      "source_work_id": "wd-q58784"
+    },
+    {
+      "id": "claim-marx-015",
+      "type": "claim",
+      "name_zh": "资本家以低于劳动价值的工资剥削工人，攫取",
+      "name_orig": "The capitalists exploit the wo",
+      "claim_text": "资本家以低于劳动价值的工资剥削工人，攫取剩余价值为利润",
+      "author_id": "wd-q9061",
+      "year": 1867,
+      "cats": [
+        "po"
+      ],
+      "reference": "Marx, K. (1867). Capital: A Critique of Political Economy.",
+      "derived_from_denizcemonduygu_record_id": 613,
+      "source_work_id": "wd-q58784"
+    },
+    {
+      "id": "claim-marx-016",
+      "type": "claim",
+      "name_zh": "商品看似有生命的独立存在，与人与他物建立",
+      "name_orig": "Commodities appear as independ",
+      "claim_text": "商品看似有生命的独立存在，与人与他物建立关系（即拜物教）",
+      "author_id": "wd-q9061",
+      "year": 1867,
+      "cats": [
+        "po"
+      ],
+      "reference": "Marx, K. (1867). Capital: A Critique of Political Economy.",
+      "derived_from_denizcemonduygu_record_id": 614,
+      "source_work_id": "wd-q58784"
+    },
+    {
+      "id": "claim-marx-017",
+      "type": "claim",
+      "name_zh": "私有财产使我们愚钝至以为，物唯有被占有时",
+      "name_orig": "Private property has made us s",
+      "claim_text": "私有财产使我们愚钝至以为，物唯有被占有时才属于自己",
+      "author_id": "wd-q9061",
+      "year": 1844,
+      "cats": [
+        "po"
+      ],
+      "reference": "Marx, K. (1844). Economic and Philosophical Manuscripts.",
+      "derived_from_denizcemonduygu_record_id": 615,
+      "source_work_id": "wd-q295347"
+    },
+    {
+      "id": "claim-marx-018",
+      "type": "claim",
+      "name_zh": "工人必将推翻资本家，建立生产资料归全民所",
+      "name_orig": "It is inevitable that the work",
+      "claim_text": "工人必将推翻资本家，建立生产资料归全民所有的无阶级社会",
+      "author_id": "wd-q9061",
+      "year": 1850,
+      "cats": [
+        "po"
+      ],
+      "keywords": "communism, historical determinism",
+      "reference": "Magee, B. (1998). The Story of Philosophy. DK Pub.",
+      "derived_from_denizcemonduygu_record_id": 616,
+      "source_work_id": "-"
+    },
+    {
+      "id": "claim-marx-019",
+      "type": "claim",
+      "name_zh": "哲学家们只是用不同方式解释世界，问题在于",
+      "name_orig": "Philosophers have hitherto onl",
+      "claim_text": "哲学家们只是用不同方式解释世界，问题在于改变它",
+      "author_id": "wd-q9061",
+      "year": 1845,
+      "cats": [
+        "po",
+        "mp"
+      ],
+      "reference": "Marx, K. (1845). Theses On Feuerbach.",
+      "derived_from_denizcemonduygu_record_id": 617,
+      "source_work_id": "-"
+    }
+  ],
+  "relations": []
+}

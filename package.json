@@ -18,7 +18,9 @@
     "m3:apply-md": "tsx scripts/apply-validation-md.ts all",
     "m3:apply-person": "tsx scripts/apply-validation-md.ts person",
     "m3:apply-work": "tsx scripts/apply-validation-md.ts work",
-    "m3:apply-concept": "tsx scripts/apply-validation-md.ts concept"
+    "m3:apply-concept": "tsx scripts/apply-validation-md.ts concept",
+    "m4:import-marx": "tsx scripts/import-denizcemonduygu-marx.ts",
+    "m4:apply-md": "tsx scripts/apply-claim-validation-md.ts"
   },
   "repository": {
     "type": "git",
