@@ -49,12 +49,12 @@ describe('claim-schema · ClaimNode 校验', () => {
   });
 
   it('cats 至少 1 个', () => {
-    const c = { ...validClaim, cats: [] as any };
+    const c = { ...validClaim, cats: [] as never[] };
     expect(validateClaim(c)).toContain('claim-001 cats 至少 1 个');
   });
 
   it('cats 含非法值报错', () => {
-    const c = { ...validClaim, cats: ['me', 'invalid'] as any };
+    const c = { ...validClaim, cats: ['me', 'invalid'] as unknown as ClaimNode['cats'] };
     expect(validateClaim(c).some((e) => e.includes('cats 含非法值'))).toBe(true);
   });
 });
@@ -89,7 +89,7 @@ describe('claim-schema · ClaimRelation 校验', () => {
 
   it('type 非法报错', () => {
     const errs = validateClaimRelation(
-      { source: 'claim-001', target: 'claim-002', type: 'foo' as any },
+      { source: 'claim-001', target: 'claim-002', type: 'foo' as unknown as 'agreement_with' },
       knownIds,
     );
     expect(errs.some((e) => e.includes('type 必须是'))).toBe(true);

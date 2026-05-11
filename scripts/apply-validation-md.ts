@@ -70,7 +70,7 @@ function parseChecklist(md: string): ParsedNode[] {
 
     // 列表项，如 "  - 1818 年 - 生于普鲁士特里尔"
     if (listField) {
-      const item = line.match(/^  - (.+)$/);
+      const item = line.match(/^ {2}- (.+)$/);
       if (item) {
         const value = item[1].trim();
         if (!isUnfilled(value)) {
