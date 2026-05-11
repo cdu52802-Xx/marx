@@ -751,45 +751,57 @@
       "id": "wd-q40591",
       "type": "work",
       "name_zh": "共产党宣言",
-      "name_orig": "共产党宣言",
+      "name_orig": "Manifest der Kommunistischen Partei",
       "pub_year": 1848,
       "author_id": "wd-q9061",
-      "writing_period": "1848",
-      "summary": "M3 阶段 B 人工补充",
-      "citation_urls": []
+      "writing_period": "1847-1848",
+      "summary": "1847 共产主义者同盟委托 / 1848年2月 伦敦德文版出版 / 引发欧洲革命之春",
+      "citation_urls": [
+        "https://www.marxists.org/chinese/marx-engels/01/index.htm",
+        "https://www.marxists.org/archive/marx/works/1848/communist-manifesto/"
+      ]
     },
     {
       "id": "wd-q58784",
       "type": "work",
       "name_zh": "资本论",
-      "name_orig": "资本论",
+      "name_orig": "Das Kapital, Kritik der politischen Ökonomie",
       "pub_year": 1867,
       "author_id": "wd-q9061",
-      "writing_period": "1867",
-      "summary": "M3 阶段 B 人工补充",
-      "citation_urls": []
+      "writing_period": "1857-1867",
+      "summary": "1857 开始政治经济学研究 / 1867年9月 第一卷汉堡出版 / 1885+1894 恩格斯整理 II/III 卷",
+      "citation_urls": [
+        "https://www.marxists.org/chinese/marx/01/index.htm",
+        "https://www.marxists.org/archive/marx/works/1867-c1/"
+      ]
     },
     {
       "id": "wd-q295347",
       "type": "work",
       "name_zh": "1844年哲学和经济学手稿",
-      "name_orig": "1844年哲学和经济学手稿",
+      "name_orig": "Ökonomisch-philosophische Manuskripte aus dem Jahre 1844",
       "pub_year": 1932,
       "author_id": "wd-q9061",
-      "writing_period": "1932",
-      "summary": "M3 阶段 B 人工补充",
-      "citation_urls": []
+      "writing_period": "1844",
+      "summary": "1844 巴黎流亡期笔记 / 论异化劳动 + 私有财产批判 / 1932 苏联档案首次完整刊出",
+      "citation_urls": [
+        "https://www.marxists.org/chinese/marx/1844/index.htm",
+        "https://www.marxists.org/archive/marx/works/1844/manuscripts/"
+      ]
     },
     {
       "id": "wd-q470600",
       "type": "work",
       "name_zh": "德意志意識形態",
-      "name_orig": "德意志意識形態",
+      "name_orig": "Die Deutsche Ideologie",
       "pub_year": 1932,
       "author_id": "wd-q9061",
-      "writing_period": "1932",
-      "summary": "M3 阶段 B 人工补充",
-      "citation_urls": []
+      "writing_period": "1845-1846",
+      "summary": "1845-46 Marx + Engels 合著 / 批判青年黑格尔派 + 费尔巴哈 / 1932 苏联首次完整出版",
+      "citation_urls": [
+        "https://www.marxists.org/chinese/marx/02/index.htm",
+        "https://www.marxists.org/archive/marx/works/1845/german-ideology/"
+      ]
     }
   ],
   "relations": [
