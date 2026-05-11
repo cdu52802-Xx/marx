@@ -5,7 +5,7 @@
 
 ## 项目状态
 
-- 第一个产品代号：**Marx 星图 + Marx 思想史**；阶段：**M1+M2 已上线 + M3 暂停（Task 1-12 完成）+ M4 implementation 进行中（T0+T1+T2 完成 / T3 待启动）**
+- 第一个产品代号：**Marx 星图 + Marx 思想史**；阶段：**M1+M2 已上线 + M3 暂停（Task 1-12 完成）+ M4 implementation 进行中（T0-T3 代码完成 / T3 等 PM 复核 checklist md + apply / T4 待启动）**
   - M4 vision 大调整：从 person-network 星图 → **claim-on-timeline 思想史**（observation 一句话 + 半圆弧关系 + 底部时间轴），借鉴 denizcemonduygu.com/philo
   - M3 暂停原因：Task 13-17 阶段 C 需要 PM 第三机操作有窗口（30-60 分钟），M4 brainstorm session PM 选先做 M4
   - 续接专用锚点（**实时更新**）：[`docs/2026-05-11-m4-progress-anchor.md`](docs/2026-05-11-m4-progress-anchor.md)（含 2026-05-12 update）

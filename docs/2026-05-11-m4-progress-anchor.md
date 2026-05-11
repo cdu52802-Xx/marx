@@ -1,6 +1,6 @@
-# Marx M4 续接锚点 · implementation 进行中（T0+T1+T2 完成 / T3 待启动）
+# Marx M4 续接锚点 · implementation 进行中（T0-T3 代码完成 / T3 等 PM 复核 / T4 待启动）
 
-> **状态**（2026-05-12 update）：M4 implementation 进行中 · T0+T1+T2 完成 · 待 PM 启动 T3
+> **状态**（2026-05-12 T3 update）：M4 implementation 进行中 · T0-T3 代码完成 · T3 等 PM 复核 `docs/m4-validation/concept-12-claims-checklist.md` + 跑 `npm run m4:apply-md` · T4 待启动
 > **本文件用途**：跨窗口/跨机器续接锚点。新窗口读 AGENTS.md + 本文件 + spec + plan 即可重建完整理解
 > **关联**：[M4 spec](../specs/2026-05-11-m4-claim-timeline-design.md) / [M4 plan](../plans/2026-05-11-marx-m4-claim-timeline.md) / [M3 progress anchor](2026-05-08-m3-progress-anchor.md)（M3 暂停状态）/ [PRD V1 + 实施状态](PRD.md)
 
@@ -13,8 +13,64 @@
 | M1（项目骨架） | ✅ 已上线 | https://cdu52802-xx.github.io/marx/ |
 | M2（数据 schema + SPARQL 阶段 A） | ✅ 已上线 | 39 节点 |
 | **M3（数据采集阶段 B 校对 + C 后来者旁注）** | **⏸ 暂停** · Task 1-12 完成 / Task 13-17 待 PM 第三机操作 · demo 存档 `/m3-archive/` | [M3 anchor](2026-05-08-m3-progress-anchor.md) |
-| **M4（claim-on-timeline 形态大重构）** | **🚧 implementation 进行中** · T0+T1+T2 完成 · T3 待启动 | 见下表 + § 2026-05-12 update |
+| **M4（claim-on-timeline 形态大重构）** | **🚧 implementation 进行中** · T0-T3 代码完成 · T3 等 PM 复核 checklist · T4 待启动 | 见下表 + § 2026-05-12 update |
 | M5+ | ⏳ 待办（含 PRD V1 地理图副视图，silent drift 复盘后落 PRD V1 状态注释） | [PRD](PRD.md) |
+
+---
+
+## 2026-05-12 T3 update · T3 代码完成（subagent-driven 流程） · 等 PM 复核 checklist
+
+### T3 完成（commit chain 3381b77 → 7edaff1）
+
+| Task | commit | 内容 | 测试 |
+|---|---|---|---|
+| **T3 main** | [3381b77](https://github.com/cdu52802-Xx/marx/commit/3381b77) | upgrade-concept-to-claim.ts + concept-12-claims-checklist.md (12 AI 草稿) + apply-claim-validation-md.ts 加 applyConceptChecklistMd 纯函数 + concept-claim.test.ts (3 acceptance) + apply-concept-md.test.ts (10 unit) | 52/49/3 → 65/61/4（1 expected RED 等 PM apply + 3 M3 pre-existing） |
+| **T3 fix** | [7edaff1](https://github.com/cdu52802-Xx/marx/commit/7edaff1) | code review fix: C1 (cats `-` guard + CLAIM_CATEGORIES_SET 白名单) + C2 (derived_from_concept_id 12 ID 白名单硬校验) + I1 (test 2/3 honest-RED guard) + I3 (extractField helper) + 4 regression test | 65/61/4 → 69/63/6（I1 fix 让 2 个 vacuous PASS 变 honest-RED，所以 fail 4 → 6 是正确效果） |
+
+### T3 执行模式 = subagent-driven（spec § 14 + plan handoff PM 选）
+
+1. implementer subagent (sonnet) 跑全 9 step → 3381b77
+2. spec reviewer subagent → ✅ spec compliant
+3. code quality reviewer (superpowers:code-reviewer) → 2 Critical + 4 Important + 5 Minor
+4. fix implementer subagent (sonnet) 修 C1+C2+I1+I3 → 7edaff1
+5. code quality reviewer re-review → ✅ Approved
+
+### T3 vision 核心约束（PM 显式）
+
+- 🛑 **不允许 AI 自跑直接入库** = AI 不能跑 `npm run m4:apply-md` 直接改 `src/data/claims.json`
+- ✅ AI 生成 12 条 claim_text 草稿写入 `docs/m4-validation/concept-12-claims-checklist.md`
+- ✅ AI 完成 apply 脚本扩展 (applyConceptChecklistMd 纯函数 + 14 unit test 全 PASS)
+- 🛑 `src/data/claims.json` 当前状态: 19 Marx claims + 0 concept claims (PM 复核 checklist md 后才跑 apply)
+
+### PM 复核 checklist md 时建议重点看的 3 条（implementer subagent 主动 flag）
+
+1. **共产主义** (claim-cpt-communism) · 草稿带目的论色彩 "人类历史的最终形态"，与 Marx 实证历史唯物主义有张力。建议改更中性的"没有阶级、没有国家的社会形态"
+2. **革命** (claim-cpt-revolution) · 含"暴力革命"+"无产阶级专政"。Marx 原话，但政治敏感
+3. **生产方式** (claim-cpt-mode-of-production) · 含"五种社会形态依次更替"是苏联诠释，Marx 本人未明确提出完整五形态论序列。如严格区分"Marx 本人主张"vs"后期马克思主义诠释"需调整
+
+### Code review backlog (M-level，T4 / T5 时再 polish)
+
+- I2 · applyMdCLI 缺 try/catch + skipped > 0 退出码
+- M1 · year fallback `1850` 硬编码 (可改 NaN guard + use proposed_year)
+- M5 · checklist `pm_reviewed: yes` field 未被 apply 解析 (要么 enforce 要么删字段)
+- 抽 extractField helper 后推广到 applyChecklistMd (T2 范围保护，本次未动)
+
+### M3 阶段 B 已有数据小坑（baseline 3 RED 之一）
+
+- `wd-q136116320` Alfred Herman person 节点：name_zh == name_orig + bio/lat/citations 全空
+- 触发 stage-b-validated.test.ts `name_orig != name_zh` assertion
+- 这是 M3 阶段 B 校对漏单，非 T3 引入 / 修复也属于 M3 范围 (回头做 M3 Task 13-17 时一并补)
+
+### 下一步（PM）
+
+1. 打开 `docs/m4-validation/concept-12-claims-checklist.md` 审 12 条 claim_text 草稿
+2. 满意 / 改个别条目（直接编辑 md）后跑：
+   ```bash
+   npm run m4:apply-md
+   ```
+3. 验证: `npm test` → 69 total / 66 pass / 3 fail（concept-claim 3 个 RED → GREEN，剩 stage-b alfred + stage-c 2 个 M3 pre-existing RED）
+4. 满意后 commit `feat(M4): T3 apply - PM 复核完 12 concept claim 入库`
+5. 启动 T4（33 person × 3 quote 补采，⭐ M4 工时大头）
 
 ---
 
