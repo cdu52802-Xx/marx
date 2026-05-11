@@ -31,8 +31,14 @@ describe('Stage B · 阶段 B 校对完成 acceptance', () => {
     for (const p of persons) {
       expect(p.name_orig, `${p.id} ${p.name_zh} name_orig`).not.toBe(p.name_zh);
       expect(p.main_location_lat_lng, `${p.id} ${p.name_zh} latlng`).not.toEqual([0, 0]);
-      expect(p.bio_event_style?.length ?? 0, `${p.id} ${p.name_zh} bio_event_style`).toBeGreaterThanOrEqual(1);
-      expect(p.citation_urls?.length ?? 0, `${p.id} ${p.name_zh} citation_urls`).toBeGreaterThanOrEqual(1);
+      expect(
+        p.bio_event_style?.length ?? 0,
+        `${p.id} ${p.name_zh} bio_event_style`,
+      ).toBeGreaterThanOrEqual(1);
+      expect(
+        p.citation_urls?.length ?? 0,
+        `${p.id} ${p.name_zh} citation_urls`,
+      ).toBeGreaterThanOrEqual(1);
     }
   });
 
@@ -65,7 +71,10 @@ describe('Stage B · 阶段 B 校对完成 acceptance', () => {
       expect(c.proposed_work_id, `${c.id} proposed_work_id`).toBeTruthy();
       expect(c.definition_plain, `${c.id} definition_plain`).toBeTruthy();
       expect(c.citation_urls?.length ?? 0, `${c.id} citations`).toBeGreaterThanOrEqual(1);
-      expect(Array.isArray(c.successor_notes), `${c.id} successor_notes 字段必须是数组（schema 校验要求）`).toBe(true);
+      expect(
+        Array.isArray(c.successor_notes),
+        `${c.id} successor_notes 字段必须是数组（schema 校验要求）`,
+      ).toBe(true);
     }
   });
 });
