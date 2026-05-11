@@ -7,10 +7,7 @@
       "name_orig": "Karl Marx",
       "birth_year": 1818,
       "death_year": 1883,
-      "main_location_lat_lng": [
-        51.5074,
-        -0.1278
-      ],
+      "main_location_lat_lng": [51.5074, -0.1278],
       "bio_event_style": [
         "1818年5月 - 生于普鲁士特里尔",
         "1841年 - 耶拿大学博士论文",
@@ -30,10 +27,7 @@
       "name_orig": "Georg Wilhelm Friedrich Hegel",
       "birth_year": 1770,
       "death_year": 1831,
-      "main_location_lat_lng": [
-        52.52,
-        13.405
-      ],
+      "main_location_lat_lng": [52.52, 13.405],
       "bio_event_style": [
         "1770年8月 - 生于符腾堡斯图加特",
         "1788年 - 入图宾根大学神学院",
@@ -53,10 +47,7 @@
       "name_orig": "Ludwig Feuerbach",
       "birth_year": 1804,
       "death_year": 1872,
-      "main_location_lat_lng": [
-        49.45,
-        10.75
-      ],
+      "main_location_lat_lng": [49.45, 10.75],
       "bio_event_style": [
         "1804年7月 - 生于巴伐利亚兰茨胡特",
         "1828年 - 埃尔朗根大学讲师",
@@ -76,10 +67,7 @@
       "name_orig": "Max Stirner",
       "birth_year": 1806,
       "death_year": 1856,
-      "main_location_lat_lng": [
-        52.52,
-        13.405
-      ],
+      "main_location_lat_lng": [52.52, 13.405],
       "bio_event_style": [
         "1806年10月 - 生于拜罗伊特",
         "1842-43年 - 加入青年黑格尔派",
@@ -99,10 +87,7 @@
       "name_orig": "Pierre-Joseph Proudhon",
       "birth_year": 1809,
       "death_year": 1865,
-      "main_location_lat_lng": [
-        48.8566,
-        2.3522
-      ],
+      "main_location_lat_lng": [48.8566, 2.3522],
       "bio_event_style": [
         "1809年1月 - 生于贝桑松工匠家",
         "1840年 - 《什么是所有权》出版",
@@ -122,10 +107,7 @@
       "name_orig": "Mikhail Bakunin",
       "birth_year": 1814,
       "death_year": 1876,
-      "main_location_lat_lng": [
-        46.2044,
-        6.1432
-      ],
+      "main_location_lat_lng": [46.2044, 6.1432],
       "bio_event_style": [
         "1814年5月 - 生于俄国 Pryamukhino",
         "1849年 - 参与德累斯顿起义被捕",
@@ -145,10 +127,7 @@
       "name_orig": "Friedrich Engels",
       "birth_year": 1820,
       "death_year": 1895,
-      "main_location_lat_lng": [
-        53.4808,
-        -2.2426
-      ],
+      "main_location_lat_lng": [53.4808, -2.2426],
       "bio_event_style": [
         "1820年11月 - 生于普鲁士巴门",
         "1844年8月 - 巴黎遇 Marx 思想合流",
@@ -168,10 +147,7 @@
       "name_orig": "Ferdinand Lassalle",
       "birth_year": 1825,
       "death_year": 1864,
-      "main_location_lat_lng": [
-        52.52,
-        13.405
-      ],
+      "main_location_lat_lng": [52.52, 13.405],
       "bio_event_style": [
         "1825年4月 - 生于布雷斯劳犹太商家",
         "1848年 - 参与莱茵革命被捕",
@@ -191,10 +167,7 @@
       "name_orig": "Henry Mayers Hyndman",
       "birth_year": 1842,
       "death_year": 1921,
-      "main_location_lat_lng": [
-        51.5074,
-        -0.1278
-      ],
+      "main_location_lat_lng": [51.5074, -0.1278],
       "bio_event_style": [
         "1842年3月 - 生于伦敦",
         "1881年 - 创立社会民主同盟 (SDF)",
@@ -214,10 +187,7 @@
       "name_orig": "Alfred Herman",
       "birth_year": 1842,
       "death_year": 1890,
-      "main_location_lat_lng": [
-        0,
-        0
-      ],
+      "main_location_lat_lng": [0, 0],
       "bio_event_style": [],
       "citation_urls": []
     },
@@ -228,10 +198,7 @@
       "name_orig": "Antonio Labriola",
       "birth_year": 1843,
       "death_year": 1904,
-      "main_location_lat_lng": [
-        41.9028,
-        12.4964
-      ],
+      "main_location_lat_lng": [41.9028, 12.4964],
       "bio_event_style": [
         "1843年7月 - 生于卡西诺",
         "1874年 - 罗马大学道德哲学教席",
@@ -251,10 +218,7 @@
       "name_orig": "Svetozar Marković",
       "birth_year": 1846,
       "death_year": 1875,
-      "main_location_lat_lng": [
-        44.7866,
-        20.4489
-      ],
+      "main_location_lat_lng": [44.7866, 20.4489],
       "bio_event_style": [
         "1846年9月 - 生于塞尔维亚 Zaječar",
         "1866年 - 留学俄国 + 瑞士",
@@ -262,9 +226,7 @@
         "1875年 - 流亡赴俄途中肺病重",
         "1875年2月 - Trieste 逝"
       ],
-      "citation_urls": [
-        "https://en.wikipedia.org/wiki/Svetozar_Markovi%C4%87"
-      ]
+      "citation_urls": ["https://en.wikipedia.org/wiki/Svetozar_Markovi%C4%87"]
     },
     {
       "id": "wd-q563138",
@@ -273,10 +235,7 @@
       "name_orig": "Carlo Cafiero",
       "birth_year": 1846,
       "death_year": 1892,
-      "main_location_lat_lng": [
-        40.8518,
-        14.2681
-      ],
+      "main_location_lat_lng": [40.8518, 14.2681],
       "bio_event_style": [
         "1846年9月 - 生于意大利巴尔莱塔",
         "1872年 - 加入巴枯宁国际联盟",
@@ -296,10 +255,7 @@
       "name_orig": "Witold Rola-Piekarski",
       "birth_year": 1857,
       "death_year": 1909,
-      "main_location_lat_lng": [
-        52.2297,
-        21.0122
-      ],
+      "main_location_lat_lng": [52.2297, 21.0122],
       "bio_event_style": [
         "1857年 - 生于俄属波兰",
         "1880年代 - 入\"无产阶级\"波兰社党",
@@ -307,9 +263,7 @@
         "1900年代 - 重返波兰革命活动",
         "1909年 - 华沙逝"
       ],
-      "citation_urls": [
-        "https://en.wikipedia.org/wiki/Witold_Piekarski"
-      ]
+      "citation_urls": ["https://en.wikipedia.org/wiki/Witold_Piekarski"]
     },
     {
       "id": "wd-q185085",
@@ -318,10 +272,7 @@
       "name_orig": "Miguel de Unamuno",
       "birth_year": 1864,
       "death_year": 1936,
-      "main_location_lat_lng": [
-        40.9701,
-        -5.6635
-      ],
+      "main_location_lat_lng": [40.9701, -5.6635],
       "bio_event_style": [
         "1864年9月 - 生于毕尔巴鄂",
         "1891年 - 萨拉曼卡大学希腊语教授",
@@ -341,10 +292,7 @@
       "name_orig": "Benedetto Croce",
       "birth_year": 1866,
       "death_year": 1952,
-      "main_location_lat_lng": [
-        40.8518,
-        14.2681
-      ],
+      "main_location_lat_lng": [40.8518, 14.2681],
       "bio_event_style": [
         "1866年2月 - 生于 Pescasseroli",
         "1903年 - 创办《La Critica》杂志",
@@ -364,10 +312,7 @@
       "name_orig": "Lyubov Axelrod",
       "birth_year": 1868,
       "death_year": 1946,
-      "main_location_lat_lng": [
-        46.2044,
-        6.1432
-      ],
+      "main_location_lat_lng": [46.2044, 6.1432],
       "bio_event_style": [
         "1868年 - 生于俄国白罗斯",
         "1880年代 - 加入民意党流亡瑞士",
@@ -387,10 +332,7 @@
       "name_orig": "Władysław Bortkiewicz",
       "birth_year": 1868,
       "death_year": 1931,
-      "main_location_lat_lng": [
-        52.52,
-        13.405
-      ],
+      "main_location_lat_lng": [52.52, 13.405],
       "bio_event_style": [
         "1868年8月 - 生于圣彼得堡波兰裔家",
         "1895年 - Strasbourg 统计学博士",
@@ -398,9 +340,7 @@
         "1907年 - 论 Marx 价值转形问题",
         "1931年7月 - 柏林逝"
       ],
-      "citation_urls": [
-        "https://en.wikipedia.org/wiki/Ladislaus_Bortkiewicz"
-      ]
+      "citation_urls": ["https://en.wikipedia.org/wiki/Ladislaus_Bortkiewicz"]
     },
     {
       "id": "wd-q110655615",
@@ -409,10 +349,7 @@
       "name_orig": "Harry Waton",
       "birth_year": 1870,
       "death_year": 1959,
-      "main_location_lat_lng": [
-        0,
-        0
-      ],
+      "main_location_lat_lng": [0, 0],
       "bio_event_style": [],
       "citation_urls": []
     },
@@ -423,10 +360,7 @@
       "name_orig": "Vladimir Lenin",
       "birth_year": 1870,
       "death_year": 1924,
-      "main_location_lat_lng": [
-        55.7558,
-        37.6173
-      ],
+      "main_location_lat_lng": [55.7558, 37.6173],
       "bio_event_style": [
         "1870年4月 - 生于辛比尔斯克",
         "1900-03年 - 瑞士流亡 + 创《火星报》",
@@ -446,10 +380,7 @@
       "name_orig": "Sergei Bulgakov",
       "birth_year": 1871,
       "death_year": 1944,
-      "main_location_lat_lng": [
-        48.8566,
-        2.3522
-      ],
+      "main_location_lat_lng": [48.8566, 2.3522],
       "bio_event_style": [
         "1871年7月 - 生于俄国奥勒尔",
         "1901年 - 莫斯科教研经济学",
@@ -469,10 +400,7 @@
       "name_orig": "Anton Pannekoek",
       "birth_year": 1873,
       "death_year": 1960,
-      "main_location_lat_lng": [
-        52.3676,
-        4.9041
-      ],
+      "main_location_lat_lng": [52.3676, 4.9041],
       "bio_event_style": [
         "1873年1月 - 生于荷兰 Vaassen",
         "1906年 - 加入荷兰社会民主工党",
@@ -492,10 +420,7 @@
       "name_orig": "Joseph Stalin",
       "birth_year": 1878,
       "death_year": 1953,
-      "main_location_lat_lng": [
-        55.7558,
-        37.6173
-      ],
+      "main_location_lat_lng": [55.7558, 37.6173],
       "bio_event_style": [
         "1878年12月 - 生于格鲁吉亚 Gori",
         "1917年 - 任布尔什维克中央委员",
@@ -515,10 +440,7 @@
       "name_orig": "Ernst Simon Bloch",
       "birth_year": 1885,
       "death_year": 1977,
-      "main_location_lat_lng": [
-        51.3397,
-        12.3731
-      ],
+      "main_location_lat_lng": [51.3397, 12.3731],
       "bio_event_style": [
         "1885年7月 - 生于莱茵兰 Ludwigshafen",
         "1918年 - 《乌托邦精神》出版",
@@ -538,10 +460,7 @@
       "name_orig": "Natalia Moszkowska",
       "birth_year": 1886,
       "death_year": 1968,
-      "main_location_lat_lng": [
-        47.3769,
-        8.5417
-      ],
+      "main_location_lat_lng": [47.3769, 8.5417],
       "bio_event_style": [
         "1886年 - 生于华沙犹太家庭",
         "1929年 - 苏黎世经济学博士",
@@ -549,9 +468,7 @@
         "1960年代 - 苏黎世经济学界活跃",
         "1968年 - 苏黎世逝"
       ],
-      "citation_urls": [
-        "https://en.wikipedia.org/wiki/Natalia_Moszkowska"
-      ]
+      "citation_urls": ["https://en.wikipedia.org/wiki/Natalia_Moszkowska"]
     },
     {
       "id": "wd-q60208",
@@ -560,10 +477,7 @@
       "name_orig": "Karl Korsch",
       "birth_year": 1886,
       "death_year": 1961,
-      "main_location_lat_lng": [
-        52.52,
-        13.405
-      ],
+      "main_location_lat_lng": [52.52, 13.405],
       "bio_event_style": [
         "1886年8月 - 生于汉堡 Tostedt",
         "1923年 - 《Marxism 与哲学》出版",
@@ -583,10 +497,7 @@
       "name_orig": "Antonio Gramsci",
       "birth_year": 1891,
       "death_year": 1937,
-      "main_location_lat_lng": [
-        45.0703,
-        7.6869
-      ],
+      "main_location_lat_lng": [45.0703, 7.6869],
       "bio_event_style": [
         "1891年1月 - 生于撒丁岛 Ales",
         "1919年 - 都灵创《Ordine Nuovo》",
@@ -606,10 +517,7 @@
       "name_orig": "Walter Benjamin",
       "birth_year": 1892,
       "death_year": 1940,
-      "main_location_lat_lng": [
-        48.8566,
-        2.3522
-      ],
+      "main_location_lat_lng": [48.8566, 2.3522],
       "bio_event_style": [
         "1892年7月 - 生于柏林犹太家庭",
         "1925年 - 教职论文《德国哀悼剧》被拒",
@@ -629,10 +537,7 @@
       "name_orig": "Rāhula Sāṅkr̥tyāyana",
       "birth_year": 1893,
       "death_year": 1963,
-      "main_location_lat_lng": [
-        25.3176,
-        82.9739
-      ],
+      "main_location_lat_lng": [25.3176, 82.9739],
       "bio_event_style": [
         "1893年4月 - 生于印度北方邦",
         "1920年代 - 入佛教 + 学梵巴利文",
@@ -640,9 +545,7 @@
         "1947年 - 加入印度共产党",
         "1963年4月 - 大吉岭逝"
       ],
-      "citation_urls": [
-        "https://en.wikipedia.org/wiki/Rahul_Sankrityayan"
-      ]
+      "citation_urls": ["https://en.wikipedia.org/wiki/Rahul_Sankrityayan"]
     },
     {
       "id": "wd-q731904",
@@ -651,10 +554,7 @@
       "name_orig": "Valentin Asmus",
       "birth_year": 1894,
       "death_year": 1975,
-      "main_location_lat_lng": [
-        55.7558,
-        37.6173
-      ],
+      "main_location_lat_lng": [55.7558, 37.6173],
       "bio_event_style": [
         "1894年12月 - 生于俄属波兰基辅",
         "1925年 - 莫斯科大学哲学教席",
@@ -662,9 +562,7 @@
         "1958年 - 《柏拉图》传记出版",
         "1975年6月 - 莫斯科逝"
       ],
-      "citation_urls": [
-        "https://en.wikipedia.org/wiki/Valentin_Asmus"
-      ]
+      "citation_urls": ["https://en.wikipedia.org/wiki/Valentin_Asmus"]
     },
     {
       "id": "wd-q2939300",
@@ -673,10 +571,7 @@
       "name_orig": "Carlos Astrada",
       "birth_year": 1894,
       "death_year": 1970,
-      "main_location_lat_lng": [
-        -34.6037,
-        -58.3816
-      ],
+      "main_location_lat_lng": [-34.6037, -58.3816],
       "bio_event_style": [
         "1894年2月 - 生于阿根廷 Córdoba",
         "1929年 - 留学 Freiburg 师从海德格尔",
@@ -684,9 +579,7 @@
         "1952年 - 加入阿根廷共产党",
         "1970年12月 - 布宜诺斯艾利斯逝"
       ],
-      "citation_urls": [
-        "https://en.wikipedia.org/wiki/Carlos_Astrada"
-      ]
+      "citation_urls": ["https://en.wikipedia.org/wiki/Carlos_Astrada"]
     },
     {
       "id": "wd-q704931",
@@ -695,10 +588,7 @@
       "name_orig": "Edmund Wilson",
       "birth_year": 1895,
       "death_year": 1972,
-      "main_location_lat_lng": [
-        40.7128,
-        -74.006
-      ],
+      "main_location_lat_lng": [40.7128, -74.006],
       "bio_event_style": [
         "1895年5月 - 生于新泽西 Red Bank",
         "1929年 - 《Axel's Castle》文学批评",
@@ -706,9 +596,7 @@
         "1955年 - 《死海古卷》研究",
         "1972年6月 - 纽约 Talcottville 逝"
       ],
-      "citation_urls": [
-        "https://en.wikipedia.org/wiki/Edmund_Wilson"
-      ]
+      "citation_urls": ["https://en.wikipedia.org/wiki/Edmund_Wilson"]
     },
     {
       "id": "wd-q207359",
@@ -717,10 +605,7 @@
       "name_orig": "Georges Bataille",
       "birth_year": 1897,
       "death_year": 1962,
-      "main_location_lat_lng": [
-        48.8566,
-        2.3522
-      ],
+      "main_location_lat_lng": [48.8566, 2.3522],
       "bio_event_style": [
         "1897年9月 - 生于法国 Billom",
         "1929年 - 创办《Documents》杂志",
@@ -740,10 +625,7 @@
       "name_orig": "弗里德里希·威爾克",
       "birth_year": 1784,
       "death_year": 1868,
-      "main_location_lat_lng": [
-        0,
-        0
-      ],
+      "main_location_lat_lng": [0, 0],
       "bio_event_style": [],
       "citation_urls": []
     },
