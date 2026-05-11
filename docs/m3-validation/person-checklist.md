@@ -12,18 +12,18 @@
 
 > **PM 复核状态（2026-05-11）**：本轮 PM 容量不足，转入 opportunistic 复核模式（详见 [anchor 决策 4](../2026-05-08-m3-progress-anchor.md)）。
 >
-> ✅ **已入库**
-> - 30 个 name_orig + 30 个 latlng + 30 个 bio_event_style (5 条/人) AI 草稿已入 `src/data/nodes_skeleton.json`（Marx 1 个本来就有）
+> ✅ **已入库**（person 4 字段 AI 草稿全 ship）
+> - 30 个 name_orig + 30 个 latlng + 30 个 bio_event_style (5 条/人) + ~50 个 citation_urls AI 草稿已入 `src/data/nodes_skeleton.json`（Marx 1 个本来就有）
 >
-> ⏳ **3 个 `<不确定>` 节点 name_orig + latlng + bio 都为空待复核**
+> ⏳ **3 个 `<不确定>` 节点 name_orig + latlng + bio + citations 都为空待复核**
 > - **Q136116320** Alfred Herman / **Q110655615** Harry Waton / **Q69028** 弗里德里希·威爾克
+> - 注：JSON 中 name_orig 是 M2 SPARQL fallback 到 name_zh 的值（如 Alfred Herman），test 会 fail line 32（这是 expected RED 维持，直到 PM 复核填正确 name_orig）
 >
 > ⏳ **学术敏感 AI default 已入库，PM 可换**
 > - name_orig（3）：**Q1394** 列宁 → Lenin / **Q855** 斯大林 → Stalin / **Q57240** Bloch → Simon Bloch
 > - latlng（6）：**Q27645** 巴枯宁 → Geneva / **Q34787** 恩格斯 → Manchester / **Q1394** 列宁 → Moscow / **Q57240** Bloch → Leipzig / **Q83003** 葛兰西 → Turin / **Q332535** Bulgakov → Paris
 > - bio：30 个 person × 5 事件全是 AI default（事件选择 + 措辞均有争议），核心人物（Marx / Engels / Lenin / Gramsci / Benjamin 等）建议 M4 启动前重点过一遍
->
-> ⏳ **citation_urls 待 Task 7 填**（默认同 opportunistic 模式）
+> - citations：AI 没访问验证（中国大陆网络限制），部分 marxists.org 路径可能死链，复核时遇到改成可访问 URL
 
 ---
 
@@ -62,7 +62,8 @@
   - 1818年 - 柏林大学哲学讲席
   - 1831年11月 - 柏林霍乱亡
 - citation_urls:
-  - <在这里填 1-3 个引用 URL，每行一条>
+  - https://www.marxists.org/reference/archive/hegel/
+  - https://plato.stanford.edu/entries/hegel/
 
 ---
 
@@ -81,7 +82,8 @@
   - 1845年 - 隐居巴伐利亚 Bruckberg
   - 1872年9月 - Nuremberg 附近逝
 - citation_urls:
-  - <在这里填 1-3 个引用 URL，每行一条>
+  - https://www.marxists.org/reference/archive/feuerbach-ludwig/
+  - https://plato.stanford.edu/entries/ludwig-feuerbach/
 
 ---
 
@@ -100,7 +102,8 @@
   - 1845年后 - 商业失败 + 入债务监狱
   - 1856年6月 - 柏林虫叮感染亡
 - citation_urls:
-  - <在这里填 1-3 个引用 URL，每行一条>
+  - https://www.marxists.org/reference/archive/stirner/
+  - https://plato.stanford.edu/entries/max-stirner/
 
 ---
 
@@ -119,7 +122,8 @@
   - 1858年 - 因《论正义》流亡比利时
   - 1865年1月 - 巴黎逝
 - citation_urls:
-  - <在这里填 1-3 个引用 URL，每行一条>
+  - https://www.marxists.org/reference/subject/economics/proudhon/
+  - https://plato.stanford.edu/entries/proudhon/
 
 ---
 
@@ -138,7 +142,8 @@
   - 1872年 - 海牙大会被开除第一国际
   - 1876年7月 - 伯尔尼逝
 - citation_urls:
-  - <在这里填 1-3 个引用 URL，每行一条>
+  - https://www.marxists.org/reference/archive/bakunin/
+  - https://plato.stanford.edu/entries/bakunin/
 
 ---
 
@@ -157,7 +162,8 @@
   - 1883年后 - 编辑《资本论》II/III 卷
   - 1895年8月 - 伦敦逝
 - citation_urls:
-  - <在这里填 1-3 个引用 URL，每行一条>
+  - https://www.marxists.org/archive/marx/index.htm
+  - https://en.wikipedia.org/wiki/Friedrich_Engels
 
 ---
 
@@ -176,7 +182,8 @@
   - 1864年8月 - 日内瓦 Carouge 决斗受伤
   - 1864年8月 - 决斗伤亡
 - citation_urls:
-  - <在这里填 1-3 个引用 URL，每行一条>
+  - https://www.marxists.org/archive/lassalle/
+  - https://en.wikipedia.org/wiki/Ferdinand_Lassalle
 
 ---
 
@@ -195,7 +202,8 @@
   - 1911年 - 创立英国社会党 (BSP)
   - 1921年11月 - 伦敦逝
 - citation_urls:
-  - <在这里填 1-3 个引用 URL，每行一条>
+  - https://www.marxists.org/archive/hyndman/
+  - https://en.wikipedia.org/wiki/Henry_Hyndman
 
 ---
 
@@ -229,7 +237,8 @@
   - 1896年 - 《历史唯物主义随笔》出版
   - 1904年2月 - 罗马逝
 - citation_urls:
-  - <在这里填 1-3 个引用 URL，每行一条>
+  - https://www.marxists.org/archive/labriola/
+  - https://en.wikipedia.org/wiki/Antonio_Labriola
 
 ---
 
@@ -248,7 +257,7 @@
   - 1875年 - 流亡赴俄途中肺病重
   - 1875年2月 - Trieste 逝
 - citation_urls:
-  - <在这里填 1-3 个引用 URL，每行一条>
+  - https://en.wikipedia.org/wiki/Svetozar_Markovi%C4%87
 
 ---
 
@@ -267,7 +276,8 @@
   - 1882年 - 精神崩溃入院
   - 1892年7月 - 诺利逝
 - citation_urls:
-  - <在这里填 1-3 个引用 URL，每行一条>
+  - https://www.marxists.org/archive/cafiero/
+  - https://en.wikipedia.org/wiki/Carlo_Cafiero
 
 ---
 
@@ -286,7 +296,7 @@
   - 1900年代 - 重返波兰革命活动
   - 1909年 - 华沙逝
 - citation_urls:
-  - <在这里填 1-3 个引用 URL，每行一条>
+  - https://en.wikipedia.org/wiki/Witold_Piekarski
 
 ---
 
@@ -305,7 +315,8 @@
   - 1924年 - 反 Primo de Rivera 流亡
   - 1936年12月 - 软禁中亡
 - citation_urls:
-  - <在这里填 1-3 个引用 URL，每行一条>
+  - https://plato.stanford.edu/entries/miguel-de-unamuno/
+  - https://en.wikipedia.org/wiki/Miguel_de_Unamuno
 
 ---
 
@@ -324,7 +335,8 @@
   - 1925年 - 起草反法西斯知识分子宣言
   - 1952年11月 - 那不勒斯逝
 - citation_urls:
-  - <在这里填 1-3 个引用 URL，每行一条>
+  - https://plato.stanford.edu/entries/croce/
+  - https://en.wikipedia.org/wiki/Benedetto_Croce
 
 ---
 
@@ -343,7 +355,8 @@
   - 1920年代 - 任莫斯科共产主义学院
   - 1946年2月 - 莫斯科逝
 - citation_urls:
-  - <在这里填 1-3 个引用 URL，每行一条>
+  - https://www.marxists.org/archive/axelrod-lyubov/
+  - https://en.wikipedia.org/wiki/Lyubov_Axelrod
 
 ---
 
@@ -362,7 +375,7 @@
   - 1907年 - 论 Marx 价值转形问题
   - 1931年7月 - 柏林逝
 - citation_urls:
-  - <在这里填 1-3 个引用 URL，每行一条>
+  - https://en.wikipedia.org/wiki/Ladislaus_Bortkiewicz
 
 ---
 
@@ -396,7 +409,8 @@
   - 1917年11月 - 领导十月革命夺权
   - 1924年1月 - 戈尔基村亡
 - citation_urls:
-  - <在这里填 1-3 个引用 URL，每行一条>
+  - https://www.marxists.org/archive/lenin/
+  - https://en.wikipedia.org/wiki/Vladimir_Lenin
 
 ---
 
@@ -415,7 +429,8 @@
   - 1925年 - 巴黎圣谢尔吉神学院院长
   - 1944年7月 - 巴黎逝
 - citation_urls:
-  - <在这里填 1-3 个引用 URL，每行一条>
+  - https://plato.stanford.edu/entries/bulgakov-sergei/
+  - https://en.wikipedia.org/wiki/Sergei_Bulgakov
 
 ---
 
@@ -434,7 +449,8 @@
   - 1936年 - 《工人委员会》理论奠基
   - 1960年4月 - Wageningen 逝
 - citation_urls:
-  - <在这里填 1-3 个引用 URL，每行一条>
+  - https://www.marxists.org/archive/pannekoe/
+  - https://en.wikipedia.org/wiki/Anton_Pannekoek
 
 ---
 
@@ -453,7 +469,8 @@
   - 1928年 - 启动一五计划 + 集体化
   - 1953年3月 - 莫斯科逝
 - citation_urls:
-  - <在这里填 1-3 个引用 URL，每行一条>
+  - https://www.marxists.org/reference/archive/stalin/
+  - https://en.wikipedia.org/wiki/Joseph_Stalin
 
 ---
 
@@ -472,7 +489,8 @@
   - 1949年 - 莱比锡大学哲学教席
   - 1977年8月 - Tübingen 逝
 - citation_urls:
-  - <在这里填 1-3 个引用 URL，每行一条>
+  - https://plato.stanford.edu/entries/bloch/
+  - https://en.wikipedia.org/wiki/Ernst_Bloch
 
 ---
 
@@ -491,7 +509,7 @@
   - 1960年代 - 苏黎世经济学界活跃
   - 1968年 - 苏黎世逝
 - citation_urls:
-  - <在这里填 1-3 个引用 URL，每行一条>
+  - https://en.wikipedia.org/wiki/Natalia_Moszkowska
 
 ---
 
@@ -510,7 +528,8 @@
   - 1933年 - 流亡丹麦后转美国
   - 1961年10月 - 麻州 Belmont 逝
 - citation_urls:
-  - <在这里填 1-3 个引用 URL，每行一条>
+  - https://www.marxists.org/archive/korsch/
+  - https://en.wikipedia.org/wiki/Karl_Korsch
 
 ---
 
@@ -529,7 +548,8 @@
   - 1926年 - 被法西斯逮捕入狱
   - 1937年4月 - 罗马监狱医院逝
 - citation_urls:
-  - <在这里填 1-3 个引用 URL，每行一条>
+  - https://www.marxists.org/archive/gramsci/
+  - https://plato.stanford.edu/entries/gramsci/
 
 ---
 
@@ -548,7 +568,8 @@
   - 1936年 - 《机械复制时代艺术作品》出版
   - 1940年9月 - 西法边境 Portbou 自杀
 - citation_urls:
-  - <在这里填 1-3 个引用 URL，每行一条>
+  - https://plato.stanford.edu/entries/benjamin/
+  - https://en.wikipedia.org/wiki/Walter_Benjamin
 
 ---
 
@@ -567,7 +588,7 @@
   - 1947年 - 加入印度共产党
   - 1963年4月 - 大吉岭逝
 - citation_urls:
-  - <在这里填 1-3 个引用 URL，每行一条>
+  - https://en.wikipedia.org/wiki/Rahul_Sankrityayan
 
 ---
 
@@ -586,7 +607,7 @@
   - 1958年 - 《柏拉图》传记出版
   - 1975年6月 - 莫斯科逝
 - citation_urls:
-  - <在这里填 1-3 个引用 URL，每行一条>
+  - https://en.wikipedia.org/wiki/Valentin_Asmus
 
 ---
 
@@ -605,7 +626,7 @@
   - 1952年 - 加入阿根廷共产党
   - 1970年12月 - 布宜诺斯艾利斯逝
 - citation_urls:
-  - <在这里填 1-3 个引用 URL，每行一条>
+  - https://en.wikipedia.org/wiki/Carlos_Astrada
 
 ---
 
@@ -624,7 +645,7 @@
   - 1955年 - 《死海古卷》研究
   - 1972年6月 - 纽约 Talcottville 逝
 - citation_urls:
-  - <在这里填 1-3 个引用 URL，每行一条>
+  - https://en.wikipedia.org/wiki/Edmund_Wilson
 
 ---
 
@@ -643,7 +664,8 @@
   - 1949年 - 《被诅咒的份额》出版
   - 1962年7月 - 巴黎逝
 - citation_urls:
-  - <在这里填 1-3 个引用 URL，每行一条>
+  - https://plato.stanford.edu/entries/bataille/
+  - https://en.wikipedia.org/wiki/Georges_Bataille
 
 ---
 
