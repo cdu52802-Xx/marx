@@ -341,6 +341,12 @@ const redArc = (x1, y1, x2, y2) => {
 
 ### 9.2 复核策略 propose（覆盖 M3 决策 4 opportunistic）
 
+> ⚠ **实施状态**（2026-05-12 update · M4 T3 实施期）：PM **撤回**本节 propose 的"回到决策 3"。实际执行回到**决策 4 = hybrid 模式**（AI 草稿 + apply 直接入库不阻塞 + PM 任意时间异步复核 checklist md）。PM 原话："别让人工审核成为进度卡点"。
+>
+> **适用所有 T2/T3/T4/T5 数据采集 task**（含本节列的 12 concept + 33 person quote + 4 work claim）。例外仅 AI 草稿涉及医疗 / 法律 / 金融建议时主动停下问 PM（学术 / 思想史不属于）。
+>
+> 详见 memory `feedback_hybrid_ai_draft_mode.md`（默认 5 步工作流）。下方原 propose 文字保留追溯。
+
 **M3 决策 4 是 opportunistic（PM 容量不足时的降级）**。M4 我 propose **回到 M3 决策 3（100% PM 复核）**，理由：
 
 1. **claim_text 是 vision 核心**：错误成本极高（编造引文损害学术信誉，跟"异化论"被理解为 Marx 主张同等重要）
