@@ -51,4 +51,5 @@ export interface ClaimDataset {
   relations: ClaimRelation[];
 }
 
-export const isClaim = (n: any): n is ClaimNode => n?.type === 'claim';
+export const isClaim = (n: unknown): n is ClaimNode =>
+  typeof n === 'object' && n !== null && (n as { type?: string }).type === 'claim';

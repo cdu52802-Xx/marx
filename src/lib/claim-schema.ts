@@ -1,6 +1,12 @@
+// Pattern note: validateClaim / validateClaimRelation 返回 string[] 而不是 throw。
+// 跟 M3 src/lib/schema.ts validateNode 的 throw 模式 deliberate 分歧。
+// 原因: M4 数据采集走 hybrid AI 草稿 + PM 批量复核 (spec § 9.2 / M3 决策 3),
+// PM 复核 .md 时需要一次看完所有 error 而不是 fail-fast 第一个 stop。
 import { CLAIM_CATEGORIES, type ClaimNode, type ClaimRelation } from '../types/Claim.ts';
 
 const CHAR_MAX = 50; // claim_text 中文字符上限（汉字 length === 等价英文长度的近似）
+
+const CLAIM_CATEGORIES_SET: ReadonlySet<string> = new Set(CLAIM_CATEGORIES);
 
 export function validateClaim(c: ClaimNode): string[] {
   const errors: string[] = [];
@@ -19,15 +25,15 @@ export function validateClaim(c: ClaimNode): string[] {
     errors.push(`${tag} author_id 不能为空`);
   }
 
-  if (!c.year || c.year <= 0) {
-    errors.push(`${tag} year 必须 > 0`);
+  if (!c.year || c.year <= 0 || !Number.isInteger(c.year)) {
+    errors.push(`${tag} year 必须 > 0 的整数`);
   }
 
   if (!c.cats || c.cats.length === 0) {
     errors.push(`${tag} cats 至少 1 个`);
   } else {
     for (const cat of c.cats) {
-      if (!CLAIM_CATEGORIES.includes(cat as any)) {
+      if (!CLAIM_CATEGORIES_SET.has(cat)) {
         errors.push(`${tag} cats 含非法值 ${cat}`);
       }
     }

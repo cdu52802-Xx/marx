@@ -19,6 +19,9 @@ const VALID_RELATION_TYPES: ReadonlySet<RelationType> = new Set([
   'proposed_concept',
   'lived_in',
   'participated_in',
+  'agreement_with',
+  'disagreement_with',
+  'extends',
 ]);
 
 function requireField(obj: unknown, field: string, contextId: string): void {

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { ClaimNode } from '../../src/types/Claim.ts';
-import { validateClaim } from '../../src/lib/claim-schema.ts';
+import { validateClaim, validateClaimRelation } from '../../src/lib/claim-schema.ts';
 
 describe('claim-schema · ClaimNode 校验', () => {
   const validClaim: ClaimNode = {
@@ -40,7 +40,12 @@ describe('claim-schema · ClaimNode 校验', () => {
 
   it('year 必须 > 0', () => {
     const c = { ...validClaim, year: 0 };
-    expect(validateClaim(c)).toContain('claim-001 year 必须 > 0');
+    expect(validateClaim(c).some((e) => e.includes('year'))).toBe(true);
+  });
+
+  it('year 非整数（1844.5）报错', () => {
+    const c = { ...validClaim, year: 1844.5 };
+    expect(validateClaim(c).some((e) => e.includes('year'))).toBe(true);
   });
 
   it('cats 至少 1 个', () => {
@@ -51,5 +56,50 @@ describe('claim-schema · ClaimNode 校验', () => {
   it('cats 含非法值报错', () => {
     const c = { ...validClaim, cats: ['me', 'invalid'] as any };
     expect(validateClaim(c).some((e) => e.includes('cats 含非法值'))).toBe(true);
+  });
+});
+
+describe('claim-schema · ClaimRelation 校验', () => {
+  const knownIds = new Set(['claim-001', 'claim-002']);
+
+  it('valid relation 通过校验', () => {
+    expect(
+      validateClaimRelation(
+        { source: 'claim-001', target: 'claim-002', type: 'agreement_with' },
+        knownIds,
+      ),
+    ).toEqual([]);
+  });
+
+  it('source 不在 known 集合报错', () => {
+    const errs = validateClaimRelation(
+      { source: 'claim-999', target: 'claim-002', type: 'agreement_with' },
+      knownIds,
+    );
+    expect(errs.some((e) => e.includes('source 不在 claim 集合'))).toBe(true);
+  });
+
+  it('target 不在 known 集合报错', () => {
+    const errs = validateClaimRelation(
+      { source: 'claim-001', target: 'claim-999', type: 'agreement_with' },
+      knownIds,
+    );
+    expect(errs.some((e) => e.includes('target 不在 claim 集合'))).toBe(true);
+  });
+
+  it('type 非法报错', () => {
+    const errs = validateClaimRelation(
+      { source: 'claim-001', target: 'claim-002', type: 'foo' as any },
+      knownIds,
+    );
+    expect(errs.some((e) => e.includes('type 必须是'))).toBe(true);
+  });
+
+  it('source === target 自环报错', () => {
+    const errs = validateClaimRelation(
+      { source: 'claim-001', target: 'claim-001', type: 'agreement_with' },
+      knownIds,
+    );
+    expect(errs.some((e) => e.includes('自环'))).toBe(true);
   });
 });
