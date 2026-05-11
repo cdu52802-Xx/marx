@@ -12,10 +12,17 @@
 
 > **PM 复核状态（2026-05-11）**：本轮 PM 容量不足，转入 opportunistic 复核模式（详见 [anchor 决策 4](../2026-05-08-m3-progress-anchor.md)）。
 >
-> - ✅ 28 个高把握 + 3 个学术敏感节点 name_orig 已入库（详见 `src/data/nodes_skeleton.json`）
-> - ⏳ 3 个 `<不确定>` 节点 name_orig 保持空待复核：**Q136116320** Alfred Herman / **Q110655615** Harry Waton / **Q69028** 弗里德里希·威爾克
-> - ⏳ 3 个学术敏感节点 AI default 已入库，PM 复核时可改本名：**Q1394** 列宁 / **Q855** 斯大林 / **Q57240** Ernst Bloch
-> - latlng / bio / citations 三字段 Task 5-7 才填（默认同 opportunistic 模式）
+> ✅ **已入库**
+> - 30 个 name_orig + 30 个 latlng AI 草稿已入 `src/data/nodes_skeleton.json`（Marx 1 个本来就有）
+>
+> ⏳ **3 个 `<不确定>` 节点 name_orig + latlng 都为空待复核**
+> - **Q136116320** Alfred Herman / **Q110655615** Harry Waton / **Q69028** 弗里德里希·威爾克
+>
+> ⏳ **学术敏感 AI default 已入库，PM 可换**
+> - name_orig（3）：**Q1394** 列宁 → Lenin / **Q855** 斯大林 → Stalin / **Q57240** Bloch → Simon Bloch
+> - latlng（6）：**Q27645** 巴枯宁 → Geneva / **Q34787** 恩格斯 → Manchester / **Q1394** 列宁 → Moscow / **Q57240** Bloch → Leipzig / **Q83003** 葛兰西 → Turin / **Q332535** Bulgakov → Paris
+>
+> ⏳ **bio_event_style / citation_urls 待 Task 6-7 填**（默认同 opportunistic 模式）
 
 ---
 
@@ -46,7 +53,7 @@
 **待补**:
 
 - name_orig: Georg Wilhelm Friedrich Hegel
-- main_location_lat_lng: <在这里填经纬度，格式 lat,lng，如 51.5074,-0.1278（伦敦）>
+- main_location_lat_lng: 52.5200,13.4050
 - bio_event_style:
   - <每行一条事件，最多 5 行，格式 "yyyy 年 - 做了什么">
 - citation_urls:
@@ -61,7 +68,7 @@
 **待补**:
 
 - name_orig: Ludwig Feuerbach
-- main_location_lat_lng: <在这里填经纬度，格式 lat,lng，如 51.5074,-0.1278（伦敦）>
+- main_location_lat_lng: 49.4500,10.7500
 - bio_event_style:
   - <每行一条事件，最多 5 行，格式 "yyyy 年 - 做了什么">
 - citation_urls:
@@ -76,7 +83,7 @@
 **待补**:
 
 - name_orig: Max Stirner
-- main_location_lat_lng: <在这里填经纬度，格式 lat,lng，如 51.5074,-0.1278（伦敦）>
+- main_location_lat_lng: 52.5200,13.4050
 - bio_event_style:
   - <每行一条事件，最多 5 行，格式 "yyyy 年 - 做了什么">
 - citation_urls:
@@ -91,7 +98,7 @@
 **待补**:
 
 - name_orig: Pierre-Joseph Proudhon
-- main_location_lat_lng: <在这里填经纬度，格式 lat,lng，如 51.5074,-0.1278（伦敦）>
+- main_location_lat_lng: 48.8566,2.3522
 - bio_event_style:
   - <每行一条事件，最多 5 行，格式 "yyyy 年 - 做了什么">
 - citation_urls:
@@ -106,7 +113,7 @@
 **待补**:
 
 - name_orig: Mikhail Bakunin
-- main_location_lat_lng: <在这里填经纬度，格式 lat,lng，如 51.5074,-0.1278（伦敦）>
+- main_location_lat_lng: 46.2044,6.1432
 - bio_event_style:
   - <每行一条事件，最多 5 行，格式 "yyyy 年 - 做了什么">
 - citation_urls:
@@ -121,7 +128,7 @@
 **待补**:
 
 - name_orig: Friedrich Engels
-- main_location_lat_lng: <在这里填经纬度，格式 lat,lng，如 51.5074,-0.1278（伦敦）>
+- main_location_lat_lng: 53.4808,-2.2426
 - bio_event_style:
   - <每行一条事件，最多 5 行，格式 "yyyy 年 - 做了什么">
 - citation_urls:
@@ -136,7 +143,7 @@
 **待补**:
 
 - name_orig: Ferdinand Lassalle
-- main_location_lat_lng: <在这里填经纬度，格式 lat,lng，如 51.5074,-0.1278（伦敦）>
+- main_location_lat_lng: 52.5200,13.4050
 - bio_event_style:
   - <每行一条事件，最多 5 行，格式 "yyyy 年 - 做了什么">
 - citation_urls:
@@ -151,7 +158,7 @@
 **待补**:
 
 - name_orig: Henry Mayers Hyndman
-- main_location_lat_lng: <在这里填经纬度，格式 lat,lng，如 51.5074,-0.1278（伦敦）>
+- main_location_lat_lng: 51.5074,-0.1278
 - bio_event_style:
   - <每行一条事件，最多 5 行，格式 "yyyy 年 - 做了什么">
 - citation_urls:
@@ -166,7 +173,7 @@
 **待补**:
 
 - name_orig: <不确定: name_zh 已是英文 Alfred Herman，请点 Wikidata 链接核对原文是否为 Alfred Hermann (双 n) 或其他>
-- main_location_lat_lng: <在这里填经纬度，格式 lat,lng，如 51.5074,-0.1278（伦敦）>
+- main_location_lat_lng: <不确定: 人物身份模糊，主要活动地待 Wikidata 核对>
 - bio_event_style:
   - <每行一条事件，最多 5 行，格式 "yyyy 年 - 做了什么">
 - citation_urls:
@@ -181,7 +188,7 @@
 **待补**:
 
 - name_orig: Antonio Labriola
-- main_location_lat_lng: <在这里填经纬度，格式 lat,lng，如 51.5074,-0.1278（伦敦）>
+- main_location_lat_lng: 41.9028,12.4964
 - bio_event_style:
   - <每行一条事件，最多 5 行，格式 "yyyy 年 - 做了什么">
 - citation_urls:
@@ -196,7 +203,7 @@
 **待补**:
 
 - name_orig: Svetozar Marković
-- main_location_lat_lng: <在这里填经纬度，格式 lat,lng，如 51.5074,-0.1278（伦敦）>
+- main_location_lat_lng: 44.7866,20.4489
 - bio_event_style:
   - <每行一条事件，最多 5 行，格式 "yyyy 年 - 做了什么">
 - citation_urls:
@@ -211,7 +218,7 @@
 **待补**:
 
 - name_orig: Carlo Cafiero
-- main_location_lat_lng: <在这里填经纬度，格式 lat,lng，如 51.5074,-0.1278（伦敦）>
+- main_location_lat_lng: 40.8518,14.2681
 - bio_event_style:
   - <每行一条事件，最多 5 行，格式 "yyyy 年 - 做了什么">
 - citation_urls:
@@ -226,7 +233,7 @@
 **待补**:
 
 - name_orig: Witold Rola-Piekarski
-- main_location_lat_lng: <在这里填经纬度，格式 lat,lng，如 51.5074,-0.1278（伦敦）>
+- main_location_lat_lng: 52.2297,21.0122
 - bio_event_style:
   - <每行一条事件，最多 5 行，格式 "yyyy 年 - 做了什么">
 - citation_urls:
@@ -241,7 +248,7 @@
 **待补**:
 
 - name_orig: Miguel de Unamuno
-- main_location_lat_lng: <在这里填经纬度，格式 lat,lng，如 51.5074,-0.1278（伦敦）>
+- main_location_lat_lng: 40.9701,-5.6635
 - bio_event_style:
   - <每行一条事件，最多 5 行，格式 "yyyy 年 - 做了什么">
 - citation_urls:
@@ -256,7 +263,7 @@
 **待补**:
 
 - name_orig: Benedetto Croce
-- main_location_lat_lng: <在这里填经纬度，格式 lat,lng，如 51.5074,-0.1278（伦敦）>
+- main_location_lat_lng: 40.8518,14.2681
 - bio_event_style:
   - <每行一条事件，最多 5 行，格式 "yyyy 年 - 做了什么">
 - citation_urls:
@@ -271,7 +278,7 @@
 **待补**:
 
 - name_orig: Lyubov Axelrod
-- main_location_lat_lng: <在这里填经纬度，格式 lat,lng，如 51.5074,-0.1278（伦敦）>
+- main_location_lat_lng: 46.2044,6.1432
 - bio_event_style:
   - <每行一条事件，最多 5 行，格式 "yyyy 年 - 做了什么">
 - citation_urls:
@@ -286,7 +293,7 @@
 **待补**:
 
 - name_orig: Władysław Bortkiewicz
-- main_location_lat_lng: <在这里填经纬度，格式 lat,lng，如 51.5074,-0.1278（伦敦）>
+- main_location_lat_lng: 52.5200,13.4050
 - bio_event_style:
   - <每行一条事件，最多 5 行，格式 "yyyy 年 - 做了什么">
 - citation_urls:
@@ -301,7 +308,7 @@
 **待补**:
 
 - name_orig: <不确定: Harry Waton 已是英文形式，请点 Wikidata 链接核对>
-- main_location_lat_lng: <在这里填经纬度，格式 lat,lng，如 51.5074,-0.1278（伦敦）>
+- main_location_lat_lng: <不确定: 人物身份模糊，主要活动地待 Wikidata 核对>
 - bio_event_style:
   - <每行一条事件，最多 5 行，格式 "yyyy 年 - 做了什么">
 - citation_urls:
@@ -316,7 +323,7 @@
 **待补**:
 
 - name_orig: Vladimir Lenin
-- main_location_lat_lng: <在这里填经纬度，格式 lat,lng，如 51.5074,-0.1278（伦敦）>
+- main_location_lat_lng: 55.7558,37.6173
 - bio_event_style:
   - <每行一条事件，最多 5 行，格式 "yyyy 年 - 做了什么">
 - citation_urls:
@@ -331,7 +338,7 @@
 **待补**:
 
 - name_orig: Sergei Bulgakov
-- main_location_lat_lng: <在这里填经纬度，格式 lat,lng，如 51.5074,-0.1278（伦敦）>
+- main_location_lat_lng: 48.8566,2.3522
 - bio_event_style:
   - <每行一条事件，最多 5 行，格式 "yyyy 年 - 做了什么">
 - citation_urls:
@@ -346,7 +353,7 @@
 **待补**:
 
 - name_orig: Anton Pannekoek
-- main_location_lat_lng: <在这里填经纬度，格式 lat,lng，如 51.5074,-0.1278（伦敦）>
+- main_location_lat_lng: 52.3676,4.9041
 - bio_event_style:
   - <每行一条事件，最多 5 行，格式 "yyyy 年 - 做了什么">
 - citation_urls:
@@ -361,7 +368,7 @@
 **待补**:
 
 - name_orig: Joseph Stalin
-- main_location_lat_lng: <在这里填经纬度，格式 lat,lng，如 51.5074,-0.1278（伦敦）>
+- main_location_lat_lng: 55.7558,37.6173
 - bio_event_style:
   - <每行一条事件，最多 5 行，格式 "yyyy 年 - 做了什么">
 - citation_urls:
@@ -376,7 +383,7 @@
 **待补**:
 
 - name_orig: Ernst Simon Bloch
-- main_location_lat_lng: <在这里填经纬度，格式 lat,lng，如 51.5074,-0.1278（伦敦）>
+- main_location_lat_lng: 51.3397,12.3731
 - bio_event_style:
   - <每行一条事件，最多 5 行，格式 "yyyy 年 - 做了什么">
 - citation_urls:
@@ -391,7 +398,7 @@
 **待补**:
 
 - name_orig: Natalia Moszkowska
-- main_location_lat_lng: <在这里填经纬度，格式 lat,lng，如 51.5074,-0.1278（伦敦）>
+- main_location_lat_lng: 47.3769,8.5417
 - bio_event_style:
   - <每行一条事件，最多 5 行，格式 "yyyy 年 - 做了什么">
 - citation_urls:
@@ -406,7 +413,7 @@
 **待补**:
 
 - name_orig: Karl Korsch
-- main_location_lat_lng: <在这里填经纬度，格式 lat,lng，如 51.5074,-0.1278（伦敦）>
+- main_location_lat_lng: 52.5200,13.4050
 - bio_event_style:
   - <每行一条事件，最多 5 行，格式 "yyyy 年 - 做了什么">
 - citation_urls:
@@ -421,7 +428,7 @@
 **待补**:
 
 - name_orig: Antonio Gramsci
-- main_location_lat_lng: <在这里填经纬度，格式 lat,lng，如 51.5074,-0.1278（伦敦）>
+- main_location_lat_lng: 45.0703,7.6869
 - bio_event_style:
   - <每行一条事件，最多 5 行，格式 "yyyy 年 - 做了什么">
 - citation_urls:
@@ -436,7 +443,7 @@
 **待补**:
 
 - name_orig: Walter Benjamin
-- main_location_lat_lng: <在这里填经纬度，格式 lat,lng，如 51.5074,-0.1278（伦敦）>
+- main_location_lat_lng: 48.8566,2.3522
 - bio_event_style:
   - <每行一条事件，最多 5 行，格式 "yyyy 年 - 做了什么">
 - citation_urls:
@@ -451,7 +458,7 @@
 **待补**:
 
 - name_orig: Rāhula Sāṅkr̥tyāyana
-- main_location_lat_lng: <在这里填经纬度，格式 lat,lng，如 51.5074,-0.1278（伦敦）>
+- main_location_lat_lng: 25.3176,82.9739
 - bio_event_style:
   - <每行一条事件，最多 5 行，格式 "yyyy 年 - 做了什么">
 - citation_urls:
@@ -466,7 +473,7 @@
 **待补**:
 
 - name_orig: Valentin Asmus
-- main_location_lat_lng: <在这里填经纬度，格式 lat,lng，如 51.5074,-0.1278（伦敦）>
+- main_location_lat_lng: 55.7558,37.6173
 - bio_event_style:
   - <每行一条事件，最多 5 行，格式 "yyyy 年 - 做了什么">
 - citation_urls:
@@ -481,7 +488,7 @@
 **待补**:
 
 - name_orig: Carlos Astrada
-- main_location_lat_lng: <在这里填经纬度，格式 lat,lng，如 51.5074,-0.1278（伦敦）>
+- main_location_lat_lng: -34.6037,-58.3816
 - bio_event_style:
   - <每行一条事件，最多 5 行，格式 "yyyy 年 - 做了什么">
 - citation_urls:
@@ -496,7 +503,7 @@
 **待补**:
 
 - name_orig: Edmund Wilson
-- main_location_lat_lng: <在这里填经纬度，格式 lat,lng，如 51.5074,-0.1278（伦敦）>
+- main_location_lat_lng: 40.7128,-74.0060
 - bio_event_style:
   - <每行一条事件，最多 5 行，格式 "yyyy 年 - 做了什么">
 - citation_urls:
@@ -511,7 +518,7 @@
 **待补**:
 
 - name_orig: Georges Bataille
-- main_location_lat_lng: <在这里填经纬度，格式 lat,lng，如 51.5074,-0.1278（伦敦）>
+- main_location_lat_lng: 48.8566,2.3522
 - bio_event_style:
   - <每行一条事件，最多 5 行，格式 "yyyy 年 - 做了什么">
 - citation_urls:
@@ -526,7 +533,7 @@
 **待补**:
 
 - name_orig: <不确定: 弗里德里希·威爾克 译名歧义，可能是 Friedrich Wilcke / Friedrich Vielke / Friedrich Wielke，请点 Wikidata 链接核对>
-- main_location_lat_lng: <在这里填经纬度，格式 lat,lng，如 51.5074,-0.1278（伦敦）>
+- main_location_lat_lng: <不确定: 人物身份模糊，主要活动地待 Wikidata 核对>
 - bio_event_style:
   - <每行一条事件，最多 5 行，格式 "yyyy 年 - 做了什么">
 - citation_urls:
