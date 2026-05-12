@@ -1369,5 +1369,161 @@
       "reference": "Bataille, G. (1949). La Part maudite."
     }
   ],
-  "relations": []
+  "relations": [
+    {
+      "source": "claim-q9235-01",
+      "target": "claim-marx-001",
+      "type": "agreement_with"
+    },
+    {
+      "source": "claim-q76422-01",
+      "target": "claim-marx-001",
+      "type": "agreement_with"
+    },
+    {
+      "source": "claim-q9235-01",
+      "target": "claim-marx-002",
+      "type": "agreement_with"
+    },
+    {
+      "source": "claim-q9235-01",
+      "target": "claim-marx-003",
+      "type": "disagreement_with"
+    },
+    {
+      "source": "claim-q76422-01",
+      "target": "claim-marx-003",
+      "type": "agreement_with"
+    },
+    {
+      "source": "claim-q9235-01",
+      "target": "claim-marx-004",
+      "type": "agreement_with"
+    },
+    {
+      "source": "claim-q9235-01",
+      "target": "claim-marx-004",
+      "type": "disagreement_with"
+    },
+    {
+      "source": "claim-q76422-01",
+      "target": "claim-marx-004",
+      "type": "disagreement_with"
+    },
+    {
+      "source": "claim-q9235-01",
+      "target": "claim-marx-005",
+      "type": "agreement_with"
+    },
+    {
+      "source": "claim-q9235-01",
+      "target": "claim-marx-006",
+      "type": "agreement_with"
+    },
+    {
+      "source": "claim-q9235-01",
+      "target": "claim-marx-006",
+      "type": "disagreement_with"
+    },
+    {
+      "source": "claim-q9235-01",
+      "target": "claim-marx-009",
+      "type": "disagreement_with"
+    },
+    {
+      "source": "claim-q76422-01",
+      "target": "claim-marx-009",
+      "type": "agreement_with"
+    },
+    {
+      "source": "claim-q9235-01",
+      "target": "claim-marx-013",
+      "type": "agreement_with"
+    },
+    {
+      "source": "claim-q9235-01",
+      "target": "claim-marx-018",
+      "type": "disagreement_with"
+    },
+    {
+      "source": "claim-q76422-01",
+      "target": "claim-marx-018",
+      "type": "agreement_with"
+    },
+    {
+      "source": "claim-q9235-01",
+      "target": "claim-marx-019",
+      "type": "disagreement_with"
+    },
+    {
+      "source": "claim-marx-001",
+      "target": "claim-q83003-01",
+      "type": "agreement_with"
+    },
+    {
+      "source": "claim-marx-004",
+      "target": "claim-q83003-01",
+      "type": "agreement_with"
+    },
+    {
+      "source": "claim-marx-019",
+      "target": "claim-q83003-01",
+      "type": "agreement_with"
+    },
+    {
+      "source": "claim-marx-011",
+      "target": "claim-q83003-01",
+      "type": "disagreement_with"
+    },
+    {
+      "source": "claim-marx-005",
+      "target": "claim-q83003-01",
+      "type": "agreement_with"
+    },
+    {
+      "source": "claim-marx-008",
+      "target": "claim-q83003-01",
+      "type": "disagreement_with"
+    },
+    {
+      "source": "claim-marx-007",
+      "target": "claim-q83003-01",
+      "type": "agreement_with"
+    },
+    {
+      "source": "claim-marx-006",
+      "target": "claim-q83003-01",
+      "type": "disagreement_with"
+    },
+    {
+      "source": "claim-marx-018",
+      "target": "claim-q83003-01",
+      "type": "disagreement_with"
+    },
+    {
+      "source": "claim-marx-014",
+      "target": "claim-q61078-01",
+      "type": "agreement_with"
+    },
+    {
+      "source": "claim-marx-008",
+      "target": "claim-q61078-01",
+      "type": "agreement_with"
+    },
+    {
+      "source": "claim-marx-005",
+      "target": "claim-q61078-01",
+      "type": "agreement_with"
+    },
+    {
+      "source": "claim-marx-013",
+      "target": "claim-q207359-01",
+      "type": "agreement_with"
+    },
+    {
+      "source": "claim-marx-017",
+      "target": "claim-q207359-01",
+      "type": "agreement_with"
+    }
+  ]
 }
