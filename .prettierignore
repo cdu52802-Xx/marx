@@ -12,3 +12,11 @@ package-lock.json
 # 跟 prettier 默认格式可能不一致（trailing newline / 缩进），交给脚本管理
 src/data/claims.json
 scripts/data/
+
+# 静态资源 / 存档 / mockup / cache 不交给 prettier 管：
+# - public/m3-archive/  M3 已存档 build artifacts（minified JS/CSS，prettier 展开成 ~4000 行噪音）
+# - public/styles/      风格调研 mockup HTML（保留作者手写格式）
+# - scripts/sparql/cache/  SPARQL 响应 cache（数据，非源码）
+public/m3-archive/
+public/styles/
+scripts/sparql/cache/

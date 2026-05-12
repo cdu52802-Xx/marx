@@ -8,9 +8,7 @@ describe('Task 2 · Marx 19 obs 入库 acceptance', () => {
   const claims = (data.claims ?? []) as ClaimNode[];
   // filter 用 denizcemonduygu source identity, 不是 author_id
   // (T3 12 concept claim author_id 也是 wd-q9061 但 source 不同, 走 derived_from_concept_id)
-  const marxClaims = claims.filter(
-    (c) => c.derived_from_denizcemonduygu_record_id !== undefined,
-  );
+  const marxClaims = claims.filter((c) => c.derived_from_denizcemonduygu_record_id !== undefined);
 
   it('Marx claim 数 = 19', () => {
     expect(marxClaims.length).toBe(19);
