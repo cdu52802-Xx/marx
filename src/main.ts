@@ -26,6 +26,7 @@ import {
   type PersonSection,
   type ClaimWithCoords,
 } from './components/claim-layout.ts';
+import { mountTimeline } from './components/timeline.ts';
 import type { ClaimNode, ClaimRelation } from './types/Claim.ts';
 import type { PersonNode } from './types/Node.ts';
 
@@ -96,7 +97,13 @@ if (app.empty()) {
 }
 
 // 让 #app + body 允许横向 scroll (画布无限 / Engels 等长 section 不被裁)
-app.style('overflow', 'auto').style('width', '100vw').style('height', '100vh');
+// padding-bottom: 160px 给底部 fixed timeline 留视觉空间（T7 / spec § 6.1 独立栏）
+app
+  .style('overflow', 'auto')
+  .style('width', '100vw')
+  .style('height', '100vh')
+  .style('padding-bottom', '160px')
+  .style('box-sizing', 'border-box');
 document.documentElement.style.overflow = 'auto';
 document.body.style.margin = '0';
 document.body.style.background = '#fcfaf6';
@@ -258,4 +265,28 @@ sectionG.each(function (section) {
   });
 });
 
-console.log('[Marx M4] render complete');
+// === 8. T7 · 底部横向时间轴（spec § 6 / 独立参考维度）===
+// PM 视觉期待: timeline 是 "独立栏" 始终可见，不能 scroll 到画布底才看到
+// 实现: position: fixed bottom: 0 mount 到 document.body，跨 #app scroll 始终在视口底部
+// 若 PM 反馈 "timeline 应跟画布一起 scroll" → 切回 mount 到 #app 末尾（5 分钟改回）
+
+const timelineContainer = document.createElement('div');
+timelineContainer.id = 'timeline-fixed';
+timelineContainer.style.cssText =
+  'position:fixed;bottom:0;left:0;right:0;z-index:10;box-shadow:0 -4px 12px rgba(58,35,96,0.08)';
+document.body.appendChild(timelineContainer);
+
+mountTimeline({
+  container: timelineContainer,
+  yearMin: 1770,
+  yearMax: 1950,
+  initialCursor: 1880,
+  onCursorChange: (year) => {
+    // 之后年代的 person section 淡出（opacity 0.4 / spec § 6.2 时间轴游标联动）
+    d3.selectAll<SVGGElement, PersonSection>('g.person-section').attr('opacity', (s) =>
+      s.birth_year > year ? 0.4 : 1,
+    );
+  },
+});
+
+console.log('[Marx M4] render complete · timeline mounted (position:fixed bottom:0)');
