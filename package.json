@@ -21,7 +21,8 @@
     "m3:apply-concept": "tsx scripts/apply-validation-md.ts concept",
     "m4:import-marx": "tsx scripts/import-denizcemonduygu-marx.ts",
     "m4:apply-md": "tsx scripts/apply-claim-validation-md.ts",
-    "m4:gen-concept-md": "tsx scripts/upgrade-concept-to-claim.ts"
+    "m4:gen-concept-md": "tsx scripts/upgrade-concept-to-claim.ts",
+    "m4:gen-person-md": "tsx scripts/generate-person-quote-md.ts"
   },
   "repository": {
     "type": "git",

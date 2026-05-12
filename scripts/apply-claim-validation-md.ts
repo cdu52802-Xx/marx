@@ -24,8 +24,9 @@ const VALID_CONCEPT_IDS = new Set<string>([
 ]);
 
 /**
- * I3: 共享字段提取 helper — 统一 non-greedy regex + 行尾 anchor + 4 种 placeholder guard。
- * 返回 undefined 表示字段为空/placeholder/dash，调用方无需重复检查。
+ * I3: 共享字段提取 helper — 统一 non-greedy regex + 行尾 anchor + 5 种 placeholder guard。
+ * 返回 undefined 表示字段为空/placeholder/dash/不确定，调用方无需重复检查。
+ * T4: 加 `<不确定:` 前缀 guard — hybrid 模式 AI 没把握的 reference / deniz id 等字段。
  */
 function extractField(body: string, fieldName: string): string | undefined {
   const escaped = fieldName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -33,11 +34,13 @@ function extractField(body: string, fieldName: string): string | undefined {
   if (!m) return undefined;
   const v = m[1].trim();
   if (v === '' || v === '-' || v === '<待 AI 草稿>' || v === '<待翻译>') return undefined;
+  if (v.startsWith('<不确定')) return undefined; // T4 hybrid mode: 跳过 AI 不确定字段
   return v;
 }
 
 const CHECKLIST_PATH = 'docs/m4-validation/marx-19-claims-checklist.md';
 const CONCEPT_CHECKLIST_PATH = 'docs/m4-validation/concept-12-claims-checklist.md';
+const PERSON_QUOTE_CHECKLIST_PATH = 'docs/m4-validation/person-quote-checklist.md';
 const CLAIMS_JSON_PATH = 'src/data/claims.json';
 
 export interface ClaimDatasetShape {
@@ -195,6 +198,102 @@ export function applyConceptChecklistMd(
   return { dataset, created, skipped };
 }
 
+/**
+ * T4: applyPersonQuoteMd — 99 person quote entries (33 person × 3).
+ * - H2 = ## claim-q<digits>-<NN>（e.g. claim-q9235-01）
+ * - 跟 concept apply 区别：
+ *   1) author_id 不固定 Marx，从 checklist 的 **author_id**: wd-q<N> 字段取
+ *   2) 多了 reference / deniz_person_id 字段（deniz 入 derived_from_denizcemonduygu_record_id × NO,
+ *      T5 用 deniz id 做 cross-person link mapping，T4 此处只入 reference）
+ *   3) 不写 derived_from_concept_id / derived_from_denizcemonduygu_record_id
+ *      （test 第 3 个 it 用此判别哪些是 person quote）
+ *   4) `<不确定:` 前缀字段被 extractField 跳过（claim_text 跳过 → 整条 entry skip）
+ */
+export function applyPersonQuoteMd(
+  md: string,
+  dataset: ClaimDatasetShape,
+): { dataset: ClaimDatasetShape; created: number; skipped: number } {
+  const claims: ClaimNode[] = dataset.claims;
+  // H2 = claim-q<digits>-<NN>，需 anchor 末尾 \d+ 防误匹配 claim-cpt-xxx 或 claim-marx-xxx
+  const sections = md.split(/^## (claim-q\d+-\d+)$/m).slice(1);
+  let created = 0;
+  let skipped = 0;
+
+  for (let i = 0; i < sections.length; i += 2) {
+    const id = sections[i].trim();
+    const body = sections[i + 1];
+
+    const claim_text = extractField(body, 'claim_text');
+    if (claim_text === undefined) {
+      skipped++;
+      continue;
+    }
+
+    // author_id: must exist 且 wd-q<N> 形式
+    const author_id = extractField(body, 'author_id');
+    if (author_id === undefined || !author_id.startsWith('wd-q')) {
+      console.warn(`  ⚠️ ${id} author_id 缺失或非法: ${author_id} — entry skip`);
+      skipped++;
+      continue;
+    }
+
+    const yearStr = extractField(body, 'year');
+    const year = yearStr ? parseInt(yearStr) : 1850;
+
+    const source_work_id = extractField(body, 'source_work_id');
+
+    const catsStr = extractField(body, 'cats');
+    const cats: ClaimCategory[] = catsStr
+      ? (catsStr
+          .split(',')
+          .map((s) => s.trim())
+          .filter((s) => s !== '' && VALID_CATS_SET.has(s)) as ClaimCategory[])
+      : [];
+    if (cats.length === 0) cats.push('po');
+
+    const keywords = extractField(body, 'keywords');
+    const reference = extractField(body, 'reference');
+
+    // Check if exists (idempotent)
+    const existing = claims.find((c) => c.id === id);
+    if (existing) {
+      existing.claim_text = claim_text;
+      existing.name_zh = claim_text.slice(0, 20);
+      existing.author_id = author_id;
+      existing.year = year;
+      existing.cats = cats;
+      if (source_work_id) existing.source_work_id = source_work_id;
+      if (keywords) existing.keywords = keywords;
+      if (reference) existing.reference = reference;
+      created++;
+      continue;
+    }
+
+    // Create new person quote ClaimNode
+    // name_orig 留空（person quote 无统一原文名，跟 marx-19 quote 一致）
+    const newClaim: ClaimNode = {
+      id,
+      type: 'claim',
+      name_zh: claim_text.slice(0, 20),
+      name_orig: '',
+      claim_text,
+      author_id,
+      year,
+      cats,
+    };
+    if (source_work_id) newClaim.source_work_id = source_work_id;
+    if (keywords) newClaim.keywords = keywords;
+    if (reference) newClaim.reference = reference;
+    // 注意：故意不写 derived_from_concept_id / derived_from_denizcemonduygu_record_id
+    // 让 test 第 3 个 it 通过 filter 识别为 person quote
+
+    claims.push(newClaim);
+    created++;
+  }
+
+  return { dataset, created, skipped };
+}
+
 function applyMdCLI() {
   // Step 1: apply marx-19 checklist (update existing claims)
   const md = readFileSync(CHECKLIST_PATH, 'utf-8');
@@ -205,10 +304,20 @@ function applyMdCLI() {
   const conceptMd = readFileSync(CONCEPT_CHECKLIST_PATH, 'utf-8');
   const { created, skipped: conceptSkipped } = applyConceptChecklistMd(conceptMd, dataset);
 
+  // Step 3: apply person quote checklist (T4 / 33 person × 3 quote = 99)
+  const personQuoteMd = readFileSync(PERSON_QUOTE_CHECKLIST_PATH, 'utf-8');
+  const { created: personCreated, skipped: personSkipped } = applyPersonQuoteMd(
+    personQuoteMd,
+    dataset,
+  );
+
   writeFileSync(CLAIMS_JSON_PATH, JSON.stringify(dataset, null, 2));
   console.log(`Updated ${updated} Marx claims (skipped ${skipped} <待翻译> placeholders)`);
   console.log(
     `Created/updated ${created} concept claims (skipped ${conceptSkipped} incomplete entries)`,
+  );
+  console.log(
+    `Person quote claims: ${personCreated} added/updated (skipped ${personSkipped} <不确定>/<待 AI 草稿> entries)`,
   );
 }
 

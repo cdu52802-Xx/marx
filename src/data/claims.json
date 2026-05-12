@@ -477,6 +477,896 @@
       "source_work_id": "wd-q40591",
       "keywords": "国家,阶级压迫工具",
       "derived_from_concept_id": "concept-state"
+    },
+    {
+      "id": "claim-q9235-01",
+      "type": "claim",
+      "name_zh": "理性即现实，凡现实的都是合理的——精神在",
+      "name_orig": "",
+      "claim_text": "理性即现实，凡现实的都是合理的——精神在历史中辩证展开。",
+      "author_id": "wd-q9235",
+      "year": 1820,
+      "cats": [
+        "me",
+        "po"
+      ],
+      "keywords": "Hegelian idealism,dialectic",
+      "reference": "Hegel, G.W.F. (1820). Grundlinien der Philosophie des Rechts, 序言."
+    },
+    {
+      "id": "claim-q9235-02",
+      "type": "claim",
+      "name_zh": "历史是绝对精神自我认识的辩证过程，每个时",
+      "name_orig": "",
+      "claim_text": "历史是绝对精神自我认识的辩证过程，每个时代都是必然环节。",
+      "author_id": "wd-q9235",
+      "year": 1807,
+      "cats": [
+        "me"
+      ],
+      "keywords": "absolute idealism,philosophy of history",
+      "reference": "Hegel, G.W.F. (1807). Phänomenologie des Geistes."
+    },
+    {
+      "id": "claim-q9235-03",
+      "type": "claim",
+      "name_zh": "主奴辩证法：奴隶通过劳动改造世界，反获自",
+      "name_orig": "",
+      "claim_text": "主奴辩证法：奴隶通过劳动改造世界，反获自我意识——劳动是自由的中介。",
+      "author_id": "wd-q9235",
+      "year": 1807,
+      "cats": [
+        "me",
+        "po",
+        "et"
+      ],
+      "keywords": "master-slave dialectic,labor",
+      "reference": "Hegel, G.W.F. (1807). Phänomenologie des Geistes, B.IV.A."
+    },
+    {
+      "id": "claim-q76422-01",
+      "type": "claim",
+      "name_zh": "神是人的本质的异化投射——不是上帝创造人",
+      "name_orig": "",
+      "claim_text": "神是人的本质的异化投射——不是上帝创造人，是人按自己创造上帝。",
+      "author_id": "wd-q76422",
+      "year": 1841,
+      "cats": [
+        "re",
+        "me"
+      ],
+      "keywords": "anthropological materialism,religion critique",
+      "reference": "Feuerbach, L. (1841). Das Wesen des Christentums."
+    },
+    {
+      "id": "claim-q76422-02",
+      "type": "claim",
+      "name_zh": "哲学的对象不是抽象精神，而是感性的、肉体",
+      "name_orig": "",
+      "claim_text": "哲学的对象不是抽象精神，而是感性的、肉体的、现实的人。",
+      "author_id": "wd-q76422",
+      "year": 1843,
+      "cats": [
+        "me",
+        "mp"
+      ],
+      "keywords": "sensualism,anthropological turn",
+      "reference": "Feuerbach, L. (1843). Grundsätze der Philosophie der Zukunft."
+    },
+    {
+      "id": "claim-q76422-03",
+      "type": "claim",
+      "name_zh": "宗教的秘密在人类学——批判神学必先还原为",
+      "name_orig": "",
+      "claim_text": "宗教的秘密在人类学——批判神学必先还原为批判人本身的异化。",
+      "author_id": "wd-q76422",
+      "year": 1841,
+      "cats": [
+        "re",
+        "et"
+      ],
+      "keywords": "religion as alienation",
+      "reference": "Feuerbach, L. (1841). Das Wesen des Christentums, 第一编."
+    },
+    {
+      "id": "claim-q76725-01",
+      "type": "claim",
+      "name_zh": "我把我的事业建立在虚无之上——除唯一者自",
+      "name_orig": "",
+      "claim_text": "我把我的事业建立在虚无之上——除唯一者自己以外，一切都是虚妄。",
+      "author_id": "wd-q76725",
+      "year": 1844,
+      "cats": [
+        "me",
+        "et",
+        "po"
+      ],
+      "keywords": "egoism,nihilism",
+      "reference": "Stirner, M. (1844). Der Einzige und sein Eigentum, 序言."
+    },
+    {
+      "id": "claim-q76725-02",
+      "type": "claim",
+      "name_zh": "国家、社会、人类、神——都是压迫个人的\"",
+      "name_orig": "",
+      "claim_text": "国家、社会、人类、神——都是压迫个人的\"幽灵\"，必须由唯一者抛弃。",
+      "author_id": "wd-q76725",
+      "year": 1844,
+      "cats": [
+        "po",
+        "me"
+      ],
+      "keywords": "anti-statism,individualism",
+      "reference": "Stirner, M. (1844). Der Einzige und sein Eigentum."
+    },
+    {
+      "id": "claim-q76725-03",
+      "type": "claim",
+      "name_zh": "共产主义只是把神圣的占有换成神圣的共有—",
+      "name_orig": "",
+      "claim_text": "共产主义只是把神圣的占有换成神圣的共有——仍以集体名义剥夺个人。",
+      "author_id": "wd-q76725",
+      "year": 1844,
+      "cats": [
+        "po"
+      ],
+      "keywords": "critique of communism,egoist union",
+      "reference": "Stirner, M. (1844). Der Einzige und sein Eigentum, 第二部分."
+    },
+    {
+      "id": "claim-q5749-01",
+      "type": "claim",
+      "name_zh": "财产就是盗窃——所有权在没有劳动的情况下",
+      "name_orig": "",
+      "claim_text": "财产就是盗窃——所有权在没有劳动的情况下取得就是对劳动者的掠夺。",
+      "author_id": "wd-q5749",
+      "year": 1840,
+      "cats": [
+        "po",
+        "et"
+      ],
+      "keywords": "mutualism,anti-property",
+      "reference": "Proudhon, P.-J. (1840). Qu'est-ce que la propriété?"
+    },
+    {
+      "id": "claim-q5749-02",
+      "type": "claim",
+      "name_zh": "互助主义：自由人之间的契约联合可以取代国",
+      "name_orig": "",
+      "claim_text": "互助主义：自由人之间的契约联合可以取代国家与资本——无政府才是秩序。",
+      "author_id": "wd-q5749",
+      "year": 1851,
+      "cats": [
+        "po"
+      ],
+      "keywords": "mutualism,anarchism",
+      "reference": "Proudhon, P.-J. (1851). Idée générale de la Révolution au XIXe siècle."
+    },
+    {
+      "id": "claim-q5749-03",
+      "type": "claim",
+      "name_zh": "哲学是经济矛盾的体系——贫困即矛盾本身，",
+      "name_orig": "",
+      "claim_text": "哲学是经济矛盾的体系——贫困即矛盾本身，须由社会互助化解。",
+      "author_id": "wd-q5749",
+      "year": 1846,
+      "cats": [
+        "po",
+        "me"
+      ],
+      "keywords": "philosophy of poverty",
+      "reference": "Proudhon, P.-J. (1846). Système des contradictions économiques ou Philosophie de la misère."
+    },
+    {
+      "id": "claim-q27645-01",
+      "type": "claim",
+      "name_zh": "一切国家都是压迫——即便是无产阶级专政也",
+      "name_orig": "",
+      "claim_text": "一切国家都是压迫——即便是无产阶级专政也会变成新红色官僚。",
+      "author_id": "wd-q27645",
+      "year": 1873,
+      "cats": [
+        "po"
+      ],
+      "keywords": "anarchism,anti-statism",
+      "reference": "Bakunin, M. (1873). Государственность и анархия (Statism and Anarchy)."
+    },
+    {
+      "id": "claim-q27645-02",
+      "type": "claim",
+      "name_zh": "自由不能由权威给予，必须由人民自下而上的",
+      "name_orig": "",
+      "claim_text": "自由不能由权威给予，必须由人民自下而上的革命直接夺取。",
+      "author_id": "wd-q27645",
+      "year": 1871,
+      "cats": [
+        "po",
+        "et"
+      ],
+      "keywords": "libertarian socialism,direct revolution",
+      "reference": "Bakunin, M. (1871). Бог и государство (God and the State)."
+    },
+    {
+      "id": "claim-q27645-03",
+      "type": "claim",
+      "name_zh": "破坏的激情也是创造的激情——彻底毁灭旧世",
+      "name_orig": "",
+      "claim_text": "破坏的激情也是创造的激情——彻底毁灭旧世界才能诞生新世界。",
+      "author_id": "wd-q27645",
+      "year": 1842,
+      "cats": [
+        "po",
+        "et"
+      ],
+      "keywords": "revolutionary destruction",
+      "reference": "Bakunin, M. (1842). Die Reaktion in Deutschland."
+    },
+    {
+      "id": "claim-q34787-01",
+      "type": "claim",
+      "name_zh": "家庭、私有制、国家是历史产物——母权制曾",
+      "name_orig": "",
+      "claim_text": "家庭、私有制、国家是历史产物——母权制曾长期主导，阶级出现才有国家。",
+      "author_id": "wd-q34787",
+      "year": 1884,
+      "cats": [
+        "po",
+        "me"
+      ],
+      "keywords": "historical materialism,family",
+      "reference": "Engels, F. (1884). Der Ursprung der Familie, des Privateigentums und des Staats."
+    },
+    {
+      "id": "claim-q34787-02",
+      "type": "claim",
+      "name_zh": "自然辩证法：辩证法不仅是社会规律，也是物",
+      "name_orig": "",
+      "claim_text": "自然辩证法：辩证法不仅是社会规律，也是物质自然演化的根本规律。",
+      "author_id": "wd-q34787",
+      "year": 1883,
+      "cats": [
+        "sc",
+        "me"
+      ],
+      "keywords": "dialectics of nature",
+      "reference": "Engels, F. (1883). Dialektik der Natur (posthumous, marxists.org)."
+    },
+    {
+      "id": "claim-q34787-03",
+      "type": "claim",
+      "name_zh": "英国工人阶级的状况是资本主义工业化的代价",
+      "name_orig": "",
+      "claim_text": "英国工人阶级的状况是资本主义工业化的代价——他们的解放就是人类的解放。",
+      "author_id": "wd-q34787",
+      "year": 1845,
+      "cats": [
+        "po",
+        "et"
+      ],
+      "keywords": "working class condition,industrial capitalism",
+      "reference": "Engels, F. (1845). Die Lage der arbeitenden Klasse in England."
+    },
+    {
+      "id": "claim-q75784-01",
+      "type": "claim",
+      "name_zh": "工人必须通过国家选举建立合作社——以普选",
+      "name_orig": "",
+      "claim_text": "工人必须通过国家选举建立合作社——以普选权和国家资助实现解放。",
+      "author_id": "wd-q75784",
+      "year": 1863,
+      "cats": [
+        "po"
+      ],
+      "keywords": "state socialism,universal suffrage"
+    },
+    {
+      "id": "claim-q75784-02",
+      "type": "claim",
+      "name_zh": "工资铁律：在自由竞争下工资总趋向最低生存",
+      "name_orig": "",
+      "claim_text": "工资铁律：在自由竞争下工资总趋向最低生存水平——必须用国家干预打破。",
+      "author_id": "wd-q75784",
+      "year": 1863,
+      "cats": [
+        "po",
+        "sc"
+      ],
+      "keywords": "iron law of wages"
+    },
+    {
+      "id": "claim-q75784-03",
+      "type": "claim",
+      "name_zh": "相对于工人阶级，其他一切阶级都是反动的—",
+      "name_orig": "",
+      "claim_text": "相对于工人阶级，其他一切阶级都是反动的——只有工人代表全民族的未来。",
+      "author_id": "wd-q75784",
+      "year": 1862,
+      "cats": [
+        "po"
+      ],
+      "keywords": "workers as universal class"
+    },
+    {
+      "id": "claim-q548271-01",
+      "type": "claim",
+      "name_zh": "马克思主义必须本土化——英国走议会道路而",
+      "name_orig": "",
+      "claim_text": "马克思主义必须本土化——英国走议会道路而非俄式革命也能达到社会主义。",
+      "author_id": "wd-q548271",
+      "year": 1881,
+      "cats": [
+        "po"
+      ],
+      "keywords": "British socialism,parliamentary road"
+    },
+    {
+      "id": "claim-q548271-02",
+      "type": "claim",
+      "name_zh": "剩余价值理论是社会主义的科学基石——资本",
+      "name_orig": "",
+      "claim_text": "剩余价值理论是社会主义的科学基石——资本剥削有量化经济根据。",
+      "author_id": "wd-q548271",
+      "year": 1881,
+      "cats": [
+        "po",
+        "sc"
+      ],
+      "keywords": "Marxist economics",
+      "reference": "Hyndman, H.M. (1881). England for All (借鉴 Capital 但未署名引发与 Marx 不和)."
+    },
+    {
+      "id": "claim-q548271-03",
+      "type": "claim",
+      "name_zh": "英国工人有特权的工资是帝国剥削殖民地的红",
+      "name_orig": "",
+      "claim_text": "英国工人有特权的工资是帝国剥削殖民地的红利——必须警惕沙文主义。",
+      "author_id": "wd-q548271",
+      "year": 1911,
+      "cats": [
+        "po",
+        "et"
+      ],
+      "keywords": "imperialism critique"
+    },
+    {
+      "id": "claim-q342730-01",
+      "type": "claim",
+      "name_zh": "历史唯物主义不是经济宿命论——是研究历史",
+      "name_orig": "",
+      "claim_text": "历史唯物主义不是经济宿命论——是研究历史的方法，非预测公式。",
+      "author_id": "wd-q342730",
+      "year": 1896,
+      "cats": [
+        "me",
+        "po"
+      ],
+      "keywords": "Italian Marxism,methodology",
+      "reference": "Labriola, A. (1896). In memoria del Manifesto dei Comunisti."
+    },
+    {
+      "id": "claim-q342730-02",
+      "type": "claim",
+      "name_zh": "理论与实践统一——马克思主义首要不是世界",
+      "name_orig": "",
+      "claim_text": "理论与实践统一——马克思主义首要不是世界观而是无产阶级的行动哲学。",
+      "author_id": "wd-q342730",
+      "year": 1897,
+      "cats": [
+        "po",
+        "mp"
+      ],
+      "keywords": "praxis philosophy",
+      "reference": "Labriola, A. (1897). Discorrendo di socialismo e di filosofia."
+    },
+    {
+      "id": "claim-q376036-01",
+      "type": "claim",
+      "name_zh": "塞尔维亚 zadruga 公社是社会主义",
+      "name_orig": "",
+      "claim_text": "塞尔维亚 zadruga 公社是社会主义本土基础——可绕过资本主义直达共产。",
+      "author_id": "wd-q376036",
+      "year": 1872,
+      "cats": [
+        "po"
+      ],
+      "keywords": "agrarian socialism,Balkan socialism"
+    },
+    {
+      "id": "claim-q563138-01",
+      "type": "claim",
+      "name_zh": "资本论需要通俗化——把 Marx 的剥削",
+      "name_orig": "",
+      "claim_text": "资本论需要通俗化——把 Marx 的剥削分析变成工人能读懂的语言。",
+      "author_id": "wd-q563138",
+      "year": 1879,
+      "cats": [
+        "po"
+      ],
+      "keywords": "popularizing Marxism",
+      "reference": "Cafiero, C. (1879). Il Capitale di Carlo Marx brevemente compendiato."
+    },
+    {
+      "id": "claim-q563138-02",
+      "type": "claim",
+      "name_zh": "无政府共产主义：废除一切国家与所有制——",
+      "name_orig": "",
+      "claim_text": "无政府共产主义：废除一切国家与所有制——按需分配自下而上的联合。",
+      "author_id": "wd-q563138",
+      "year": 1880,
+      "cats": [
+        "po"
+      ],
+      "keywords": "anarcho-communism"
+    },
+    {
+      "id": "claim-q185085-01",
+      "type": "claim",
+      "name_zh": "人是有血肉的存在，对死亡的痛苦感是哲学的",
+      "name_orig": "",
+      "claim_text": "人是有血肉的存在，对死亡的痛苦感是哲学的起点——不是抽象理性。",
+      "author_id": "wd-q185085",
+      "year": 1913,
+      "cats": [
+        "me",
+        "et"
+      ],
+      "keywords": "Spanish existentialism,tragic sense",
+      "reference": "Unamuno, M. (1913). Del sentimiento trágico de la vida."
+    },
+    {
+      "id": "claim-q185085-02",
+      "type": "claim",
+      "name_zh": "理性和信仰永远冲突——这种矛盾本身才是真",
+      "name_orig": "",
+      "claim_text": "理性和信仰永远冲突——这种矛盾本身才是真正的人性悲剧。",
+      "author_id": "wd-q185085",
+      "year": 1913,
+      "cats": [
+        "re",
+        "me"
+      ],
+      "keywords": "reason vs faith",
+      "reference": "Unamuno, M. (1913). Del sentimiento trágico de la vida."
+    },
+    {
+      "id": "claim-q192348-01",
+      "type": "claim",
+      "name_zh": "一切真历史都是当代史——历史只在当下的精",
+      "name_orig": "",
+      "claim_text": "一切真历史都是当代史——历史只在当下的精神中获得真实存在。",
+      "author_id": "wd-q192348",
+      "year": 1917,
+      "cats": [
+        "me",
+        "mp"
+      ],
+      "keywords": "Italian neo-Hegelianism,philosophy of history",
+      "reference": "Croce, B. (1917). Teoria e storia della storiografia."
+    },
+    {
+      "id": "claim-q192348-02",
+      "type": "claim",
+      "name_zh": "马克思主义是经济唯物主义的方法启示——但",
+      "name_orig": "",
+      "claim_text": "马克思主义是经济唯物主义的方法启示——但不是封闭哲学体系。",
+      "author_id": "wd-q192348",
+      "year": 1900,
+      "cats": [
+        "po",
+        "mp"
+      ],
+      "keywords": "critique of Marxism",
+      "reference": "Croce, B. (1900). Materialismo storico ed economia marxistica."
+    },
+    {
+      "id": "claim-q192348-03",
+      "type": "claim",
+      "name_zh": "历史是自由的故事——精神在历史中不断扩展",
+      "name_orig": "",
+      "claim_text": "历史是自由的故事——精神在历史中不断扩展和实现自由的范围。",
+      "author_id": "wd-q192348",
+      "year": 1938,
+      "cats": [
+        "po",
+        "me"
+      ],
+      "keywords": "historicism,liberty",
+      "reference": "Croce, B. (1938). La storia come pensiero e come azione."
+    },
+    {
+      "id": "claim-q128494-01",
+      "type": "claim",
+      "name_zh": "哲学唯物主义必须以认识论为基础——不能跳",
+      "name_orig": "",
+      "claim_text": "哲学唯物主义必须以认识论为基础——不能跳过哲学直接谈政治。",
+      "author_id": "wd-q128494",
+      "year": 1906,
+      "cats": [
+        "me",
+        "ep"
+      ],
+      "keywords": "Russian Marxism,Plekhanov school"
+    },
+    {
+      "id": "claim-q836646-01",
+      "type": "claim",
+      "name_zh": "价值与价格的转形需要联立方程——Marx",
+      "name_orig": "",
+      "claim_text": "价值与价格的转形需要联立方程——Marx 第三卷数学上未严格证明完整。",
+      "author_id": "wd-q836646",
+      "year": 1907,
+      "cats": [
+        "sc",
+        "po"
+      ],
+      "keywords": "transformation problem,mathematical economics",
+      "reference": "Bortkiewicz, L. v. (1907). Wertrechnung und Preisrechnung im Marxschen System."
+    },
+    {
+      "id": "claim-q1394-01",
+      "type": "claim",
+      "name_zh": "没有革命的理论，就没有革命的运动——先锋",
+      "name_orig": "",
+      "claim_text": "没有革命的理论，就没有革命的运动——先锋党是工人阶级意识的载体。",
+      "author_id": "wd-q1394",
+      "year": 1902,
+      "cats": [
+        "po"
+      ],
+      "keywords": "vanguard party,Leninism",
+      "reference": "Lenin, V.I. (1902). Что делать? (What Is to Be Done?), marxists.org."
+    },
+    {
+      "id": "claim-q1394-02",
+      "type": "claim",
+      "name_zh": "帝国主义是资本主义的最高阶段——金融资本",
+      "name_orig": "",
+      "claim_text": "帝国主义是资本主义的最高阶段——金融资本与垄断把世界划分为殖民体系。",
+      "author_id": "wd-q1394",
+      "year": 1917,
+      "cats": [
+        "po",
+        "sc"
+      ],
+      "keywords": "imperialism theory",
+      "reference": "Lenin, V.I. (1917). Империализм, как высшая стадия капитализма, marxists.org."
+    },
+    {
+      "id": "claim-q1394-03",
+      "type": "claim",
+      "name_zh": "国家是阶级压迫的工具——无产阶级必须粉碎",
+      "name_orig": "",
+      "claim_text": "国家是阶级压迫的工具——无产阶级必须粉碎旧国家机器，建立专政过渡。",
+      "author_id": "wd-q1394",
+      "year": 1917,
+      "cats": [
+        "po"
+      ],
+      "keywords": "state and revolution",
+      "reference": "Lenin, V.I. (1917). Государство и революция, marxists.org."
+    },
+    {
+      "id": "claim-q332535-01",
+      "type": "claim",
+      "name_zh": "马克思主义的经济决定论无法解释精神现象—",
+      "name_orig": "",
+      "claim_text": "马克思主义的经济决定论无法解释精神现象——必须诉诸宗教与终极意义。",
+      "author_id": "wd-q332535",
+      "year": 1903,
+      "cats": [
+        "po",
+        "re"
+      ],
+      "keywords": "Russian religious philosophy",
+      "reference": "Bulgakov, S. (1903). От марксизма к идеализму (From Marxism to Idealism)."
+    },
+    {
+      "id": "claim-q332535-02",
+      "type": "claim",
+      "name_zh": "经济是创造活动的精神维度——索菲亚（神圣",
+      "name_orig": "",
+      "claim_text": "经济是创造活动的精神维度——索菲亚（神圣智慧）贯穿物质生产。",
+      "author_id": "wd-q332535",
+      "year": 1912,
+      "cats": [
+        "po",
+        "re",
+        "me"
+      ],
+      "keywords": "sophiology,religious economics",
+      "reference": "Bulgakov, S. (1912). Философия хозяйства (Philosophy of Economy)."
+    },
+    {
+      "id": "claim-q347930-01",
+      "type": "claim",
+      "name_zh": "工人议会才是无产阶级真正的自治形式——反",
+      "name_orig": "",
+      "claim_text": "工人议会才是无产阶级真正的自治形式——反对党国一体的列宁式专政。",
+      "author_id": "wd-q347930",
+      "year": 1920,
+      "cats": [
+        "po"
+      ],
+      "keywords": "council communism,left communism",
+      "reference": "Pannekoek, A. (1920). Weltrevolution und kommunistische Taktik."
+    },
+    {
+      "id": "claim-q347930-02",
+      "type": "claim",
+      "name_zh": "工人必须自己解放自己——党代替阶级行动只",
+      "name_orig": "",
+      "claim_text": "工人必须自己解放自己——党代替阶级行动只会重建新的统治。",
+      "author_id": "wd-q347930",
+      "year": 1936,
+      "cats": [
+        "po"
+      ],
+      "keywords": "workers self-emancipation",
+      "reference": "Pannekoek, A. (1936). Lenin als Philosoph (marxists.org)."
+    },
+    {
+      "id": "claim-q855-01",
+      "type": "claim",
+      "name_zh": "辩证唯物主义有四特征：联系、运动、量变质",
+      "name_orig": "",
+      "claim_text": "辩证唯物主义有四特征：联系、运动、量变质变、对立统一——是普遍世界观。",
+      "author_id": "wd-q855",
+      "year": 1938,
+      "cats": [
+        "me"
+      ],
+      "keywords": "diamat,Stalinism",
+      "reference": "Stalin, J. (1938). О диалектическом и историческом материализме (marxists.org)."
+    },
+    {
+      "id": "claim-q855-02",
+      "type": "claim",
+      "name_zh": "一国可以建成社会主义——苏联工业化是先锋",
+      "name_orig": "",
+      "claim_text": "一国可以建成社会主义——苏联工业化是先锋，无需等世界革命。",
+      "author_id": "wd-q855",
+      "year": 1924,
+      "cats": [
+        "po"
+      ],
+      "keywords": "socialism in one country",
+      "reference": "Stalin, J. (1924). Основы ленинизма (Foundations of Leninism), marxists.org."
+    },
+    {
+      "id": "claim-q855-03",
+      "type": "claim",
+      "name_zh": "阶级斗争在社会主义建设过程中不会消失而会",
+      "name_orig": "",
+      "claim_text": "阶级斗争在社会主义建设过程中不会消失而会更加尖锐——必须警惕敌人渗透。",
+      "author_id": "wd-q855",
+      "year": 1937,
+      "cats": [
+        "po"
+      ],
+      "keywords": "sharpening class struggle"
+    },
+    {
+      "id": "claim-q57240-01",
+      "type": "claim",
+      "name_zh": "人是仍未完成的存在——希望是面向尚未存在",
+      "name_orig": "",
+      "claim_text": "人是仍未完成的存在——希望是面向尚未存在的乌托邦的根本激情。",
+      "author_id": "wd-q57240",
+      "year": 1959,
+      "cats": [
+        "et",
+        "me"
+      ],
+      "keywords": "philosophy of hope,utopia",
+      "reference": "Bloch, E. (1959). Das Prinzip Hoffnung."
+    },
+    {
+      "id": "claim-q57240-02",
+      "type": "claim",
+      "name_zh": "马克思主义包含暖流（乌托邦）与冷流（科学",
+      "name_orig": "",
+      "claim_text": "马克思主义包含暖流（乌托邦）与冷流（科学）——缺一不可。",
+      "author_id": "wd-q57240",
+      "year": 1959,
+      "cats": [
+        "po",
+        "mp"
+      ],
+      "keywords": "warm/cold currents in Marxism",
+      "reference": "Bloch, E. (1959). Das Prinzip Hoffnung, 第一卷."
+    },
+    {
+      "id": "claim-q57240-03",
+      "type": "claim",
+      "name_zh": "艺术、神话、宗教中潜藏着未实现的人性——",
+      "name_orig": "",
+      "claim_text": "艺术、神话、宗教中潜藏着未实现的人性——必须以唯物主义解读。",
+      "author_id": "wd-q57240",
+      "year": 1923,
+      "cats": [
+        "ae",
+        "re"
+      ],
+      "keywords": "utopian function of art",
+      "reference": "Bloch, E. (1923). Geist der Utopie."
+    },
+    {
+      "id": "claim-q4305318-01",
+      "type": "claim",
+      "name_zh": "资本主义危机根源在消费不足——工资压低导",
+      "name_orig": "",
+      "claim_text": "资本主义危机根源在消费不足——工资压低导致总需求长期萎缩。",
+      "author_id": "wd-q4305318",
+      "year": 1935,
+      "cats": [
+        "sc",
+        "po"
+      ],
+      "keywords": "underconsumption theory,Marxist economics"
+    },
+    {
+      "id": "claim-q60208-01",
+      "type": "claim",
+      "name_zh": "马克思主义和哲学是同一过程——把理论与无",
+      "name_orig": "",
+      "claim_text": "马克思主义和哲学是同一过程——把理论与无产阶级实践重新连接起来。",
+      "author_id": "wd-q60208",
+      "year": 1923,
+      "cats": [
+        "mp",
+        "po"
+      ],
+      "keywords": "Western Marxism,praxis",
+      "reference": "Korsch, K. (1923). Marxismus und Philosophie."
+    },
+    {
+      "id": "claim-q60208-02",
+      "type": "claim",
+      "name_zh": "第二国际把马克思主义庸俗化成实证科学——",
+      "name_orig": "",
+      "claim_text": "第二国际把马克思主义庸俗化成实证科学——丢失了革命辩证法。",
+      "author_id": "wd-q60208",
+      "year": 1923,
+      "cats": [
+        "po",
+        "mp"
+      ],
+      "keywords": "critique of orthodoxy",
+      "reference": "Korsch, K. (1923). Marxismus und Philosophie."
+    },
+    {
+      "id": "claim-q83003-01",
+      "type": "claim",
+      "name_zh": "文化霸权先于政治权力——统治阶级通过市民",
+      "name_orig": "",
+      "claim_text": "文化霸权先于政治权力——统治阶级通过市民社会的同意而非仅暴力维持统治。",
+      "author_id": "wd-q83003",
+      "year": 1932,
+      "cats": [
+        "po",
+        "me"
+      ],
+      "keywords": "cultural hegemony,civil society",
+      "reference": "Gramsci, A. (1929-1935). Quaderni del carcere (Prison Notebooks)."
+    },
+    {
+      "id": "claim-q83003-02",
+      "type": "claim",
+      "name_zh": "每个人都是知识分子——但只有有机知识分子",
+      "name_orig": "",
+      "claim_text": "每个人都是知识分子——但只有有机知识分子能从阶级内部组织文化抵抗。",
+      "author_id": "wd-q83003",
+      "year": 1932,
+      "cats": [
+        "po",
+        "et"
+      ],
+      "keywords": "organic intellectuals",
+      "reference": "Gramsci, A. Prison Notebooks, Notebook 12."
+    },
+    {
+      "id": "claim-q83003-03",
+      "type": "claim",
+      "name_zh": "阵地战 vs 运动战——发达资本主义需要",
+      "name_orig": "",
+      "claim_text": "阵地战 vs 运动战——发达资本主义需要长期文化阵地战，不是单次起义。",
+      "author_id": "wd-q83003",
+      "year": 1932,
+      "cats": [
+        "po"
+      ],
+      "keywords": "war of position",
+      "reference": "Gramsci, A. Prison Notebooks, Notebook 13."
+    },
+    {
+      "id": "claim-q61078-01",
+      "type": "claim",
+      "name_zh": "历史的天使被进步的风暴吹向未来，他面向的",
+      "name_orig": "",
+      "claim_text": "历史的天使被进步的风暴吹向未来，他面向的是堆积如山的废墟。",
+      "author_id": "wd-q61078",
+      "year": 1940,
+      "cats": [
+        "me",
+        "ae"
+      ],
+      "keywords": "philosophy of history,messianic time",
+      "reference": "Benjamin, W. (1940). Über den Begriff der Geschichte, IX 节."
+    },
+    {
+      "id": "claim-q61078-02",
+      "type": "claim",
+      "name_zh": "机械复制时代艺术失去了灵韵（aura）—",
+      "name_orig": "",
+      "claim_text": "机械复制时代艺术失去了灵韵（aura）——但获得了大众政治化的新潜能。",
+      "author_id": "wd-q61078",
+      "year": 1936,
+      "cats": [
+        "ae",
+        "po"
+      ],
+      "keywords": "aura,mass culture",
+      "reference": "Benjamin, W. (1936). Das Kunstwerk im Zeitalter seiner technischen Reproduzierbarkeit."
+    },
+    {
+      "id": "claim-q61078-03",
+      "type": "claim",
+      "name_zh": "历史唯物主义须从被压迫者视角写作——每个",
+      "name_orig": "",
+      "claim_text": "历史唯物主义须从被压迫者视角写作——每个文献都是野蛮的记录。",
+      "author_id": "wd-q61078",
+      "year": 1940,
+      "cats": [
+        "po",
+        "me"
+      ],
+      "keywords": "history from below",
+      "reference": "Benjamin, W. (1940). Über den Begriff der Geschichte, VII 节."
+    },
+    {
+      "id": "claim-q704931-01",
+      "type": "claim",
+      "name_zh": "从黑格尔到列宁——社会主义思想是一条连贯",
+      "name_orig": "",
+      "claim_text": "从黑格尔到列宁——社会主义思想是一条连贯的智识革命传统。",
+      "author_id": "wd-q704931",
+      "year": 1940,
+      "cats": [
+        "po",
+        "me"
+      ],
+      "keywords": "intellectual history of socialism",
+      "reference": "Wilson, E. (1940). To the Finland Station: A Study in the Writing and Acting of History."
+    },
+    {
+      "id": "claim-q207359-01",
+      "type": "claim",
+      "name_zh": "一般经济学：剩余能量必须以非生产性方式消",
+      "name_orig": "",
+      "claim_text": "一般经济学：剩余能量必须以非生产性方式消耗——耗费而非积累是社会真相。",
+      "author_id": "wd-q207359",
+      "year": 1949,
+      "cats": [
+        "po",
+        "me"
+      ],
+      "keywords": "general economy,expenditure",
+      "reference": "Bataille, G. (1949). La Part maudite."
+    },
+    {
+      "id": "claim-q207359-02",
+      "type": "claim",
+      "name_zh": "资本主义压抑了献祭、节庆、色情等耗费形式",
+      "name_orig": "",
+      "claim_text": "资本主义压抑了献祭、节庆、色情等耗费形式——使能量流回积累陷入危机。",
+      "author_id": "wd-q207359",
+      "year": 1949,
+      "cats": [
+        "po",
+        "et"
+      ],
+      "keywords": "sacrifice,erotism",
+      "reference": "Bataille, G. (1949). La Part maudite."
     }
   ],
   "relations": []
