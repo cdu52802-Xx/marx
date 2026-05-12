@@ -68,11 +68,24 @@ const sections = computePersonSectionPositions(personInputs);
 
 console.log(`[Marx M4] rendering ${sections.length} person sections`);
 
-// === 4. 计算画布尺寸（动态：根据最后一个 section 底部）===
+// === 4. 计算画布尺寸（动态: 根据所有 obs 坐标 + 估算 claim_text 像素长度 / "无限画布"雏形）===
+// 2026-05-12 PM 反馈: 画布要无限, 不能限制宽度导致 Engels 等 section 视觉换行
+// 当前实现 = 动态算最大像素宽 + 浏览器横向 scroll (真无限画布 = T7+ 用 d3.zoom pan 实现)
 
 const lastSection = sections[sections.length - 1];
-const canvasWidth = 1400;
+
+// claim_text 最长估算: 50 汉字 × 12px ≈ 600px + tag 60px + 头像 30px buffer
+const MAX_CLAIM_TEXT_PX = 700;
+let maxObsX = 0;
+for (const s of sections) {
+  for (const c of s.claims) {
+    if (c.x > maxObsX) maxObsX = c.x;
+  }
+}
+const canvasWidth = Math.max(1400, maxObsX + MAX_CLAIM_TEXT_PX);
 const canvasHeight = lastSection ? lastSection.y + lastSection.claims.length * 22 + 120 : 1500;
+
+console.log(`[Marx M4] canvas ${canvasWidth} × ${canvasHeight} px (maxObsX = ${maxObsX})`);
 
 // === 5. SVG 容器 ===
 
@@ -82,13 +95,20 @@ if (app.empty()) {
   throw new Error('#app missing');
 }
 
+// 让 #app + body 允许横向 scroll (画布无限 / Engels 等长 section 不被裁)
+app.style('overflow', 'auto').style('width', '100vw').style('height', '100vh');
+document.documentElement.style.overflow = 'auto';
+document.body.style.margin = '0';
+document.body.style.background = '#fcfaf6';
+
 const svg = app
   .append('svg')
   .attr('viewBox', `0 0 ${canvasWidth} ${canvasHeight}`)
-  .attr('width', '100%')
-  .attr('preserveAspectRatio', 'xMidYMin meet')
+  .attr('width', canvasWidth) // 真实像素宽 (不再 100% fit-to-viewport)
+  .attr('height', canvasHeight)
   .style('font-family', "'EB Garamond', Georgia, 'Source Serif 4', 'Noto Serif SC', serif")
-  .style('background', '#fcfaf6');
+  .style('background', '#fcfaf6')
+  .style('display', 'block');
 
 // 米白纸感背景 rect (spec § 4.1)
 svg

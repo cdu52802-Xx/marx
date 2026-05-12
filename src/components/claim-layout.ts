@@ -63,10 +63,10 @@ export function computePersonSectionPositions(persons: PersonInput[]): PersonSec
     const obsBaseX = currentX + OBS_X_FROM_HEADER;
     let obsY = currentY + SECTION_TOP_PADDING;
     p.claims.forEach((c, i) => {
-      const xOffset = Math.floor(i / 5) * 25; // 每 5 条 obs X 偏移 25 (主张族群区隔)
+      // 45° 斜向排列: 每行 X 增量 = Y 增量 = OBS_ROW_HEIGHT (22px) (2026-05-12 PM 视觉反馈)
       section.claims.push({
         ...c,
-        x: obsBaseX + xOffset,
+        x: obsBaseX + i * OBS_ROW_HEIGHT,
         y: obsY,
       });
       obsY += OBS_ROW_HEIGHT;
@@ -89,31 +89,32 @@ export function generateArcPath(
   y2: number,
   type: 'agreement_with' | 'disagreement_with' | 'extends',
 ): string {
-  const midX = (x1 + x2) / 2;
-  const midY = (y1 + y2) / 2;
-  const dist = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
-  const offset = dist * 0.3; // 控制点偏移距离 = 30% 弧长
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const dist = Math.sqrt(dx * dx + dy * dy);
 
-  let ctrlX: number;
-  let ctrlY: number;
-  switch (type) {
-    case 'agreement_with':
-      // 绿弧 = 左下弯曲
-      ctrlX = midX - offset;
-      ctrlY = midY + offset;
-      break;
-    case 'disagreement_with':
-      // 红弧 = 右上弯曲
-      ctrlX = midX + offset;
-      ctrlY = midY - offset;
-      break;
-    case 'extends':
-      // 灰弧 = 微弯向右（同 person 自延，短距）
-      ctrlX = Math.max(x1, x2) + dist * 0.15;
-      ctrlY = midY;
-      break;
+  if (type === 'extends') {
+    // 灰弧 = 微弯向右（同 person 自延 / 短距 / 不是 180° 半圆）
+    const midY = (y1 + y2) / 2;
+    const ctrlX = Math.max(x1, x2) + dist * 0.15;
+    return `M ${x1} ${y1} Q ${ctrlX} ${midY} ${x2} ${y2}`;
   }
-  return `M ${x1} ${y1} Q ${ctrlX} ${ctrlY} ${x2} ${y2}`;
+
+  // 绿弧 / 红弧 = 真 180° 半圆 (SVG A 命令 / 半径 = dist/2 / 2026-05-12 PM 反馈)
+  // sweep-flag 决定弧凸向哪侧:
+  //   sweep=1 → 弧凸向 leftPerp 方向 (-dy, dx)
+  //   sweep=0 → 弧凸向 rightPerp 方向 (dy, -dx)
+  // 绿弧 want 凸向 (-, +) 方向 = (-1, 1): dot(leftPerp, (-1, 1)) = dy + dx > 0 → sweep=1
+  // 红弧 want 凸向 (+, -) 方向 = (1, -1): 反过来
+  const r = dist / 2;
+  const leftPerpDotLeftDown = dy + dx;
+  let sweep: 0 | 1;
+  if (type === 'agreement_with') {
+    sweep = leftPerpDotLeftDown >= 0 ? 1 : 0;
+  } else {
+    sweep = leftPerpDotLeftDown >= 0 ? 0 : 1;
+  }
+  return `M ${x1} ${y1} A ${r} ${r} 0 0 ${sweep} ${x2} ${y2}`;
 }
 
 export function getArcStyle(type: 'agreement_with' | 'disagreement_with' | 'extends') {

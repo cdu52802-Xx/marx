@@ -47,33 +47,36 @@ describe('claim-layout · person section 斜向流坐标', () => {
 });
 
 describe('claim-layout · 半圆弧 SVG path generator', () => {
-  it('绿弧 (agreement) 控制点偏左下', () => {
+  // 2026-05-12 PM 反馈: "180度的半圆, 不是劣弧" → 绿弧/红弧改用 SVG A 命令真半圆
+  // SVG A 命令: M x1 y1 A rx ry rotation large-arc sweep x2 y2
+  it('绿弧 (agreement) 是 180° 半圆 + 凸向左下', () => {
     const path = generateArcPath(100, 100, 200, 200, 'agreement_with');
-    // path 形如 "M 100 100 Q ctrlX ctrlY 200 200"
-    const match = path.match(/Q (\S+) (\S+)/);
-    expect(match).not.toBeNull();
-    const ctrlX = parseFloat(match![1]);
-    const ctrlY = parseFloat(match![2]);
-    const midX = (100 + 200) / 2;
-    const midY = (100 + 200) / 2;
-    expect(ctrlX, 'ctrlX 偏左 (< midX)').toBeLessThan(midX);
-    expect(ctrlY, 'ctrlY 偏下 (> midY)').toBeGreaterThan(midY);
+    const match = path.match(/^M (\S+) (\S+) A (\S+) (\S+) 0 0 (\d) (\S+) (\S+)$/);
+    expect(match, '应为 SVG A 命令').not.toBeNull();
+    const rx = parseFloat(match![3]);
+    const ry = parseFloat(match![4]);
+    const sweep = match![5];
+    // 半径 = dist / 2 (180° 半圆 / 直径 = 两点距离)
+    const expectedR = Math.sqrt(2) * 100 * 0.5;
+    expect(rx).toBeCloseTo(expectedR, 0);
+    expect(ry).toBeCloseTo(expectedR, 0);
+    // P2 在 P1 右下 (dx=100, dy=100) → leftPerpDot = 200 > 0 → sweep=1 (弧凸向左下)
+    expect(sweep, '绿弧 sweep=1 凸向左下').toBe('1');
   });
 
-  it('红弧 (disagreement) 控制点偏右上', () => {
+  it('红弧 (disagreement) 是 180° 半圆 + 凸向右上', () => {
     const path = generateArcPath(100, 100, 200, 200, 'disagreement_with');
-    const match = path.match(/Q (\S+) (\S+)/);
-    const ctrlX = parseFloat(match![1]);
-    const ctrlY = parseFloat(match![2]);
-    const midX = (100 + 200) / 2;
-    const midY = (100 + 200) / 2;
-    expect(ctrlX, 'ctrlX 偏右 (> midX)').toBeGreaterThan(midX);
-    expect(ctrlY, 'ctrlY 偏上 (< midY)').toBeLessThan(midY);
+    const match = path.match(/^M (\S+) (\S+) A (\S+) (\S+) 0 0 (\d) (\S+) (\S+)$/);
+    expect(match, '应为 SVG A 命令').not.toBeNull();
+    const sweep = match![5];
+    // 红弧 sweep=0 (凸向右上, 跟绿弧方向相反)
+    expect(sweep, '红弧 sweep=0 凸向右上').toBe('0');
   });
 
-  it('灰弧 (extends) 控制点偏右 (微弯)', () => {
+  it('灰弧 (extends) 仍为 Q 命令微弯向右 (不是半圆)', () => {
     const path = generateArcPath(100, 100, 100, 150, 'extends');
     const match = path.match(/Q (\S+) (\S+)/);
+    expect(match, '灰弧应为 Q 命令').not.toBeNull();
     const ctrlX = parseFloat(match![1]);
     expect(ctrlX, 'ctrlX 偏右').toBeGreaterThan(100);
   });
