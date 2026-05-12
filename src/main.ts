@@ -265,7 +265,7 @@ sectionG.each(function (section) {
     .text((c) => c.claim_text);
 
   // 点击 obs → popover 详情卡（T9 / spec § 8.2 单点深入）
-  obsG.on('click', (event, c) => {
+  obsG.on('click', (_event, c) => {
     const author = persons.find((p) => p.id === c.author_id);
     const sourceWork = c.source_work_id
       ? nodesData.nodes.find((n: { id: string }) => n.id === c.source_work_id)
@@ -296,16 +296,12 @@ sectionG.each(function (section) {
       })
       .filter((x): x is { id: string; author: string; text: string } => x !== null);
 
-    showClaimPopover(
-      c,
-      { x: event.clientX + 10, y: event.clientY + 10 },
-      {
-        authorName: author?.name_zh ?? '?',
-        sourceWorkName: (sourceWork as { name_zh?: string } | null | undefined)?.name_zh,
-        agreementClaims,
-        disagreementClaims,
-      },
-    );
+    showClaimPopover(c, {
+      authorName: author?.name_zh ?? '?',
+      sourceWorkName: (sourceWork as { name_zh?: string } | null | undefined)?.name_zh,
+      agreementClaims,
+      disagreementClaims,
+    });
   });
 });
 

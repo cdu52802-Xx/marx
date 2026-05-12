@@ -26,10 +26,55 @@
 - timeline 高度 ~140px (border-top + axis 50 + slider 行 + padding) 是否合适 / 待 PM 用过几次后判断
 - ▶ 播放按钮位置 / 样式（当前左对齐 / 紫色 border + 米白底）
 
-## 后续 task 可能收集到的 polish item（占位）
+## T9 详情右侧栏反馈（2026-05-12 PM · 改造版）
+
+> **状态**：vision-level 已通过（PM 原话 "效果基本满意"）· 配色 / 样式 / 内容 / 排版 4 维度细节 PM 暂无具体方向 / 慢慢磨
+> **改造前**：浮动小卡片（鼠标旁 300×300）· 改造后：380px 右侧 fixed 滑入栏（PM Q1 A / Q2 A 朋友项目风格 / Q3 hybrid / Q4 三路关闭 + 0.35s 滑入滑出）
+> **何时调**：T13 跑 dev server 沿 backlog 顺序实验 / 每条 5-15 min / PM 决定接受 / 改 / 跳过
+
+### A · 配色
+
+- **sidebar 底色 #fcfaf6**：跟主画布同色 / 用户视觉上"延续画布"是否要换成略浅 (#fffef8) 或略深 (#f7f0e0) 区分？
+- **kicker 紫 #5b3a8c**：饱和度跟画布 obs 圆点同 / 是否调浅成"副信息"感（如 #8a7aa6）
+- **successor 卡背景叠加 6% (rgba 0.06)**：绿 / 红橘色块淡到几乎看不出 / 是否调浓 (10-12%) 让"agreement / disagreement"两路视觉对比更强
+- **blockquote 紫 4px 左边线**：宽度 / 颜色饱和度
+- **reference footer 灰虚线**：是否改实线 / 颜色
+
+### B · 样式
+
+- **blockquote 装饰**：当前无装饰 / 是否加 " " 引号字符（左上 / 右下大字 italic 灰）
+- **kicker 编号**：当前 `§ Claim · Karl Marx` / editorial 用 `§IV 核心概念` 罗马数字 / 是否每个 claim 按 author 编号
+- **successor 卡 hover 反馈**：当前无 / 是否加 background 加深 0.02
+- **× 关闭按钮**：当前绝对定位 right:18 top:14 / 是否加 hover 圈背景 / 跟 sidebar 头部对齐
+
+### C · 内容
+
+- **person 头像占位**：当前无 / 是否在 kicker 旁加圆形头像（r=20 紫填充 + 灰边）/ Marx 主角是否特殊样式
+- **keywords tag**：当前没单独显示（只藏在 cats 后） / 是否单独一行展示
+- **derived_from_concept_id 标记**：concept-12 升级来的 claim 是否标"概念升级自 X"
+- **agreement / disagreement 列表跳转**：点 successor 卡是否触发对方 claim 的 sidebar（chain navigation）
+- **claim_text 太长截断**：当前不截断完整显示 / 极长 claim 是否加 "展开全文"
+
+### D · 排版
+
+- **sidebar 宽度 380px**：候选 360 / 380 / 400 / 420 / 跟 T8 左 sidebar 展开宽度（200px）对比关系
+- **header sticky**：当前滚动时 kicker + h2 + meta 跟着滚走 / 是否 sticky top 始终可见
+- **close 按钮 sticky**：当前固定 absolute / 长内容滚动到底时按钮看不见 / 是否 sticky
+- **顶底 fade-mask**：长内容滚动时是否加 linear-gradient 顶底 8% 渐隐
+- **section 间距 22-24px gap**：紧凑度 / 学术编辑风密度
+
+### 处理顺序建议（T13 时按价值 / 风险排序）
+
+1. 先调 A 配色（不改 DOM 结构 / 风险最低 / 视觉冲击最大）
+2. 再调 D 排版宽度 + sticky（PM 浏览器看几次再判断）
+3. 然后 C 内容（加头像 / 链接跳转 = 加新功能 / 留 T13 看时间）
+4. 最后 B 样式装饰（引号 / 罗马数字 / hover = nice-to-have）
+
+---
+
+## 其他 task 可能收集到的 polish item（占位）
 
 - T8 sidebar：48px 收起态 icon 大小 / 200px 展开态 hover 反馈
-- T9 popover：弹出位置 / 阴影深度 / 关闭按钮位置
 - T10 维度融合：勾选著作时叠加 `[书名 · 年份]` 文字大小 / 位置
 - ...
 
