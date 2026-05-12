@@ -28,6 +28,7 @@ import {
 } from './components/claim-layout.ts';
 import { mountTimeline } from './components/timeline.ts';
 import { mountSidebar } from './components/sidebar.ts';
+import { showClaimPopover } from './components/claim-popover.ts';
 import type { ClaimNode, ClaimRelation } from './types/Claim.ts';
 import type { PersonNode } from './types/Node.ts';
 
@@ -263,9 +264,48 @@ sectionG.each(function (section) {
     .attr('font-style', 'italic')
     .text((c) => c.claim_text);
 
-  // 点击 obs → popover 详情卡 stub（T9 实现完整版）
-  obsG.on('click', (_event, claim) => {
-    console.log('[Marx M4] obs clicked (T9 popover stub):', claim.id, claim.claim_text);
+  // 点击 obs → popover 详情卡（T9 / spec § 8.2 单点深入）
+  obsG.on('click', (event, c) => {
+    const author = persons.find((p) => p.id === c.author_id);
+    const sourceWork = c.source_work_id
+      ? nodesData.nodes.find((n: { id: string }) => n.id === c.source_work_id)
+      : null;
+
+    // 找 agreement / disagreement 关系
+    const agreementRels = relations.filter((r) => r.source === c.id && r.type === 'agreement_with');
+    const disagreementRels = relations.filter(
+      (r) => (r.source === c.id || r.target === c.id) && r.type === 'disagreement_with',
+    );
+
+    const agreementClaims = agreementRels
+      .map((r) => {
+        const target = claims.find((cc) => cc.id === r.target);
+        if (!target) return null;
+        const targetAuthor = persons.find((p) => p.id === target.author_id);
+        return { id: target.id, author: targetAuthor?.name_zh ?? '?', text: target.claim_text };
+      })
+      .filter((x): x is { id: string; author: string; text: string } => x !== null);
+
+    const disagreementClaims = disagreementRels
+      .map((r) => {
+        const otherId = r.source === c.id ? r.target : r.source;
+        const other = claims.find((cc) => cc.id === otherId);
+        if (!other) return null;
+        const otherAuthor = persons.find((p) => p.id === other.author_id);
+        return { id: other.id, author: otherAuthor?.name_zh ?? '?', text: other.claim_text };
+      })
+      .filter((x): x is { id: string; author: string; text: string } => x !== null);
+
+    showClaimPopover(
+      c,
+      { x: event.clientX + 10, y: event.clientY + 10 },
+      {
+        authorName: author?.name_zh ?? '?',
+        sourceWorkName: (sourceWork as { name_zh?: string } | null | undefined)?.name_zh,
+        agreementClaims,
+        disagreementClaims,
+      },
+    );
   });
 });
 
