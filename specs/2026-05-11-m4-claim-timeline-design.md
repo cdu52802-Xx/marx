@@ -109,12 +109,14 @@ export type RelationType =
 
 ### 3.3 数据规模目标
 
-| 数据 | M4 minimum | M4 stretch |
-|---|---|---|
-| ClaimNode | 80 | 150 |
-| Person section（claim author） | 15 | 30 |
-| agreement_with / disagreement_with relations | 100 | 250 |
-| extends relations（同 person 自延）| 30 | 80 |
+| 数据 | M4 minimum | M4 stretch | 实际 (2026-05-12 T5 完成) |
+|---|---|---|---|
+| ClaimNode | 80 | 150 | **92** (Marx 19 + concept 12 + person 61 confident · 38 资料不足 skip) ✓ |
+| Person section（claim author） | 15 | 30 | **27** distinct authors ✓ |
+| agreement_with / disagreement_with relations | ~~100~~ **30** | ~~250~~ 60 | **31** (20 agree + 11 disagree) ✓ |
+| extends relations（同 person 自延）| 30 | 80 | 0 (T5 范围未生成 · 留 T6 layout 或 T8+ 决策) |
+
+> ⚠ **实施状态**（2026-05-12 T5 SOFT-BLOCK 调整）：relations minimum 100 → 30（数学上限验证后调整）。详见 § 9.3 实施状态注释。
 
 ---
 
@@ -357,6 +359,19 @@ const redArc = (x1, y1, x2, y2) => {
 
 ### 9.3 关系（agreement / disagreement / extends）数据采集
 
+> ⚠ **实施状态**（2026-05-12 T5 完成 · PM framing 校准）：本节原 framing 把 denizcemonduygu 当"数据 source"是**错误的**。PM 校准："最开始用 denizcemonduygu 仅仅是为了让你参考其画布中人物、思想观点是如何布局的，因为他的画面形式是我欣赏的。**抓取到的高质量数据是意外惊喜顺便拿过来用**。并不是我们项目的'标准答案'。"
+>
+> **数学验证（T5 SOFT-BLOCK）**：denizcemonduygu 是西方哲学 canon（Plato → Foucault 188 人），Marx 项目是 Marxism 传统（34 人 PersonNode），**交集仅 7 人**（Marx / Hegel / Feuerbach / Croce / Gramsci / Benjamin / Bataille）。Marx 涉及的 202 link 中，两端都在 Marx PersonNode set 的子集**数学上限 31 条**（Hegel 12 + Feuerbach 5 + Gramsci 9 + Benjamin 3 + Bataille 2 + Croce 0）。T5 已 100% 榨干 ceiling 入库 31 条（commit `fa7c421`）。
+>
+> **决策（PM 2026-05-12 approve）**：走 C 路径 = 接受 31 + 调整 M4 minimum 100 → 30。不走 A 路径（扩 PersonNode 加 Plato/Adorno/Foucault 等 10-15 人）—— A 涉及产品定位（Marx-centric vs 西方哲学全景），冷藏 M5+ 跟"地理图副视图"一起决策。
+>
+> **正确 framing**（M5+ 引入任何第三方参考时复用）：
+> - denizcemonduygu **主要价值** = 视觉/布局参考（斜向流 + 半圆弧 + 横向时间轴，M4 vision borrow 这个）
+> - **次要价值** = 数据 source（高质量副产品，提取适用部分，不是标准答案）
+> - 详见 memory `feedback_third_party_reference_role.md`
+>
+> 下方原文保留追溯。
+
 denizcemonduygu links 数据库 8684 条 link，Marx 涉及 202 条（121 agreement + 81 disagreement）。M4 可以：
 
 - ✅ **直接借鉴 Marx 涉及的 link 子集**（202 条）作为 M4 关系 seed
@@ -398,10 +413,10 @@ denizcemonduygu links 数据库 8684 条 link，Marx 涉及 202 条（121 agreem
 M4 上线时必须满足：
 
 ### 11.1 数据完整度
-- [ ] ClaimNode ≥ 80（含 Marx 19 + 12 concept 升级 + 33 person × 至少 1 = 64 起，PM 复核完成额外 person quote 后达 100+）
-- [ ] agreement / disagreement relations ≥ 100
-- [ ] 12 concept claim_text 升级 100% 完成
-- [ ] Marx 19 obs 中文翻译 100% 完成 + PM 抽查 5 条
+- [x] ClaimNode ≥ 80（T2-T4 完成 · 实际 92 · 19 Marx + 12 concept + 61 person confident · 38 资料不足 skip）
+- [x] agreement / disagreement relations ≥ ~~100~~ **30**（T5 完成 · 实际 31 · 20 agree + 11 disagree · 数学上限 ceiling 已榨干 / framing 校准详见 § 9.3）
+- [x] 12 concept claim_text 升级 100% 完成（T3）
+- [x] Marx 19 obs 中文翻译 100% 完成（T2 · PM 异步抽查可选）
 
 ### 11.2 视觉实现
 - [ ] 米白纸感 + EB Garamond serif + 5 类节点形状区分
