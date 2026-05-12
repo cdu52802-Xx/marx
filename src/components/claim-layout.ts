@@ -74,8 +74,11 @@ export function computePersonSectionPositions(persons: PersonInput[]): PersonSec
 
     sections.push(section);
 
-    // 下一个 person 位置：X+50 / Y = 当前 obs 区底部 + 一些 padding
-    currentX += PERSON_X_OFFSET;
+    // 下一个 person 位置：沿斜线继续（2026-05-12 PM 视觉反馈 / Engels 之后不再堆中间）
+    // X 累加 = 当前 section 内 obs 已经斜出去多远 + PERSON_X_OFFSET buffer
+    // obsXSpan = (N-1) × OBS_ROW_HEIGHT，N=obs 数 (单 obs section span=0 / 0 obs section span=0)
+    const obsXSpan = Math.max(0, p.claims.length - 1) * OBS_ROW_HEIGHT;
+    currentX = currentX + obsXSpan + PERSON_X_OFFSET;
     currentY = obsY + 30;
   }
 
