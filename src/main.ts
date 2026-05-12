@@ -27,6 +27,7 @@ import {
   type ClaimWithCoords,
 } from './components/claim-layout.ts';
 import { mountTimeline } from './components/timeline.ts';
+import { mountSidebar } from './components/sidebar.ts';
 import type { ClaimNode, ClaimRelation } from './types/Claim.ts';
 import type { PersonNode } from './types/Node.ts';
 
@@ -98,11 +99,14 @@ if (app.empty()) {
 
 // 让 #app + body 允许横向 scroll (画布无限 / Engels 等长 section 不被裁)
 // padding-bottom: 160px 给底部 fixed timeline 留视觉空间（T7 / spec § 6.1 独立栏）
+// padding-left: 48px 给左侧 fixed sidebar 收起态留视觉空间（T8 / spec § 7 独立栏）
+//   sidebar 展开 200px 时不调 padding-left → 临时遮挡画布左侧 ~150px（spec § 7.2 默认展开态短暂使用）
 app
   .style('overflow', 'auto')
   .style('width', '100vw')
   .style('height', '100vh')
   .style('padding-bottom', '160px')
+  .style('padding-left', '48px')
   .style('box-sizing', 'border-box');
 document.documentElement.style.overflow = 'auto';
 document.body.style.margin = '0';
@@ -289,4 +293,53 @@ mountTimeline({
   },
 });
 
-console.log('[Marx M4] render complete · timeline mounted (position:fixed bottom:0)');
+// === 9. T8 · 左侧颗粒度过滤栏（spec § 7 / 独立栏）===
+// PM 视觉期待: sidebar 是 "独立栏" 始终可见，hover icon 触发主画布高亮预览语义需要 sidebar 在视口
+// 实现: position: fixed left: 0 mount 到 document.body，跨 #app scroll 始终在视口左侧
+// 跟 T7 timeline (bottom: 0) 同思路 / z-index 同级 / 物理位置不重叠
+// #app padding-left: 48px 避免 SVG 被遮挡（前面已设）
+// 若 PM 反馈 "sidebar 应跟画布一起 scroll" → 切回 flex layout 内部方案（5 分钟改回）
+
+const sidebarContainer = document.createElement('div');
+sidebarContainer.id = 'sidebar-fixed';
+sidebarContainer.style.cssText =
+  'position:fixed;left:0;top:0;bottom:0;z-index:10;box-shadow:2px 0 8px rgba(58,35,96,0.06)';
+document.body.appendChild(sidebarContainer);
+
+mountSidebar({
+  container: sidebarContainer,
+  onFilterChange: (filters) => {
+    // 应用 filter: 隐藏 unchecked node / relation
+    // person section: 总开关 = filters.nodes.person（claim 节点跟随 section 一起显隐）
+    svg
+      .selectAll<SVGGElement, PersonSection>('g.person-section')
+      .style('display', () => (filters.nodes.person ? null : 'none'));
+    // 弧线: 按 r.type 控制显隐
+    svg
+      .selectAll<SVGPathElement, ClaimRelation>('path.arc')
+      .style('display', (r) =>
+        (filters.relations as Record<string, boolean>)[r.type] ? null : 'none',
+      );
+  },
+  onHover: (filterKey) => {
+    // hover 类型 icon → 主画布高亮该类型（仅 rel-* 联动弧线 opacity）
+    if (!filterKey) {
+      // mouseleave: 恢复所有弧线 opacity
+      svg.selectAll('path.arc').attr('opacity', null);
+      return;
+    }
+    // filterKey 格式 "<type>-<name>"，name 可能含 underscore（agreement_with）
+    const dashIdx = filterKey.indexOf('-');
+    const type = filterKey.substring(0, dashIdx);
+    const name = filterKey.substring(dashIdx + 1);
+    if (type === 'rel') {
+      svg
+        .selectAll<SVGPathElement, ClaimRelation>('path.arc')
+        .attr('opacity', (r) => (r.type === name ? 1 : 0.1));
+    }
+  },
+});
+
+console.log(
+  '[Marx M4] render complete · timeline + sidebar mounted (position:fixed bottom:0 / left:0)',
+);
