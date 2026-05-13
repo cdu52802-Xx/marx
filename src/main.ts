@@ -29,6 +29,7 @@ import {
 import { mountTimeline } from './components/timeline.ts';
 import { mountSidebar } from './components/sidebar.ts';
 import { showClaimPopover } from './components/claim-popover.ts';
+import { applyClaimFilters } from './components/apply-claim-filters.ts';
 import type { ClaimNode, ClaimRelation } from './types/Claim.ts';
 import type { PersonNode } from './types/Node.ts';
 
@@ -53,6 +54,9 @@ for (const c of claims) {
   if (!claimsByAuthor.has(c.author_id)) claimsByAuthor.set(c.author_id, []);
   claimsByAuthor.get(c.author_id)!.push(c);
 }
+
+// claim id 索引 (filter / 详情栏 lookup 用)
+const claimById = new Map<string, ClaimNode>(claims.map((c) => [c.id, c]));
 
 // === 3. 构建 person section input（只显示有 claim 的 person） ===
 
@@ -345,17 +349,9 @@ document.body.appendChild(sidebarContainer);
 mountSidebar({
   container: sidebarContainer,
   onFilterChange: (filters) => {
-    // 应用 filter: 隐藏 unchecked node / relation
-    // person section: 总开关 = filters.nodes.person（claim 节点跟随 section 一起显隐）
-    svg
-      .selectAll<SVGGElement, PersonSection>('g.person-section')
-      .style('display', () => (filters.nodes.person ? null : 'none'));
-    // 弧线: 按 r.type 控制显隐
-    svg
-      .selectAll<SVGPathElement, ClaimRelation>('path.arc')
-      .style('display', (r) =>
-        (filters.relations as Record<string, boolean>)[r.type] ? null : 'none',
-      );
+    // B1 fix (2026-05-13 smoke test 后): 抽到 applyClaimFilters helper
+    // 原实现只接 person + relation, 5 学科 cats + 观点 claim checkbox 显示但不生效 (spec § 7.2 漏实现)
+    applyClaimFilters({ svg, claimById }, filters);
   },
   onHover: (filterKey) => {
     // hover 类型 icon → 主画布高亮该类型（仅 rel-* 联动弧线 opacity）
