@@ -13,6 +13,8 @@ function makeClaim(id: string, cats: ClaimNode['cats']): ClaimNode {
     type: 'claim',
     cats,
     claim_text: 'test',
+    name_zh: 'test 主张',
+    name_orig: 'test claim',
     author_id: 'wd-q9061',
     year: 1850,
   };
