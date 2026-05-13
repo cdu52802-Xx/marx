@@ -363,67 +363,62 @@ ls F:/AI/projects/Marx/.superpowers/brainstorm/*/content/q3-v7-final.html
 
 ---
 
-## 新窗口开场白模板（PM 复制粘贴用 · 2026-05-12 T9 完成 update · ⭐ 最新）
+## 新窗口开场白模板（PM 复制粘贴用 · 2026-05-13 M4 收尾完成 update · ⭐ 最新版）
 
 ```
 续接 Marx 项目（cwd: F:\AI\projects\Marx）。
 
 按惯例先 git pull origin main，然后读：
 1. AGENTS.md（项目级元约束 + 入口）
-2. docs/2026-05-11-m4-progress-anchor.md（M4 续接锚点 ⭐ 最重要 · 已 update 到 T9 完成）
-3. docs/m4-polish-backlog.md（M4 polish backlog · T13 批量处理）
-4. specs/2026-05-11-m4-claim-timeline-design.md（M4 design doc · § 9.3 含 denizcemonduygu framing 校准注释）
-5. plans/2026-05-11-marx-m4-claim-timeline.md（T10-T13 在 line 2445+）
+2. docs/2026-05-11-m4-progress-anchor.md（M4 续接锚点 ⭐ 已 update 到 M4 真收尾完成）
+3. docs/2026-05-13-m4-takeaway.md（M4 takeaway SSOT ⭐⭐ 含 PRD 覆盖率 + 6 PM 意见 → M5 输入 + 8 lessons + go M5 启动方式）
+4. docs/m4-polish-backlog.md（T13 polish backlog 已落档 / M5 完成后批量处理）
 
-当前位置（2026-05-12 T9 完成 / 等 PM 综合反馈）：
-- M4 implementation: T0-T9 完成 / T10-T13 pending
-- 测试 91/88/3（3 RED 仍 M3 pre-existing baseline · stage-b alfred + stage-c × 2 · 不属 M4）
-- claims.json: 92 ClaimNode（19 Marx + 12 concept + 61 person）+ 31 ClaimRelation
-- 视觉: 27 person section 沿斜线连续 + 31 半圆弧（A 命令真半圆）+ 底部 fixed timeline + 左侧 fixed sidebar + 详情卡 popover
-- 最新 commit: 0ef5804 (T9 popover)
-- subagent-driven 执行模式（PM 已选）
+当前位置（2026-05-13 M4 真收尾完成 · git tag m4-final / 等 PM go M5）：
+- M4 ✅ implementation 完成 · demo 在线 https://cdu52802-xx.github.io/marx/
+- T0-T9 + T9 改造 (右侧滑入栏) + T11 + T13 (deploy + takeaway) 完成
+- T10 + T12 推 M5 一起做 (PM 第一性原理推荐 / 防双倍工作)
+- 测试 96/93/3 (3 RED 仍 M3 pre-existing baseline · 不属 M4)
+- claims.json: 92 ClaimNode (19 Marx + 12 concept + 61 person) + 31 ClaimRelation
 
-⭐ 上一窗口结束时 PM 说："本轮有很多内容需要调整。"
-新窗口启动后 PM 会给综合调整反馈，AI 收到后:
-- A 类 vision-level 错 → 立即修
-- B 类 polish 细节 → 落 docs/m4-polish-backlog.md / T13 批量处理
-- 分类判断标准: AGENTS.md 视觉美学三件套硬约束 / spec § 5.4 弧线方向 / 字体配色等 = A 类立即修
+M5 启动方式 (PM 任意时间):
+PM 发 "go M5" → AI 启动 brainstorming skill / 列 6 条意见 → 3 主线 A/B/C 让 PM 排优先级:
+- A · 可探索基础设施 (zoom + 动态居中 + 时间轴 / 意见 1+7+2+4)
+- B · 页面框架 + 地理图副视图 (意见 3 / 兼 PRD V1 silent drift catch)
+- C · 多类型详情页系统 (意见 5+6 / 兼 PRD V1 person bio)
 
-⭐ 关键策略 + memory:
-- hybrid AI 草稿模式 (memory feedback_hybrid_ai_draft_mode.md): PM 异步复核不阻塞
-- 第三方参考真实角色 (memory feedback_third_party_reference_role.md): denizcemonduygu = 视觉/布局参考主 + 数据副产品辅 / 不是标准答案 (T5 SOFT-BLOCK 后 PM 校准)
-- Polish 节奏 (PM 资深产品视角): vision-level 错立即修 / polish 细节落 backlog 推 T13 / 不要陷入 polish 死循环
+启动后必做 (takeaway § 4 已落):
+1. 跟 PM 确认 A/B/C 优先级 (建议 A 先 / 用户感知最大)
+2. 重看 PRD V1 必做项 vs M4 现状 (覆盖率 30-40% / 决定 PRD v0.4 是否调整)
+3. 重看 spec § 6.1 时间轴决策 (意见 4 触发)
+4. 单线启动 / 拆 task 5-7 个 / 写 M5 spec + plan (lesson 3 防 subagent 拆太碎)
+5. M5 上线前必做 = archive M4 demo (复用 m3-archive 套路 / lesson 8)
 
-T6 视觉 layout 已 PM 3 轮 checkpoint 通过:
-- 真 180° 半圆 (SVG A 命令)
-- 45° 斜向 obs 排列
-- person section 沿斜线连续 (X 累加前段 obs span)
-- 无限画布雏形 (canvasWidth 动态 + 横向 scroll)
-- 真无限画布 (d3.zoom + pan) 留 v2
+⭐ 关键工作流约定 (本窗口确立 / memory 已落):
+- M5 启动方式 = PM 主动 "go M5" / AI 不催进度 (hybrid 不催精神延伸)
+- "资深产品 + 第一性原理" 模式: PM 显式 invite 时 AI 列候选 + ROI matrix + 推荐 / 让 PM 拍板
+- "再 challenge 自己" 模式: PM 说"再想想" → AI 真过一遍找漏洞 / 不 confirmation bias
 
-3 fixed 栏 (跟主画布解耦 / 始终可见):
-- T7 timeline bottom: 0 / T8 sidebar left: 0 / T9 popover 视口坐标边界 clamp
+⭐ 关键 memory:
+- hybrid AI 草稿模式 (feedback_hybrid_ai_draft_mode.md): PM 异步复核不阻塞
+- 第三方参考真实角色 (feedback_third_party_reference_role.md): denizcemonduygu/philosophy_vis = 参考主 + 数据副产品辅 / 不是标准答案
+- M4 closure + go M5 (m4_closure_go_m5.md ⭐ 新): M4 真收尾完成状态 + M5 启动条件
 
-dev server: npm run dev → http://localhost:5173/marx/ (PM 浏览器验视觉)
+dev server: npm run dev → http://localhost:5174/marx/ (端口 5173 可能占用 / 自动切 5174)
 
-M3 暂停状态:
-- Task 1-12 完成 / Task 13-17 待 PM 第三机
-- 实际上 Task 13 已实质完成: scripts/sep-cache/ 已存 11 个 HTML (本次 PM 网络畅通 AI 自己 curl 下载完成)
-- M4 完成后回 M3 决定: 选项 A 用 SEP HTML 跑 Task 14-17 闭环 successor_notes / 选项 B 跳过
+M3 暂停状态 (M4 真收尾后 review):
+- Task 1-12 完成 / Task 13 实质完成 (scripts/sep-cache/ 已存 11 个 HTML)
+- M4 完成后回 M3 选项 A/B 决策建议 → 选项 B (M4 ClaimNode + agreement 已替代 successor_notes 信息架构 / takeaway § 4 已落)
 
-denizcemonduygu data.json: C:/Users/xuzequan/Desktop/denizcemonduygu-data.json (988KB · 已用 Marx 19 obs / Marx 涉及 link)
+下一步 (3 种可能):
+1. PM 给 M4 demo 累积新反馈 → AI 分 A 类立即修 / B 类 polish backlog / M5 范围
+2. PM 异步复核 3 个数据 checklist md (docs/m4-validation/) → 任意时间
+3. PM 发 "go M5" → 启动新 milestone
 
-⚠ 已识别未排期 vision item:
-- 地理图副视图 (PRD § 4 V1 必做 silent drift / T6 PM checkpoint 时未决定 / 留 M5+ 跟其他 v2 一起评估)
-- A 路径扩 PersonNode (10-15 西方哲学 canon 人物 / T5 SOFT-BLOCK 时冷藏 M5+)
-
-下一步:
-- PM 提调整反馈 → AI 分 A/B 类处理
-- 反馈处理完后: "go T10" 派 subagent 跑 T10 (维度融合 / 勾选著作 obs 行末尾叠加 [书名·年份] / 小工时 / plan line 2445+)
-- "go T11" M3 demo URL 处理 (极小)
-- "go T12" M4 整体 acceptance test (中)
-- "go T13" 上线 + takeaway + polish backlog 批量处理 (M4 收尾)
+⏸ AI 不催不催 / 等 PM 主动
 ```
+
+> **历史追溯**：M4 进行中阶段（T9 完成等综合反馈）的开场白模板已被本版本覆盖。如需查阅历史开场白参考 git log `docs/2026-05-11-m4-progress-anchor.md` 在 commit 6c3c41f 之前的版本。
 
 ---
 
@@ -451,12 +446,16 @@ denizcemonduygu data.json: C:/Users/xuzequan/Desktop/denizcemonduygu-data.json (
 
 - [ ] `git pull origin main` 同步 → Already up to date 或 fast-forward
 - [ ] `git status` → working tree clean
-- [ ] `npm test` → **69/66/3**（T0-T3 完成状态，3 RED 全是 M3 pre-existing baseline）
+- [ ] `git tag | grep m4-final` → 找到 `m4-final` tag（M4 收尾标记）
+- [ ] `npm test` → **96/93/3**（M4 真收尾状态，3 RED 全是 M3 pre-existing baseline）
+- [ ] 在线 demo `curl -sI https://cdu52802-xx.github.io/marx/` → HTTP 200
 - [ ] 文件存在 check：
+  - [ ] `docs/2026-05-13-m4-takeaway.md` exists ⭐ M5 输入 SSOT
+  - [ ] `docs/m4-polish-backlog.md` exists（T13 polish backlog / M5 完成后批量）
   - [ ] `specs/2026-05-11-m4-claim-timeline-design.md` exists
   - [ ] `plans/2026-05-11-marx-m4-claim-timeline.md` exists
   - [ ] `docs/2026-05-11-m4-progress-anchor.md` exists（本文件）
-  - [ ] `docs/m4-validation/marx-19-claims-checklist.md` + `concept-12-claims-checklist.md` exist（T2/T3 PM 复核入口）
+  - [ ] `docs/m4-validation/marx-19-claims-checklist.md` + `concept-12-claims-checklist.md` + `person-quote-checklist.md` exist（PM 任意时间异步复核入口）
 - [ ] `src/data/claims.json` 含 31 条 claim (19 Marx + 12 concept)
 - [ ] denizcemonduygu data.json 路径可访问（如果换机器，PM 需重新抓 + 路径告诉新窗口 AI）：
   - [ ] `ls C:/Users/xuzequan/Desktop/denizcemonduygu-data.json` → ~988KB
