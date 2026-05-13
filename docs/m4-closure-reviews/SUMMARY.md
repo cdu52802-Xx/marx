@@ -219,9 +219,43 @@ Marx M4 **product 健康度高于初印象**：
 
 ---
 
-**SUMMARY 完成 ✅**
+## 10. ✅ Option A 已执行 (2026-05-13 PM 选 A 后追加)
+
+**5 fix + 1 follow-up 全部完成 / 6 commits / 已 push origin main**：
+
+| # | Commit | 内容 | 验证 |
+|---|---|---|---|
+| 1 | [361363b](https://github.com/cdu52802-Xx/marx/commit/361363b) | fix(M4): eslint.config.js 加 .claude/ ignore (gstack worktree 污染) | lint exit 0 / 70 errors → 0 |
+| 2 | [68e9199](https://github.com/cdu52802-Xx/marx/commit/68e9199) | fix(M4): tsconfig allowImportingTsExtensions + 修 2 个真型错 | tsc exit 0 / 25 errors → 0 |
+| 3 | [6359937](https://github.com/cdu52802-Xx/marx/commit/6359937) | fix(M4): sidebar icons + toggle 加 aria-label / role / tabindex / keyboard | browse snapshot @e4-@e9 全 ARIA / 6 个 aria-label |
+| 4 | [38cd9ed](https://github.com/cdu52802-Xx/marx/commit/38cd9ed) | feat(M4): 加 app title header + 数据量副标题 (D-001 + D-002 一举两得) | h1_count 0 → 1 / 视觉验证 17-FINAL-after-all-fixes.png |
+| 5 | [7b9b8c3](https://github.com/cdu52802-Xx/marx/commit/7b9b8c3) | fix(M4): timeline play button toggle pause (B2 / qa ISSUE-001) | 6 个新 unit test pass / browser ▶ → ⏸ → 自动 stop 验证 |
+| 6 | [4bd7816](https://github.com/cdu52802-Xx/marx/commit/4bd7816) | chore(M4): refine FilterContext.svg parent type (fix #2 follow-up) | lint 0 (Element \| null 替代 any) |
+
+**最终 baseline (实测)**：
+
+| 指标 | 之前 | 现在 | Δ |
+|---|---|---|---|
+| tsc errors | 25 | **0** ✓ | -25 |
+| eslint errors | 70 (worktree 污染) | **0** ✓ | -70 |
+| npm test | 100/103 | **106/109** ✓ | +6 (B2 fix test) |
+| document.querySelectorAll('h1').length | 0 | **1** ✓ | +1 (semantic) |
+| sidebar 元素 in ARIA tree | 3 (link+button+slider) | **9** ✓ | +6 (含 sidebar 6 icon) |
+| play button toggle | 不可 | **▶ ⇄ ⏸ + aria-pressed** ✓ | 完整 |
+
+**预计 4 件套重跑分数（未实跑 / 推算）**：
+- health: 6.0 → **8.5+** (typecheck + lint 都 clean / test 100→106 还增加)
+- QA: 90 → **95+** (ISSUE-001 + ISSUE-003 解决 / 剩 mobile responsive 推 M5)
+- design-review: B+ (84) → **A- (90+)** (D-001 + D-002 + D-004 全部解决 / Visual + Typography + a11y 升级)
+- AI Slop: A (95) → **A** 保持 ⭐
+
+**Final screenshot**: `.gstack/qa-reports/screenshots/17-FINAL-after-all-fixes.png`
+
+---
+
+**SUMMARY 完成 ✅ · Option A 执行完毕 · 等 PM `go M5` 启动 M5 brainstorm**
 
 ⏸ 等 PM:
-- 选 A / B / C 之一（或自定义组合）
-- 或发 `go M5` 接受当前 baseline 进 M5 brainstorm
+- 发 `go M5` → AI 启动 brainstorming + 6 PM 意见 + 3 主线 A/B/C
 - 或新反馈 / 新方向
+- AI 不催不催 (hybrid 不催进度精神)

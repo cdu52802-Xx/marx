@@ -35,12 +35,23 @@
 
 ## 当前状态
 
-✅ **4/4 全部完成 · 2026-05-13** · SUMMARY.md 落档 / 等 PM 决策 A/B/C（修立即修候选 vs go M5）
+✅ **4/4 全部完成 + Option A 5 fix 全部执行 · 2026-05-13** · 等 PM `go M5`
 
 ### 综合一句话
 
 - **Marx M4 product 健康度高于初印象**: app 本身扎实 / 设计 AI Slop A 级 ⭐ / B1 fix verified work
 - **3 个跨 report 主题**: a11y / mobile responsive / 字体管理 → 见 SUMMARY § 2.2
-- **5 个立即修候选共 45 min**: lint config + tsconfig + app title header + B2 play pause + sidebar ARIA → SUMMARY § 3
+- ~~**5 个立即修候选**~~ → ✅ **全部执行完毕 / 6 commits push 完 / 见 SUMMARY § 10**
 - **3 个 M5 决策输入**: responsive 战略 / app title layer / a11y 投入度 → SUMMARY § 4
+
+### Option A 执行后 baseline (2026-05-13)
+
+| 指标 | 之前 | 现在 |
+|---|---|---|
+| tsc | 25 errors | **0 ✓** |
+| eslint | 70 errors | **0 ✓** |
+| npm test | 100/103 | **106/109 ✓** |
+| h1 semantic | 0 | **1 ✓** |
+| sidebar a11y | 0/6 | **6/6 ✓** |
+| B2 timeline play | 无暂停 | **toggle ⇄ ✓** |
 
