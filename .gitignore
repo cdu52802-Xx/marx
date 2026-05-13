@@ -45,3 +45,4 @@ scripts/sep-cache/*.html
 
 # === Superpowers brainstorm visual companion session artifacts ===
 .superpowers/
+.gstack/

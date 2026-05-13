@@ -1,10 +1,11 @@
 # Marx M4 续接锚点 · ✅ 收尾完成（git tag m4-final / 等 PM `go M5`）
 
-> **状态**（2026-05-13 收尾 + smoke test update）：M4 **✅ 真收尾完成** · demo 在线 https://cdu52802-xx.github.io/marx/ · 测试 **103/100/3**（+7 B1 fix test / 3 RED 仍 M3 pre-existing）· **T10/T12 推 M5 一起做**（PM 第一性原理推荐 / 防双倍工作）· takeaway 精简版 4 节落档 · 等 PM 任意时间发 **`go M5`** 启动新 milestone
+> **状态**（2026-05-13 收尾 + smoke test + gstack 4 件套 update）：M4 **✅ 真收尾完成** · demo 在线 https://cdu52802-xx.github.io/marx/ · 测试 **103/100/3**（+7 B1 fix test / 3 RED 仍 M3 pre-existing）· **T10/T12 推 M5 一起做**（PM 第一性原理推荐 / 防双倍工作）· takeaway 精简版 4 节落档 · 等 PM 任意时间发 **`go M5`** 启动新 milestone
 >
 > **2026-05-13 smoke test 一轮**（PM 邀请"资深产品推荐"模式）：A 类 smoke test 通过 / 0 阻塞 · 发现 4 个 issue：**B1 cats + claim filter 实现遗漏** ✅ 已修 commit 2eae1db（抽 applyClaimFilters helper + 7 unit test + dev server 实测）· B2/B3/B4 入 [polish backlog](./m4-polish-backlog.md) 跟 T9 / T7 / T6 一起 M5 完成后批量
+> **2026-05-13 gstack 4 件套 baseline**（PM 新装 gstack 后第一轮 / health + benchmark + qa-only + design-review）：4/4 全部 done · **Marx product 健康度高于初印象** · app A+ / **AI Slop A ⭐ 明显不像 AI slop** / 6.0 health 偏低主要因 gstack worktree 污染 lint + TS5097 单一 config / 修 5 个立即修候选共 45 min → health 8.5+ + QA 95+ + Design A- · **3 个跨 report 主题**: a11y / mobile responsive / 字体管理 · **3 个 M5 决策输入**: responsive 战略 / app title layer / a11y 投入度 / 详见 **[docs/m4-closure-reviews/SUMMARY.md](./m4-closure-reviews/SUMMARY.md)** ⭐⭐ M5 启动期 SSOT
 > **本文件用途**：跨窗口/跨机器续接锚点。新窗口读 AGENTS.md + 本文件 + takeaway + PRD 即可重建完整理解
-> **关联**：[M4 takeaway](./2026-05-13-m4-takeaway.md) ⭐ M5 输入 / [M4 spec](../specs/2026-05-11-m4-claim-timeline-design.md) / [M4 plan](../plans/2026-05-11-marx-m4-claim-timeline.md) / [M4 polish backlog](./m4-polish-backlog.md) / [M3 progress anchor](2026-05-08-m3-progress-anchor.md)（M3 暂停） / [PRD V1 + 实施状态](PRD.md)
+> **关联**：[M4 takeaway](./2026-05-13-m4-takeaway.md) ⭐ M5 输入 / **[gstack 4 件套 SUMMARY](./m4-closure-reviews/SUMMARY.md)** ⭐⭐ M5 启动决策输入 / [M4 spec](../specs/2026-05-11-m4-claim-timeline-design.md) / [M4 plan](../plans/2026-05-11-marx-m4-claim-timeline.md) / [M4 polish backlog](./m4-polish-backlog.md) / [M3 progress anchor](2026-05-08-m3-progress-anchor.md)（M3 暂停） / [PRD V1 + 实施状态](PRD.md)
 
 ---
 

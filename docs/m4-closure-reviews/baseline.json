@@ -1,0 +1,36 @@
+{
+  "url": "https://cdu52802-xx.github.io/marx/",
+  "timestamp": "2026-05-13T16:00:00+08:00",
+  "branch": "main",
+  "tag": "m4-final",
+  "milestone": "M4 closure",
+  "network_context": "China to GH Pages international",
+  "pages": {
+    "/": {
+      "ttfb_ms": 1605,
+      "fcp_ms": 4412,
+      "lcp_ms": 4412,
+      "dom_interactive_ms": 1615,
+      "dcl_ms": 4216,
+      "dom_complete_ms": 8811,
+      "full_load_ms": 8811,
+      "total_requests": 3,
+      "total_transfer_bytes": 163827,
+      "js_bundle_bytes": 37976,
+      "css_bundle_bytes": 125851,
+      "app_css_bytes": 996,
+      "largest_resources": [
+        {"name": "index-1Gd0cDh1.js", "size": 37976, "duration": 1265, "type": "app-bundle"},
+        {"name": "css2 (Google Fonts)", "size": 124855, "duration": 2264, "type": "third-party-fonts"},
+        {"name": "index-D1JYOQK8.css", "size": 996, "duration": 320, "type": "app-css"}
+      ]
+    }
+  },
+  "regression_thresholds": {
+    "js_bundle_warning": "47471 (+25%)",
+    "js_bundle_critical": "56964 (+50%)",
+    "total_transfer_warning": "204783 (+25%)",
+    "fcp_warning_ms": 5515,
+    "fcp_critical_ms": 4912
+  }
+}
