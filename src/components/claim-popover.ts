@@ -94,6 +94,8 @@ export function showClaimPopover(claim: ClaimNode, ctx: ClaimPopoverContext) {
       margin:0 0 4px;
       line-height:1.2;
       color:#2a2a2a;
+      word-break:break-word;
+      overflow-wrap:anywhere;
     ">${escapeHtml(claim.name_zh ?? claim.keywords ?? '观点')}</h2>
     ${
       claim.name_orig
