@@ -284,10 +284,7 @@ export function showClaimPopover(claim: ClaimNode, ctx: ClaimPopoverContext) {
   const outsideHandler = (e: MouseEvent) => {
     if (!sidebar.contains(e.target as Node)) hideClaimPopover();
   };
-  const outsideTimer = setTimeout(
-    () => document.addEventListener('mousedown', outsideHandler),
-    0,
-  );
+  const outsideTimer = setTimeout(() => document.addEventListener('mousedown', outsideHandler), 0);
   const sidebarAny = sidebar as unknown as {
     _outsideHandler: (e: MouseEvent) => void;
     _outsideTimer: ReturnType<typeof setTimeout>;

@@ -80,9 +80,7 @@ describe('claim-popover · 详情右侧栏 (M4 T9 改造 / spec § 8.2)', () => 
     // 模拟 mousedown 在 body 上 (sidebar 外)
     const outsideTarget = document.createElement('div');
     document.body.appendChild(outsideTarget);
-    outsideTarget.dispatchEvent(
-      new MouseEvent('mousedown', { bubbles: true, cancelable: true }),
-    );
+    outsideTarget.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
     // 等滑出动画完成 350ms
     await new Promise((resolve) => setTimeout(resolve, 400));
     expect(document.querySelector('.claim-popover')).toBeNull();
@@ -101,9 +99,7 @@ describe('claim-popover · 详情右侧栏 (M4 T9 改造 / spec § 8.2)', () => 
   it('agreementClaims 渲染绿色 successor 块 (hybrid 配色: 沿用 M4 绿弧 #7a9a5a)', () => {
     showClaimPopover(mockClaim, {
       ...mockCtx,
-      agreementClaims: [
-        { id: 'c-lukacs-1923', author: '卢卡奇', text: '物化扩展异化论' },
-      ],
+      agreementClaims: [{ id: 'c-lukacs-1923', author: '卢卡奇', text: '物化扩展异化论' }],
     });
     const html = document.querySelector('.claim-popover')?.innerHTML ?? '';
     expect(html).toContain('卢卡奇');
@@ -113,9 +109,7 @@ describe('claim-popover · 详情右侧栏 (M4 T9 改造 / spec § 8.2)', () => 
   it('disagreementClaims 渲染红橘 successor 块 (hybrid 配色: 沿用 M4 红弧 #b8654a)', () => {
     showClaimPopover(mockClaim, {
       ...mockCtx,
-      disagreementClaims: [
-        { id: 'c-proudhon-1846', author: '蒲鲁东', text: '私有制不是异化原因' },
-      ],
+      disagreementClaims: [{ id: 'c-proudhon-1846', author: '蒲鲁东', text: '私有制不是异化原因' }],
     });
     const html = document.querySelector('.claim-popover')?.innerHTML ?? '';
     expect(html).toContain('蒲鲁东');
