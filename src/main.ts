@@ -103,6 +103,7 @@ if (app.empty()) {
 }
 
 // 让 #app + body 允许横向 scroll (画布无限 / Engels 等长 section 不被裁)
+// padding-top: 70px 给顶部 fixed #app-header (h1 + meta · M4 closure fix #4) 留视觉空间
 // padding-bottom: 160px 给底部 fixed timeline 留视觉空间（T7 / spec § 6.1 独立栏）
 // padding-left: 48px 给左侧 fixed sidebar 收起态留视觉空间（T8 / spec § 7 独立栏）
 //   sidebar 展开 200px 时不调 padding-left → 临时遮挡画布左侧 ~150px（spec § 7.2 默认展开态短暂使用）
@@ -110,6 +111,7 @@ app
   .style('overflow', 'auto')
   .style('width', '100vw')
   .style('height', '100vh')
+  .style('padding-top', '70px')
   .style('padding-bottom', '160px')
   .style('padding-left', '48px')
   .style('box-sizing', 'border-box');
