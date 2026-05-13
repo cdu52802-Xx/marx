@@ -18,10 +18,12 @@ import type { ClaimNode, ClaimRelation } from '../types/Claim.ts';
 import type { SidebarFilters } from './sidebar.ts';
 
 export interface FilterContext {
-  // 第三/四泛型 (parent/datum) 用 any 兼容 main.ts (HTMLElement parent from
-  // chained .append('svg')) + test (null parent from d3.select<...>())。
-  // selectAll 不关心 parent 类型 / 这里宽容更实用。
-  svg: d3.Selection<SVGSVGElement, unknown, any, any>;
+  // 第三/四泛型 (parent / parentDatum) 用 BaseType + unknown 兼容两种创建方式:
+  //   - main.ts: d3.select('#app').append('svg') → parent = HTMLElement (extends Element)
+  //   - test: d3.select<SVGSVGElement, unknown>(svgEl) → parent = null
+  //   - Element | null 同时容纳两者; parentDatum unknown 接受 any 或 undefined.
+  // selectAll() 不关心 parent / 类型宽容仅为接口契约 (不损 type safety).
+  svg: d3.Selection<SVGSVGElement, unknown, Element | null, unknown>;
   claimById: Map<string, ClaimNode>;
 }
 
