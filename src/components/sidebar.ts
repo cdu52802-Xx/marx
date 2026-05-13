@@ -49,15 +49,15 @@ export function mountSidebar(opts: SidebarOptions): { getFilters: () => SidebarF
   const filters: SidebarFilters = JSON.parse(JSON.stringify(DEFAULT_FILTERS));
 
   container.innerHTML = `
-    <div class="sidebar" data-state="collapsed" style="width:48px;height:100%;padding:14px 8px;border-right:1px solid #e8e0d0;background:#faf6ec;font-family:'EB Garamond','Georgia',serif;transition:width 0.2s;box-sizing:border-box;overflow:hidden">
-      <div class="toggle-btn" style="font-size:18px;color:#5b3a8c;text-align:center;margin-bottom:14px;cursor:pointer;user-select:none">⟩</div>
+    <nav class="sidebar" data-state="collapsed" aria-label="筛选栏" style="width:48px;height:100%;padding:14px 8px;border-right:1px solid #e8e0d0;background:#faf6ec;font-family:'EB Garamond','Georgia',serif;transition:width 0.2s;box-sizing:border-box;overflow:hidden">
+      <div class="toggle-btn" role="button" tabindex="0" aria-label="展开筛选栏" aria-expanded="false" style="font-size:18px;color:#5b3a8c;text-align:center;margin-bottom:14px;cursor:pointer;user-select:none">⟩</div>
       <div class="collapsed-icons">
-        <div data-filter-icon="node-claim" style="text-align:center;margin-bottom:10px;cursor:pointer;color:#5b3a8c;font-size:14px" title="claim 观点">●</div>
-        <div data-filter-icon="node-person" style="text-align:center;margin-bottom:10px;cursor:pointer;color:#5b3a8c;font-size:14px" title="person 人物">👤</div>
-        <hr style="border:none;border-top:1px dotted #d0c8b0;margin:8px 0">
-        <div data-filter-icon="rel-agreement_with" style="text-align:center;margin-bottom:10px;cursor:pointer;color:#7a9a5a;font-size:18px" title="agreement 影响">↝</div>
-        <div data-filter-icon="rel-disagreement_with" style="text-align:center;margin-bottom:10px;cursor:pointer;color:#b8654a;font-size:18px" title="disagreement 反驳">⇋</div>
-        <div data-filter-icon="rel-extends" style="text-align:center;margin-bottom:10px;cursor:pointer;color:#aaa;font-size:18px" title="extends 自延">⋯</div>
+        <div data-filter-icon="node-claim" role="button" tabindex="0" aria-label="高亮观点 claim 节点" style="text-align:center;margin-bottom:10px;cursor:pointer;color:#5b3a8c;font-size:14px" title="claim 观点">●</div>
+        <div data-filter-icon="node-person" role="button" tabindex="0" aria-label="高亮人物 person 节点" style="text-align:center;margin-bottom:10px;cursor:pointer;color:#5b3a8c;font-size:14px" title="person 人物">👤</div>
+        <hr style="border:none;border-top:1px dotted #d0c8b0;margin:8px 0" aria-hidden="true">
+        <div data-filter-icon="rel-agreement_with" role="button" tabindex="0" aria-label="高亮影响 agreement 关系弧" style="text-align:center;margin-bottom:10px;cursor:pointer;color:#7a9a5a;font-size:18px" title="agreement 影响">↝</div>
+        <div data-filter-icon="rel-disagreement_with" role="button" tabindex="0" aria-label="高亮反驳 disagreement 关系弧" style="text-align:center;margin-bottom:10px;cursor:pointer;color:#b8654a;font-size:18px" title="disagreement 反驳">⇋</div>
+        <div data-filter-icon="rel-extends" role="button" tabindex="0" aria-label="高亮自延 extends 关系弧" style="text-align:center;margin-bottom:10px;cursor:pointer;color:#aaa;font-size:18px" title="extends 自延">⋯</div>
       </div>
       <div class="expanded-content" style="display:none">
         <div style="font-size:10px;color:#888;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">节点类型</div>
@@ -87,19 +87,30 @@ export function mountSidebar(opts: SidebarOptions): { getFilters: () => SidebarF
   const collapsedIcons = container.querySelector('.collapsed-icons') as HTMLElement;
   const expandedContent = container.querySelector('.expanded-content') as HTMLElement;
 
-  toggleBtn.addEventListener('click', () => {
+  function toggleSidebar() {
     if (sidebar.dataset.state === 'collapsed') {
       sidebar.dataset.state = 'expanded';
       sidebar.style.width = '200px';
       collapsedIcons.style.display = 'none';
       expandedContent.style.display = 'block';
       toggleBtn.textContent = '⟨';
+      toggleBtn.setAttribute('aria-label', '收起筛选栏');
+      toggleBtn.setAttribute('aria-expanded', 'true');
     } else {
       sidebar.dataset.state = 'collapsed';
       sidebar.style.width = '48px';
       collapsedIcons.style.display = 'block';
       expandedContent.style.display = 'none';
       toggleBtn.textContent = '⟩';
+      toggleBtn.setAttribute('aria-label', '展开筛选栏');
+      toggleBtn.setAttribute('aria-expanded', 'false');
+    }
+  }
+  toggleBtn.addEventListener('click', toggleSidebar);
+  toggleBtn.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      toggleSidebar();
     }
   });
 
@@ -120,10 +131,14 @@ export function mountSidebar(opts: SidebarOptions): { getFilters: () => SidebarF
     });
   });
 
-  // hover icon → onHover (高亮预览主画布对应类型)
+  // hover icon → onHover (高亮预览主画布对应类型) + keyboard 焦点等价
+  // a11y: keyboard 用户 Tab 到 icon 时 focus = hover 语义 / 等价高亮主画布
   container.querySelectorAll('[data-filter-icon]').forEach((icon) => {
-    icon.addEventListener('mouseenter', () => onHover?.(icon.getAttribute('data-filter-icon')));
+    const key = icon.getAttribute('data-filter-icon');
+    icon.addEventListener('mouseenter', () => onHover?.(key));
     icon.addEventListener('mouseleave', () => onHover?.(null));
+    icon.addEventListener('focus', () => onHover?.(key));
+    icon.addEventListener('blur', () => onHover?.(null));
   });
 
   return { getFilters: () => filters };
