@@ -1,6 +1,8 @@
 # Marx M4 续接锚点 · ✅ 收尾完成（git tag m4-final / 等 PM `go M5`）
 
-> **状态**（2026-05-13 收尾 update）：M4 **✅ 真收尾完成** · demo 在线 https://cdu52802-xx.github.io/marx/ · 测试 **96/93/3**（3 RED M3 pre-existing）· **T10/T12 推 M5 一起做**（PM 第一性原理推荐 / 防双倍工作）· takeaway 精简版 4 节落档 · 等 PM 任意时间发 **`go M5`** 启动新 milestone
+> **状态**（2026-05-13 收尾 + smoke test update）：M4 **✅ 真收尾完成** · demo 在线 https://cdu52802-xx.github.io/marx/ · 测试 **103/100/3**（+7 B1 fix test / 3 RED 仍 M3 pre-existing）· **T10/T12 推 M5 一起做**（PM 第一性原理推荐 / 防双倍工作）· takeaway 精简版 4 节落档 · 等 PM 任意时间发 **`go M5`** 启动新 milestone
+>
+> **2026-05-13 smoke test 一轮**（PM 邀请"资深产品推荐"模式）：A 类 smoke test 通过 / 0 阻塞 · 发现 4 个 issue：**B1 cats + claim filter 实现遗漏** ✅ 已修 commit 2eae1db（抽 applyClaimFilters helper + 7 unit test + dev server 实测）· B2/B3/B4 入 [polish backlog](./m4-polish-backlog.md) 跟 T9 / T7 / T6 一起 M5 完成后批量
 > **本文件用途**：跨窗口/跨机器续接锚点。新窗口读 AGENTS.md + 本文件 + takeaway + PRD 即可重建完整理解
 > **关联**：[M4 takeaway](./2026-05-13-m4-takeaway.md) ⭐ M5 输入 / [M4 spec](../specs/2026-05-11-m4-claim-timeline-design.md) / [M4 plan](../plans/2026-05-11-marx-m4-claim-timeline.md) / [M4 polish backlog](./m4-polish-backlog.md) / [M3 progress anchor](2026-05-08-m3-progress-anchor.md)（M3 暂停） / [PRD V1 + 实施状态](PRD.md)
 
