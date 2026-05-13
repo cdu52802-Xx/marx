@@ -153,19 +153,50 @@ export function mountTimeline(opts: TimelineOptions): {
     onCursorChange?.(year);
   });
 
-  // 播放按钮（M4 简单实现：从 yearMin 跳到 yearMax，每 100ms 增 5 年）
+  // 播放按钮 toggle pause (M4 closure fix #5 · qa ISSUE-001 / polish backlog B2)
+  // 修复前: 每次 click 起一个 setInterval / 不记 id / 不 toggle 文字
+  //   → 第 2 次 click 第 2 个 interval 并发 / 没法暂停 / cursor 加速跑诡异
+  // 修复后: activeInterval 闭包记录正在播放的 timer id
+  //   null = 未播放 → click 起 interval + 改 ⏸ + aria-pressed=true
+  //   非 null = 正在播放 → click clearInterval + 改 ▶ + aria-pressed=false
+  //   播放从当前 cursor 位置继续 (用户期望) / 若 cursor 已在 yearMax 则 restart 从 yearMin
+  //   跑到 yearMax 自然结束时也 reset textContent + activeInterval
   const playBtn = container.querySelector('#tl-play') as HTMLButtonElement;
-  playBtn.addEventListener('click', () => {
-    let y = yearMin;
-    const interval = setInterval(() => {
+  let activeInterval: ReturnType<typeof setInterval> | null = null;
+  const PLAY_LABEL = '▶ 播放思想史';
+  const PAUSE_LABEL = '⏸ 暂停播放';
+  playBtn.setAttribute('aria-pressed', 'false');
+
+  function stopPlayback() {
+    if (activeInterval !== null) {
+      clearInterval(activeInterval);
+      activeInterval = null;
+    }
+    playBtn.textContent = PLAY_LABEL;
+    playBtn.setAttribute('aria-pressed', 'false');
+  }
+
+  function startPlayback() {
+    let y = parseInt(slider.value, 10);
+    if (isNaN(y) || y >= yearMax) y = yearMin; // 末尾或异常时从头
+    playBtn.textContent = PAUSE_LABEL;
+    playBtn.setAttribute('aria-pressed', 'true');
+    activeInterval = setInterval(() => {
       y += 5;
       if (y >= yearMax) {
-        y = yearMax;
-        clearInterval(interval);
+        slider.value = yearMax.toString();
+        slider.dispatchEvent(new Event('input'));
+        stopPlayback();
+        return;
       }
       slider.value = y.toString();
       slider.dispatchEvent(new Event('input'));
     }, 100);
+  }
+
+  playBtn.addEventListener('click', () => {
+    if (activeInterval === null) startPlayback();
+    else stopPlayback();
   });
 
   return {
