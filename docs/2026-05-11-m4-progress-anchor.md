@@ -18,6 +18,57 @@
 
 ---
 
+## ⭐ M4 收尾承诺清单（2026-05-12 PM 推 deploy 优先 / 延后 task 整体记录）
+
+> **PM 原话**："没做完的工作要做好记录，后续整体都是要弄完的"
+> **背景**：2026-05-12 PM 接受第一性原理推荐 = 跳过 T10/T12 / 简化 T13 仅 deploy / 优先上线 M4 demo
+> **本节用途**：SSOT 跟踪所有延后项 / 防 silent drift / M4 真正收尾时 PM 一处看完
+> **完成定义**：所有项 ✅ 才算 M4 真收尾
+
+### 1 · 延后 task（按 PM 第一性原理推荐 / 暂跳 / 必须回来做）
+
+| Task | 内容 | 当前状态 | 何时回来做 |
+|---|---|---|---|
+| **T10** 维度融合 | sidebar 勾选著作 → obs 末尾叠 `[书名 · 年份]` / spec § 8.1 方案 B | ⏳ delay | deploy 后 PM 反馈周内 / 或 T13 polish 一起跑 |
+| **T12** 整体 acceptance test | unit + e2e test 覆盖 spec § 11 全部 criteria | ⏳ delay | deploy 反馈周后 / 收尾前补 |
+| **T13 full takeaway** | docs/2026-XX-XX-m4-takeaway.md + README 更新 + AGENTS 状态更新 + PRD 覆盖率核对 | ⏳ delay | T10 + T12 完成后跑 |
+
+### 2 · Polish backlog（已实现但要细调）
+
+详见 [docs/m4-polish-backlog.md](./m4-polish-backlog.md)：
+
+- **T6 主画布字体** · claim_text 11→12 / person 标题 letter-spacing / obs tag 9→10
+- **T7 时间轴** · 播放速度（100ms→200-300ms 或加速度曲线）/ 拖游标淡出突变（CSS transition）/ 紫色 ticks 对比度
+- **T9 详情右侧栏** · 配色 / 样式 / 内容 / 排版 4 维度（PM 暂无具体方向 / 慢慢磨 / 2026-05-12 PM 原话）
+
+**T13 处理顺序建议**（已落 backlog）：1. T9 配色 → 2. T9 排版 → 3. T7 播放速度 → 4. T6 字体 → 5. T9 内容 → 6. 装饰细节
+
+### 3 · Silent drift items（M4 vision pivot 时丢的 / 需 M5+ 评估）
+
+| 项 | 当前状态 | 决策时机 |
+|---|---|---|
+| **地理图副视图**（PRD V1 必做）| ⚠ silent drift 已 catch / PRD § 4 V1 状态注释 line 58-65 | M5+ 评估（不在 M4 范围 / 决策 1 视觉重设计 + 详情卡）|
+| **A 路径扩 PersonNode** 10-15 西方哲学 canon 人物 | 冷藏（T5 SOFT-BLOCK 时决定走 C 路径接受 31 relation） | M5+ 跟地理图一起评估 / 涉及产品定位（Marx-centric vs 西方哲学全景）|
+
+### 4 · 数据复核（hybrid 模式异步 / 非阻塞）
+
+PM 任意时间打开复核：
+
+| 文件 | 内容 | 重点关注 |
+|---|---|---|
+| `docs/m4-validation/marx-19-claims-checklist.md` | T2 · Marx 19 obs AI 翻译 | 抽查 5 条 |
+| `docs/m4-validation/concept-12-claims-checklist.md` | T3 · 12 concept 升级 | ⭐ 3 条哲学敏感（共产主义 / 革命 / 生产方式 苏联诠释五形态）|
+| `docs/m4-validation/person-quote-checklist.md` | T4 · 61 person quote | 抽查（资料不足 38 条已 skip）|
+
+### 5 · M3 阶段 C 收尾（M4 完成后回头决定 A/B）
+
+- 选项 A：用 SEP HTML（已存 `scripts/sep-cache/` 11 个）跑 M3 Task 14-17 闭环 successor_notes 数据 + 修 3 个 RED test
+- 选项 B：M3 阶段 C 永久跳过（M3 阶段 B 已 ship + M4 claim 已取代 successor_notes 信息架构）
+
+**当前未决**：决定权 PM / 等 M4 真收尾 + takeaway 一起评估
+
+---
+
 ## 2026-05-12 T6-T9 完成 update · 视觉 layout + 4 组件就绪 / PM 反馈待收
 
 ### T6-T9 commit chain（6 commit · 全部 push 到 origin/main）
