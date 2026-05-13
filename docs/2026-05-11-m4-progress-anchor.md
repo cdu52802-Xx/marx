@@ -368,76 +368,80 @@ ls F:/AI/projects/Marx/.superpowers/brainstorm/*/content/q3-v7-final.html
 
 ---
 
-## 新窗口开场白模板（PM 复制粘贴用 · 2026-05-13 smoke test + B1 修完成版 · ⭐ 最新）
+## 新窗口开场白模板（PM 复制粘贴用 · 2026-05-13 gstack 4 件套 + Option A 修完 + 准备 go M5 版 · ⭐ 最新）
 
 ```
-续接 Marx 项目（cwd: F:\AI\projects\Marx）。
+续接 Marx 项目（cwd: F:\AI\projects\Marx）+ 立即启动 M5 brainstorm。
 
-按惯例先 git pull origin main，然后读：
-1. AGENTS.md（项目级元约束 + 入口）
-2. docs/2026-05-11-m4-progress-anchor.md（M4 续接锚点 ⭐ 已 update 到 smoke test + B1 修完成版）
-3. docs/2026-05-13-m4-takeaway.md（M4 takeaway SSOT ⭐⭐ 含 PRD 覆盖率 + 6 PM 意见 → M5 输入 + 8 lessons + go M5 启动方式）
-4. docs/m4-polish-backlog.md（polish backlog · M5 完成后批量 / 含 2026-05-13 smoke test B2/B3/B4 详细）
+按惯例先 git pull origin main，然后读 4 个文件:
+1. AGENTS.md（项目级元约束 + 入口 / 视觉三件套硬约束）
+2. docs/2026-05-11-m4-progress-anchor.md（M4 续接锚点 ⭐ 已 update 到 4 件套 + Option A 修完版）
+3. docs/m4-closure-reviews/SUMMARY.md ⭐⭐ M5 启动 SSOT（4 件套综合 + 3 决策输入 + Option A 已执行表）
+4. docs/2026-05-13-m4-takeaway.md（M4 takeaway · 8 lessons / PRD 覆盖率 / 三主线 ABC）
 
-当前位置（2026-05-13 M4 收尾 + smoke test 一轮 + B1 修 / 等 PM go M5）：
-- M4 ✅ 实现完成 + B1 修 · demo 在线 https://cdu52802-xx.github.io/marx/
-- 最近 2 commit:
-  - f8f4f20 docs(M4): smoke test follow-up · B1 落档 + B2-B4 入 backlog
-  - 2eae1db fix(M4-B1): sidebar 5 学科 + 观点 claim filter 真正生效
-- T0-T9 + T9 改造 + T11 + T13 + B1 fix 完成
-- T10 + T12 推 M5 一起做
-- 测试 103/100/3 (103 = 96 + 7 B1 fix unit test · 3 RED 仍 M3 pre-existing baseline · 不属 M4)
-- claims.json: 92 ClaimNode (19 Marx + 12 concept + 61 person) + 31 ClaimRelation
+当前位置（2026-05-13 M4 真收尾 + 4 件套 + Option A 5 fix 全部完成 / PM 已说 go M5）:
+- M4 demo 在线 https://cdu52802-xx.github.io/marx/ (Option A 修后版本 / 含 app title header + sidebar a11y + B2 toggle)
+- 最近 8 commits (Option A 5 修 + follow-up + docs):
+  - 0956e87 docs sync · 4bd7816 type refine · 7b9b8c3 B2 play toggle
+  - 38cd9ed app title header · 6359937 sidebar a11y · 68e9199 tsconfig+真型错
+  - 361363b lint config · 9ed6e16 4 件套 reports 落档
+- baseline 实测: tsc 25→0 / eslint 70→0 / npm test 100/103→106/109 / h1 0→1 / sidebar ARIA 6/6 / B2 play toggle ✓
+- claims.json: 92 ClaimNode + 31 ClaimRelation 不变
 
-⭐ 2026-05-13 smoke test 一轮成果:
-- 0 A 类阻塞 / 4 issue (B1-B4)
-- B1 (cats + claim filter 实现遗漏 / spec § 7.2 漏一半) → 立即修 ✅ commit 2eae1db
-- B2 (timeline 播放无暂停 / race interval) → polish backlog
-- B3 (mobile 详情栏几乎全屏 / 380 > 375 viewport) → polish backlog (PM 暂不升 A)
-- B4 (tablet sidebar 与 timeline 视觉重叠) → polish backlog
+⭐⭐ PM 已说 "准备 go M5 / 调用 gstack 自行判断":
+立即执行 M5 brainstorm 启动流程 (不再等 PM 发 go M5 / 跳过 confirmation gate):
 
-M5 启动方式 (PM 任意时间):
-PM 发 "go M5" → AI 启动 brainstorming skill / 列 6 条意见 → 3 主线 A/B/C 让 PM 排优先级:
-- A · 可探索基础设施 (zoom + 动态居中 + 时间轴 / 意见 1+7+2+4) ⭐ 用户感知最大 / 建议先做
-- B · 页面框架 + 地理图副视图 (意见 3 / 兼 PRD V1 silent drift catch)
-- C · 多类型详情页系统 (意见 5+6 / 兼 PRD V1 person bio)
+1. 启动 brainstorming skill (superpowers:brainstorming) + 开启 visual companion (AGENTS.md 三件套)
+2. 跟 PM 确认 M5 主线 A/B/C 优先级:
+   - A · 可探索基础设施 (zoom + pan + 动态居中 + 时间轴改造 / 6 PM 意见中 1+7+2+4) ⭐ 用户感知最大 / 建议先做
+   - B · 页面框架 + 地理图副视图 (PM 意见 3 / 兼 PRD V1 silent drift catch)
+   - C · 多类型详情页系统 (PM 意见 5+6 + PRD V1 person bio)
+3. 重看 PRD V1 必做项 vs M4 现状 (SUMMARY § 1 覆盖率 30-40%)
+4. 重看 3 个 M5 决策输入 (SUMMARY § 4):
+   - 决策 1: responsive 战略 (desktop-only / mobile 重设计 / 过渡方案)
+   - 决策 2: app title layer (HTML header / SVG header / 重组 footer)
+   - 决策 3: a11y 投入度 (最低 / WCAG AA / 声明 + 后续)
+5. 单线启动 / 拆 task 5-7 个 / 写 M5 spec + plan (lesson 3 防 subagent 拆太碎)
+6. M5 上线前必做 = archive M4 demo (复用 m3-archive 套路 / lesson 8)
 
-启动后必做 (takeaway § 4 已落):
-1. 跟 PM 确认 A/B/C 优先级 (建议 A 先 / 用户感知最大)
-2. 重看 PRD V1 必做项 vs M4 现状 (覆盖率 30-40%)
-3. 重看 spec § 6.1 时间轴决策 (意见 4 触发)
-4. 单线启动 / 拆 task 5-7 个 / 写 M5 spec + plan (lesson 3 防 subagent 拆太碎)
-5. M5 上线前必做 = archive M4 demo (复用 m3-archive 套路 / lesson 8)
+⭐ M5 期间 gstack 调用策略 (SUMMARY § 7 + memory feedback_gstack_workflow_lessons):
 
-⭐ 关键工作流约定 (memory 已落 / 必读):
-- M5 启动方式 = PM 主动 "go M5" / AI 不催进度
-- "资深产品 + 第一性原理" 模式: PM 显式 invite 时 AI 列候选 + ROI matrix + 推荐
+时机驱动 (该调用就调用 / 不需 PM 一一批准):
+- M5 spec/plan 写完 → 跑 4 个 plan review (plan-ceo + plan-eng + plan-design + plan-devex)
+- M5 主线 C 详情页前 → design-consultation 生成正式 DESIGN.md
+- M5 brainstorm 视觉变体多 → design-shotgun 探索
+- M5 关键设计决策点 → codex consult 二意见
+- M5 实施期 bug 频 → investigate 系统性 debug
+- M5 ship 时 → ship + land-and-deploy + canary + document-release
+- 月度 → cso daily + learn 沉淀
+
+不必跑 (Marx 形态不匹配): gbrain / scrape / pair-agent / cron / freeze / figma / pencil / pdf / pptx / xlsx / setup-deploy / benchmark-models / connect-chrome
+
+⭐ 关键工作流约定 (memory 必读):
+- M5 启动方式 = 本次 PM 已说 go M5 / 直接执行 brainstorming
+- "资深产品兼开发兼 AI 自行判断" 模式: 该调用 gstack 就调用 / 不要每次问 PM
 - "再 challenge 自己" 模式: PM 说"再想想" → AI 真过一遍找漏洞 / 不 confirmation bias
-- ⭐ 新增: AI 主动 challenge PM backlog 分类 (实现遗漏 vs polish / feedback_ai_challenge_pm_classification.md)
-- ⭐ 新增: auto mode chain push 必拆开 (git add → commit → push 单独跑 / feedback_auto_mode_chain_push.md)
+- AI 主动 challenge PM backlog 分类 (实现遗漏 vs polish)
+- auto mode chain push 必拆开 (git add → commit → push 单独跑 / 不能 chain)
+- 跨 milestone 落档铁律: 每个阶段 takeaway / lessons / cross-link 到 SSOT
 
 ⭐ 关键 memory (新窗口 AI 自动读):
-- M4 closure + smoke test + go M5 (m4_closure_go_m5.md ⭐ 含 smoke test follow-up)
-- hybrid AI 草稿模式 (feedback_hybrid_ai_draft_mode.md): PM 异步复核不阻塞
+- M4 closure baseline + Option A 修完 (m4_closure_gstack_4toolkit_baseline.md ⭐⭐)
+- gstack 工作流应用 lessons (feedback_gstack_workflow_lessons.md)
+- hybrid AI 草稿模式 (feedback_hybrid_ai_draft_mode.md)
+- AI challenge PM backlog 分类 (feedback_ai_challenge_pm_classification.md)
+- auto mode chain push (feedback_auto_mode_chain_push.md)
 - 第三方参考真实角色 (feedback_third_party_reference_role.md)
-- AI challenge PM backlog 分类 (feedback_ai_challenge_pm_classification.md) ⭐ 新
-- auto mode chain push (feedback_auto_mode_chain_push.md) ⭐ 新
 
 dev server: npm run dev → http://localhost:5173/marx/ (端口可能切 5174/5175 自动)
+GH Pages: 最新 commit push 后几分钟内 deploy / curl -sI https://cdu52802-xx.github.io/marx/ 看 200
 
-M3 暂停状态 (M4 真收尾后 review):
-- Task 1-12 完成 / Task 13 实质完成 (scripts/sep-cache/ 已存 11 个 HTML)
-- M4 完成后回 M3 选项 A/B 决策建议 → 选项 B (M4 ClaimNode + agreement 已替代 successor_notes 信息架构 / takeaway § 4 已落)
+M3 暂停状态: 推荐选项 B (M4 ClaimNode + agreement 替代 successor_notes / takeaway § 4 已落)
 
-下一步 (3 种可能):
-1. PM 给 M4 demo 累积新反馈 → AI 分类 (实现遗漏 / polish / vision-level)
-2. PM 异步复核 3 个数据 checklist md (docs/m4-validation/) → 任意时间
-3. PM 发 "go M5" → 启动新 milestone
-
-⏸ AI 不催不催 / 等 PM 主动
+立即下一步: 启动 brainstorming skill + visual companion + 跟我确认 A/B/C 优先级.
 ```
 
-> **历史追溯**：smoke test 之前的开场白模板已被本版本覆盖。如需查阅 commit f8f4f20 之前的版本走 git log `docs/2026-05-11-m4-progress-anchor.md`。
+> **历史追溯**：4 件套 + Option A 之前的开场白模板已被本版本覆盖。如需查阅 commit 0956e87 之前的版本走 git log `docs/2026-05-11-m4-progress-anchor.md`。
 
 ---
 
