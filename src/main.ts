@@ -31,7 +31,7 @@ import { mountSidebar } from './components/sidebar.ts';
 import { createZoom } from './viz/zoom.ts';
 import { mountZoomControl, updateZoomDisplay, isPanMode } from './components/zoom-control.ts';
 import { setOutsideClickGuard } from './components/claim-popover.ts';
-import { computeCenterTransform, flyToTarget } from './viz/center.ts';
+import { computeCenterTransform, flyToTarget, chooseTargetK } from './viz/center.ts';
 import { showClaimPopover } from './components/claim-popover.ts';
 import { applyClaimFilters } from './components/apply-claim-filters.ts';
 import type { ClaimNode, ClaimRelation } from './types/Claim.ts';
@@ -313,19 +313,21 @@ sectionG.each(function (section) {
     .text((c) => c.claim_text);
 
   // 点击 obs → 飞行居中 + 详情卡同时（M5 T5 / spec § 7.3 · DR-017）
-  // M4 只 popover / M5 加 computeCenterTransform + flyToTarget 同时触发
+  // Stage 2 PM checkpoint 修：
+  //   Issue 2.1 · Y 居中偏上 → 加 headerHeight 70 + timelineHeight 160 算可见区
+  //   Issue 2.2 · 固定 targetK=3 不对 → chooseTargetK(currentK) 递进 (1→6 / <=6→8 / >6 保持)
   obsG.on('click', (_event, c) => {
-    // M5 Stage 2 · Issue #2 修：飞行居中 + 详情卡同时
-    // target = obs 圆点 canvas 坐标 (c.x / c.y)
-    // targetK = 3 (默认 / spec § 7.3) / currentK 大则保持
-    // offset sidebar (48 收起) + popover (380)
+    const currentK = zoomCtrl.getCurrentTransform().k;
+    const targetK = chooseTargetK(currentK);
     const ct = computeCenterTransform({
       target: { x: c.x, y: c.y },
-      targetK: 3,
-      currentK: zoomCtrl.getCurrentTransform().k,
+      targetK,
+      currentK,
       viewport: { width: window.innerWidth, height: window.innerHeight },
       sidebarWidth: 48,
       popoverWidth: 380,
+      headerHeight: 70, // M4 closure fix #4 加的 fixed header
+      timelineHeight: 160, // T7 fixed timeline
     });
     flyToTarget(svg, zoomCtrl.zoomBehavior, ct, 600);
 

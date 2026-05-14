@@ -288,16 +288,18 @@ export function showClaimPopover(claim: ClaimNode, ctx: ClaimPopoverContext) {
   document.addEventListener('keydown', escHandler);
   (sidebar as unknown as { _escHandler: (e: KeyboardEvent) => void })._escHandler = escHandler;
 
-  // 点击侧栏外关闭 (mousedown · delay 1 tick 防止"打开本次点击"立即被识别为外部关闭)
-  // 用 cancellable timer + flag: 如果 sidebar 在 timer 触发前已 hide (e.g. Esc 立即关闭),
-  // clearTimeout 取消注册, 避免残留 listener 污染后续 (jsdom 测试环境必修)
+  // Stage 2 PM checkpoint Issue 2.3 修：用 click 不用 mousedown
+  // 原因：d3.zoom 在 SVG 上 `mousedown.zoom` 调 nopropagation(event) = stopImmediatePropagation()
+  // 阻止 document 层 mousedown listener 触发 / outsideHandler 永不 fire
+  // click 事件 d3.zoom 不监听 / 正常 bubble 到 document
+  // setTimeout 0 trick 仍然必要（防"打开本次 click"立即被识别为外部关闭）
   const outsideHandler = (e: MouseEvent) => {
     // Stage 1 PM checkpoint Issue #4 · guard 检查（main.ts 注入 () => !isPanMode()）
     // pan mode active 时 guard 返回 false → 不关详情卡（防 Issue #3 误关）
     if (_outsideClickGuard && !_outsideClickGuard()) return;
     if (!sidebar.contains(e.target as Node)) hideClaimPopover();
   };
-  const outsideTimer = setTimeout(() => document.addEventListener('mousedown', outsideHandler), 0);
+  const outsideTimer = setTimeout(() => document.addEventListener('click', outsideHandler), 0);
   const sidebarAny = sidebar as unknown as {
     _outsideHandler: (e: MouseEvent) => void;
     _outsideTimer: ReturnType<typeof setTimeout>;
@@ -320,7 +322,8 @@ export function hideClaimPopover() {
     _outsideTimer?: ReturnType<typeof setTimeout>;
   };
   if (meta._escHandler) document.removeEventListener('keydown', meta._escHandler);
-  if (meta._outsideHandler) document.removeEventListener('mousedown', meta._outsideHandler);
+  // Stage 2 Issue 2.3 修：跟 register 一致用 click
+  if (meta._outsideHandler) document.removeEventListener('click', meta._outsideHandler);
   if (meta._outsideTimer) clearTimeout(meta._outsideTimer);
 
   // 触发滑出动画 (transform translateX(0) → 100%, 沿用 show 时的 0.35s cubic-bezier transition)

@@ -73,26 +73,27 @@ describe('claim-popover · 详情右侧栏 (M4 T9 改造 / spec § 8.2)', () => 
     expect(sidebar.style.width).toBe('380px');
   });
 
-  it('点击 sidebar 外 mousedown → hide sidebar (PM Q4 决策 = 三路关闭之一)', async () => {
+  // Stage 2 PM checkpoint Issue 2.3 修：原 mousedown 被 d3.zoom nopropagation 拦 / 改 click
+  it('点击 sidebar 外 click → hide sidebar (PM Q4 决策 = 三路关闭之一 / Stage 2 改用 click)', async () => {
     showClaimPopover(mockClaim, mockCtx);
     // setTimeout 0 注册 outside handler · 等 1 tick
     await new Promise((resolve) => setTimeout(resolve, 5));
-    // 模拟 mousedown 在 body 上 (sidebar 外)
+    // 模拟 click 在 body 上 (sidebar 外)
     const outsideTarget = document.createElement('div');
     document.body.appendChild(outsideTarget);
-    outsideTarget.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+    outsideTarget.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
     // 等滑出动画完成 350ms
     await new Promise((resolve) => setTimeout(resolve, 400));
     expect(document.querySelector('.claim-popover')).toBeNull();
   });
 
-  it('点击 sidebar 内 mousedown → 不关闭 (内部交互不触发关闭)', async () => {
+  it('点击 sidebar 内 click → 不关闭 (内部交互不触发关闭)', async () => {
     showClaimPopover(mockClaim, mockCtx);
     await new Promise((resolve) => setTimeout(resolve, 5));
     const sidebar = document.querySelector('.claim-popover') as HTMLElement;
     const inner = sidebar.querySelector('blockquote') as HTMLElement;
     // 派发到 sidebar 内部子元素更接近真实用户交互 (鼠标按下时实际 target 是子元素)
-    inner.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+    inner.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
     expect(document.querySelector('.claim-popover')).not.toBeNull();
   });
 
