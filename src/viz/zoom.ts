@@ -36,9 +36,7 @@ export function createZoom(
   svg: Selection<SVGSVGElement, unknown, any, any>,
   opts: ZoomOptions,
 ): ZoomController {
-  const zoomBehavior = d3
-    .zoom<SVGSVGElement, unknown>()
-    .scaleExtent(opts.scaleExtent);
+  const zoomBehavior = d3.zoom<SVGSVGElement, unknown>().scaleExtent(opts.scaleExtent);
 
   // T2 · pan boundary clamp 外 5% padding
   if (opts.contentBBox) {
@@ -71,10 +69,7 @@ export function createZoom(
         zoomBehavior.scaleTo(svg, targetK);
         return;
       }
-      svg
-        .transition()
-        .duration(duration)
-        .call(zoomBehavior.scaleTo, targetK);
+      svg.transition().duration(duration).call(zoomBehavior.scaleTo, targetK);
     },
   };
 }

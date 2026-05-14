@@ -69,15 +69,15 @@ describe('zoom-control · mount', () => {
   it('+ 按钮有 aria-label="放大" / − 有 "缩小" / ⌂ 有 "重置"', () => {
     const ctrl = createZoom(svg, { scaleExtent: [1, 8] });
     mountZoomControl({ zoomController: ctrl });
-    expect(
-      document.querySelector('.zoom-control .zoom-in')!.getAttribute('aria-label'),
-    ).toBe('放大');
-    expect(
-      document.querySelector('.zoom-control .zoom-out')!.getAttribute('aria-label'),
-    ).toBe('缩小');
-    expect(
-      document.querySelector('.zoom-control .zoom-reset')!.getAttribute('aria-label'),
-    ).toBe('重置到全景视图');
+    expect(document.querySelector('.zoom-control .zoom-in')!.getAttribute('aria-label')).toBe(
+      '放大',
+    );
+    expect(document.querySelector('.zoom-control .zoom-out')!.getAttribute('aria-label')).toBe(
+      '缩小',
+    );
+    expect(document.querySelector('.zoom-control .zoom-reset')!.getAttribute('aria-label')).toBe(
+      '重置到全景视图',
+    );
   });
 });
 
