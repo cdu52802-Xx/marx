@@ -66,6 +66,11 @@ export function createZoom(
     zoomBehavior,
     getCurrentTransform: () => d3.zoomTransform(svg.node()!),
     programmaticZoom: (targetK, duration = 600) => {
+      // duration === 0 → 直接 set 不走 transition（jsdom 测试 + 即刻应用场景）
+      if (duration === 0) {
+        zoomBehavior.scaleTo(svg, targetK);
+        return;
+      }
       svg
         .transition()
         .duration(duration)

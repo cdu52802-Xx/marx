@@ -29,6 +29,7 @@ import {
 import { mountTimeline } from './components/timeline.ts';
 import { mountSidebar } from './components/sidebar.ts';
 import { createZoom } from './viz/zoom.ts';
+import { mountZoomControl, updateZoomDisplay } from './components/zoom-control.ts';
 import { showClaimPopover } from './components/claim-popover.ts';
 import { applyClaimFilters } from './components/apply-claim-filters.ts';
 import type { ClaimNode, ClaimRelation } from './types/Claim.ts';
@@ -147,19 +148,22 @@ zoomLayer
 // scaleExtent [1, 8] PRD V1 设定
 // T2 会加 contentBBox option → translateExtent pan clamp
 // onZoom 回调给 T3 zoom-control + T6 timeline 范围条同步用
+// T3 · zoomControlEl 先声明 / onZoom callback 闭包引用 / 在 createZoom 后 mount 赋值
+let zoomControlEl: HTMLElement | null = null;
+
 const zoomCtrl = createZoom(svg, {
   scaleExtent: [1, 8],
   // T2 · pan boundary clamp 到 content + 5% padding（user 不能拖到全空白）
   contentBBox: { x: 0, y: 0, width: canvasWidth, height: canvasHeight },
   onZoom: (t) => {
-    // T3 + T6 在这里接同步逻辑（当前只 log 验证 zoom 触发）
-    if (import.meta.env.DEV) {
-      console.log(`[Marx M5] zoom k=${t.k.toFixed(2)} x=${t.x.toFixed(0)} y=${t.y.toFixed(0)}`);
-    }
+    // T3 · 同步缩放控件比例 display（滚轮 + 按钮 都触发 / 始终准确）
+    if (zoomControlEl) updateZoomDisplay(zoomControlEl, t.k);
+    // T6 时间轴范围条同步在这里接（后续 task）
   },
 });
-// 临时全局暴露 / T3 重构成正式注入到 zoom-control + T6 timeline
-(window as unknown as { __marxZoomCtrl: typeof zoomCtrl }).__marxZoomCtrl = zoomCtrl;
+
+// T3 · mount 左下缩放控件 + 接到 zoomCtrl
+zoomControlEl = mountZoomControl({ zoomController: zoomCtrl });
 
 // === 6. 弧线层（在节点之前画，z-order 在底）===
 
