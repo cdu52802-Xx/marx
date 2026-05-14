@@ -60,9 +60,5 @@ export function flyToTarget(
     zoomBehavior.transform(svg, t);
     return;
   }
-  svg
-    .transition()
-    .duration(duration)
-    .ease(d3.easeCubicInOut)
-    .call(zoomBehavior.transform, t);
+  svg.transition().duration(duration).ease(d3.easeCubicInOut).call(zoomBehavior.transform, t);
 }
