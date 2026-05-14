@@ -149,6 +149,8 @@ zoomLayer
 // onZoom 回调给 T3 zoom-control + T6 timeline 范围条同步用
 const zoomCtrl = createZoom(svg, {
   scaleExtent: [1, 8],
+  // T2 · pan boundary clamp 到 content + 5% padding（user 不能拖到全空白）
+  contentBBox: { x: 0, y: 0, width: canvasWidth, height: canvasHeight },
   onZoom: (t) => {
     // T3 + T6 在这里接同步逻辑（当前只 log 验证 zoom 触发）
     if (import.meta.env.DEV) {

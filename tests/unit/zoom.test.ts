@@ -33,3 +33,47 @@ describe('zoom · createZoom', () => {
     expect(extent).toEqual([1, 8]);
   });
 });
+
+describe('zoom · T2 pan boundary clamp', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let svg: d3.Selection<SVGSVGElement, unknown, any, any>;
+
+  beforeEach(() => {
+    document.body.innerHTML = '<svg id="test-svg" width="1000" height="800"></svg>';
+    svg = d3.select<SVGSVGElement, unknown>('#test-svg');
+  });
+
+  it('translateExtent 计算 = contentBBox 外 5% padding', () => {
+    const ctrl = createZoom(svg, {
+      scaleExtent: [1, 8],
+      contentBBox: { x: 0, y: 0, width: 2000, height: 1500 },
+    });
+    const ext = ctrl.zoomBehavior.translateExtent();
+    // 5% padding · X: 2000 * 0.05 = 100 · Y: 1500 * 0.05 = 75
+    expect(ext[0][0]).toBeCloseTo(-100, 0);
+    expect(ext[0][1]).toBeCloseTo(-75, 0);
+    expect(ext[1][0]).toBeCloseTo(2100, 0);
+    expect(ext[1][1]).toBeCloseTo(1575, 0);
+  });
+
+  it('不传 contentBBox → translateExtent 不设（无限 pan）', () => {
+    const ctrl = createZoom(svg, { scaleExtent: [1, 8] });
+    const ext = ctrl.zoomBehavior.translateExtent();
+    // d3 默认 = [[-Infinity, -Infinity], [Infinity, Infinity]]
+    expect(ext[0][0]).toBe(-Infinity);
+    expect(ext[1][0]).toBe(Infinity);
+  });
+
+  it('contentBBox 非原点起点 也正确（x=100 y=200 width=800 height=600）', () => {
+    const ctrl = createZoom(svg, {
+      scaleExtent: [1, 8],
+      contentBBox: { x: 100, y: 200, width: 800, height: 600 },
+    });
+    const ext = ctrl.zoomBehavior.translateExtent();
+    // padding x = 40 / y = 30
+    expect(ext[0][0]).toBeCloseTo(60, 0); // 100 - 40
+    expect(ext[0][1]).toBeCloseTo(170, 0); // 200 - 30
+    expect(ext[1][0]).toBeCloseTo(940, 0); // 100 + 800 + 40
+    expect(ext[1][1]).toBeCloseTo(830, 0); // 200 + 600 + 30
+  });
+});

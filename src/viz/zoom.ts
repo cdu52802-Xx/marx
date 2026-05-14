@@ -14,8 +14,16 @@ import type { ZoomBehavior, ZoomTransform } from 'd3-zoom';
 
 export interface ZoomOptions {
   scaleExtent: [number, number];
+  /**
+   * T2 · pan boundary clamp · 外 5% padding 自动加
+   * 不传 = 无限 pan（d3 默认）
+   * 传 = translateExtent 设为 [bbox - 5% padding, bbox + 5% padding]
+   */
+  contentBBox?: { x: number; y: number; width: number; height: number };
   onZoom?: (transform: ZoomTransform) => void;
 }
+
+const PAN_PADDING_RATIO = 0.05;
 
 export interface ZoomController {
   zoomBehavior: ZoomBehavior<SVGSVGElement, unknown>;
@@ -30,13 +38,27 @@ export function createZoom(
 ): ZoomController {
   const zoomBehavior = d3
     .zoom<SVGSVGElement, unknown>()
-    .scaleExtent(opts.scaleExtent)
-    .on('zoom', (event) => {
-      const t = event.transform as ZoomTransform;
-      // 应用 transform 到 zoom-layer（main.ts 必须先包裹 <g class="zoom-layer">）
-      svg.select('g.zoom-layer').attr('transform', t.toString());
-      if (opts.onZoom) opts.onZoom(t);
-    });
+    .scaleExtent(opts.scaleExtent);
+
+  // T2 · pan boundary clamp 外 5% padding
+  if (opts.contentBBox) {
+    const padX = opts.contentBBox.width * PAN_PADDING_RATIO;
+    const padY = opts.contentBBox.height * PAN_PADDING_RATIO;
+    zoomBehavior.translateExtent([
+      [opts.contentBBox.x - padX, opts.contentBBox.y - padY],
+      [
+        opts.contentBBox.x + opts.contentBBox.width + padX,
+        opts.contentBBox.y + opts.contentBBox.height + padY,
+      ],
+    ]);
+  }
+
+  zoomBehavior.on('zoom', (event) => {
+    const t = event.transform as ZoomTransform;
+    // 应用 transform 到 zoom-layer（main.ts 必须先包裹 <g class="zoom-layer">）
+    svg.select('g.zoom-layer').attr('transform', t.toString());
+    if (opts.onZoom) opts.onZoom(t);
+  });
 
   svg.call(zoomBehavior);
 
