@@ -28,6 +28,7 @@ import {
 } from './components/claim-layout.ts';
 import { mountTimeline } from './components/timeline.ts';
 import { mountSidebar } from './components/sidebar.ts';
+import { createZoom } from './viz/zoom.ts';
 import { showClaimPopover } from './components/claim-popover.ts';
 import { applyClaimFilters } from './components/apply-claim-filters.ts';
 import type { ClaimNode, ClaimRelation } from './types/Claim.ts';
@@ -128,14 +129,35 @@ const svg = app
   .style('background', '#fcfaf6')
   .style('display', 'block');
 
-// 米白纸感背景 rect (spec § 4.1)
-svg
+// M5 T1 · zoom-layer 包裹所有画布内容（弧线 + person + obs + 米白纸 rect）
+// spec § 5.2 屏幕坐标 vs 画布坐标分层：zoomLayer 内部 = 画布坐标（跟 zoom 一起变）
+// 屏幕固定元素（sidebar / 详情卡 / 缩放控件 / 时间轴）保持在 svg 外或 svg 根下不进 zoomLayer
+const zoomLayer = svg.append('g').attr('class', 'zoom-layer');
+
+// 米白纸感背景 rect (spec § 4.1) · 进 zoomLayer 跟 zoom 一起缩放
+zoomLayer
   .append('rect')
   .attr('x', 0)
   .attr('y', 0)
   .attr('width', canvasWidth)
   .attr('height', canvasHeight)
   .attr('fill', '#fcfaf6');
+
+// M5 T1 · 注册 D3 zoom behavior 到 svg root
+// scaleExtent [1, 8] PRD V1 设定
+// T2 会加 contentBBox option → translateExtent pan clamp
+// onZoom 回调给 T3 zoom-control + T6 timeline 范围条同步用
+const zoomCtrl = createZoom(svg, {
+  scaleExtent: [1, 8],
+  onZoom: (t) => {
+    // T3 + T6 在这里接同步逻辑（当前只 log 验证 zoom 触发）
+    if (import.meta.env.DEV) {
+      console.log(`[Marx M5] zoom k=${t.k.toFixed(2)} x=${t.x.toFixed(0)} y=${t.y.toFixed(0)}`);
+    }
+  },
+});
+// 临时全局暴露 / T3 重构成正式注入到 zoom-control + T6 timeline
+(window as unknown as { __marxZoomCtrl: typeof zoomCtrl }).__marxZoomCtrl = zoomCtrl;
 
 // === 6. 弧线层（在节点之前画，z-order 在底）===
 
@@ -155,7 +177,7 @@ console.log(
   `[Marx M4] rendering ${visibleRelations.length} / ${relations.length} arcs (both ends visible)`,
 );
 
-svg
+zoomLayer
   .append('g')
   .attr('class', 'arc-layer')
   .selectAll('path.arc')
@@ -183,7 +205,7 @@ svg
 
 // === 7. Person section 标题 + obs 行 ===
 
-const sectionG = svg
+const sectionG = zoomLayer
   .selectAll<SVGGElement, PersonSection>('g.person-section')
   .data(sections)
   .join('g')
