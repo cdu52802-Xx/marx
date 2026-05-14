@@ -13,6 +13,14 @@
 
 import type { ClaimNode } from '../types/Claim.ts';
 
+// Stage 1 PM checkpoint Issue #3 + #4 · outside click guard 注入点
+// main.ts 注入 () => !isPanMode() / pan mode 下不关详情卡
+// 默认无 guard → outsideHandler 原行为（任何外部 click 关）
+let _outsideClickGuard: (() => boolean) | null = null;
+export function setOutsideClickGuard(fn: (() => boolean) | null): void {
+  _outsideClickGuard = fn;
+}
+
 export interface ClaimPopoverContext {
   authorName: string;
   sourceWorkName?: string;
@@ -284,6 +292,9 @@ export function showClaimPopover(claim: ClaimNode, ctx: ClaimPopoverContext) {
   // 用 cancellable timer + flag: 如果 sidebar 在 timer 触发前已 hide (e.g. Esc 立即关闭),
   // clearTimeout 取消注册, 避免残留 listener 污染后续 (jsdom 测试环境必修)
   const outsideHandler = (e: MouseEvent) => {
+    // Stage 1 PM checkpoint Issue #4 · guard 检查（main.ts 注入 () => !isPanMode()）
+    // pan mode active 时 guard 返回 false → 不关详情卡（防 Issue #3 误关）
+    if (_outsideClickGuard && !_outsideClickGuard()) return;
     if (!sidebar.contains(e.target as Node)) hideClaimPopover();
   };
   const outsideTimer = setTimeout(() => document.addEventListener('mousedown', outsideHandler), 0);

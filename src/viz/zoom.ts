@@ -29,6 +29,12 @@ export interface ZoomController {
   zoomBehavior: ZoomBehavior<SVGSVGElement, unknown>;
   getCurrentTransform(): ZoomTransform;
   programmaticZoom(targetK: number, duration?: number): void;
+  /**
+   * Stage 1 PM checkpoint Issue #5 修：reset to zoomIdentity（k=1 + translate 0,0）
+   * = fit-to-content（前提：SVG viewBox = content + preserveAspectRatio auto fit）
+   * 跟 programmaticZoom(1) 不同：programmaticZoom 只改 k 不改 translate / reset 改全部
+   */
+  reset(duration?: number): void;
 }
 
 export function createZoom(
@@ -70,6 +76,14 @@ export function createZoom(
         return;
       }
       svg.transition().duration(duration).call(zoomBehavior.scaleTo, targetK);
+    },
+    reset: (duration = 800) => {
+      // duration === 0 → 直接 set zoomIdentity（jsdom + 即刻）
+      if (duration === 0) {
+        zoomBehavior.transform(svg, d3.zoomIdentity);
+        return;
+      }
+      svg.transition().duration(duration).call(zoomBehavior.transform, d3.zoomIdentity);
     },
   };
 }

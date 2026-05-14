@@ -29,7 +29,8 @@ import {
 import { mountTimeline } from './components/timeline.ts';
 import { mountSidebar } from './components/sidebar.ts';
 import { createZoom } from './viz/zoom.ts';
-import { mountZoomControl, updateZoomDisplay } from './components/zoom-control.ts';
+import { mountZoomControl, updateZoomDisplay, isPanMode } from './components/zoom-control.ts';
+import { setOutsideClickGuard } from './components/claim-popover.ts';
 import { showClaimPopover } from './components/claim-popover.ts';
 import { applyClaimFilters } from './components/apply-claim-filters.ts';
 import type { ClaimNode, ClaimRelation } from './types/Claim.ts';
@@ -104,28 +105,28 @@ if (app.empty()) {
   throw new Error('#app missing');
 }
 
-// 让 #app + body 允许横向 scroll (画布无限 / Engels 等长 section 不被裁)
-// padding-top: 70px 给顶部 fixed #app-header (h1 + meta · M4 closure fix #4) 留视觉空间
-// padding-bottom: 160px 给底部 fixed timeline 留视觉空间（T7 / spec § 6.1 独立栏）
-// padding-left: 48px 给左侧 fixed sidebar 收起态留视觉空间（T8 / spec § 7 独立栏）
-//   sidebar 展开 200px 时不调 padding-left → 临时遮挡画布左侧 ~150px（spec § 7.2 默认展开态短暂使用）
+// M5 Stage 1 PM checkpoint Issue #1 + #5 修：fit-to-content 默认
+// 改造：#app overflow auto → hidden / SVG 100% fill #app / viewBox 保 content 范围 / preserveAspectRatio fit
+// 结果：k=1 等价 fit-to-content（SVG viewBox auto-fit 到 element）/ user 看到全部观点 + 连线
+// 屏幕坐标 padding 保留（给 fixed sidebar / header / timeline 留视觉空间）
 app
-  .style('overflow', 'auto')
+  .style('overflow', 'hidden') // 不再用浏览器 scroll / d3.zoom 唯一负责 pan/zoom
   .style('width', '100vw')
   .style('height', '100vh')
   .style('padding-top', '70px')
   .style('padding-bottom', '160px')
   .style('padding-left', '48px')
   .style('box-sizing', 'border-box');
-document.documentElement.style.overflow = 'auto';
+document.documentElement.style.overflow = 'hidden';
 document.body.style.margin = '0';
 document.body.style.background = '#fcfaf6';
 
 const svg = app
   .append('svg')
   .attr('viewBox', `0 0 ${canvasWidth} ${canvasHeight}`)
-  .attr('width', canvasWidth) // 真实像素宽 (不再 100% fit-to-viewport)
-  .attr('height', canvasHeight)
+  .attr('width', '100%') // 自适应 #app 容器 / fit-to-viewport
+  .attr('height', '100%')
+  .attr('preserveAspectRatio', 'xMidYMid meet') // 内容居中 + letterbox / fit-to-content default
   .style('font-family', "'EB Garamond', Georgia, 'Source Serif 4', 'Noto Serif SC', serif")
   .style('background', '#fcfaf6')
   .style('display', 'block');
@@ -163,7 +164,19 @@ const zoomCtrl = createZoom(svg, {
 });
 
 // T3 · mount 左下缩放控件 + 接到 zoomCtrl
-zoomControlEl = mountZoomControl({ zoomController: zoomCtrl });
+// Stage 1 Issue #4 · 小手 toggle pan mode 接 cursor + popover guard
+zoomControlEl = mountZoomControl({
+  zoomController: zoomCtrl,
+  onPanModeChange: (panOn) => {
+    // 切 cursor （pan mode 用 grab / 非 pan 默认 / obs + arc 后续 T5/T8 override pointer）
+    svg.style('cursor', panOn ? 'grab' : 'default');
+  },
+});
+
+// Stage 1 Issue #3 + #4 · 详情卡 outside-click guard
+// pan mode active → guard 返回 false → 不关详情卡（防误关）
+// pan mode inactive → guard 返回 true → 任何外部 click 关详情卡（含画布空白）
+setOutsideClickGuard(() => !isPanMode());
 
 // === 6. 弧线层（在节点之前画，z-order 在底）===
 

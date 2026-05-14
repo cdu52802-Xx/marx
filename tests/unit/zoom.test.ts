@@ -77,3 +77,32 @@ describe('zoom · T2 pan boundary clamp', () => {
     expect(ext[1][1]).toBeCloseTo(830, 0); // 200 + 600 + 30
   });
 });
+
+describe('zoom · Stage 1 PM checkpoint Issue #5 · reset', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let svg: d3.Selection<SVGSVGElement, unknown, any, any>;
+
+  beforeEach(() => {
+    document.body.innerHTML = '<svg id="test-svg" width="800" height="600"></svg>';
+    svg = d3.select<SVGSVGElement, unknown>('#test-svg');
+  });
+
+  it('reset 暴露在 ZoomController 接口', () => {
+    const ctrl = createZoom(svg, { scaleExtent: [1, 8] });
+    expect(typeof ctrl.reset).toBe('function');
+  });
+
+  it('reset(0) 不抛错（jsdom 限制：scaleTo/transform 内部 defaultExtent access baseVal 失败 / 用 try/catch 验)', () => {
+    const ctrl = createZoom(svg, { scaleExtent: [1, 8] });
+    // jsdom 不支持 SVG baseVal / 实际 prod 行为通过 E2E 验
+    // 这里只验 reset API 不抛"function not defined"型错
+    expect(() => {
+      try {
+        ctrl.reset(0);
+      } catch (e) {
+        // 接受 jsdom baseVal 失败 / 不接受其他错
+        if (!String(e).includes('baseVal')) throw e;
+      }
+    }).not.toThrow();
+  });
+});
