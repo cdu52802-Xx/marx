@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>M5 Stage 3 Brainstorm · 拖动方向 + 范围条样式</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #fcfaf6;
+    font-family: 'EB Garamond', 'Georgia', 'Noto Serif SC', serif;
+    color: #1a1a1a;
+    padding: 32px 48px 64px;
+    line-height: 1.6;
+  }
+  h1 { font-size: 24px; color: #5b3a8c; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 4px; }
+  h1 .subtitle { font-size: 13px; color: #888; font-style: italic; font-weight: 400; margin-left: 12px; }
+  h2 { font-size: 18px; color: #1a1a1a; border-bottom: 2px solid #5b3a8c; padding-bottom: 6px; margin-top: 36px; margin-bottom: 16px; letter-spacing: 0.3px; }
+  h2 .qtag { background: #5b3a8c; color: #fcfaf6; font-size: 11px; padding: 2px 8px; margin-right: 10px; vertical-align: 3px; letter-spacing: 1px; }
+  .intro { font-size: 13px; color: #555; margin-bottom: 16px; font-style: italic; }
+  .annotation-red { color: #8b2635; font-weight: 700; font-style: italic; font-size: 12px; }
+  .annotation-purple { color: #5b3a8c; font-weight: 700; font-style: italic; font-size: 12px; }
+
+  /* === Q1 layout === */
+  .q1-row { display: flex; gap: 24px; margin-bottom: 20px; }
+  .q1-col {
+    flex: 1;
+    background: #fff;
+    border: 1px solid #d8ccb8;
+    padding: 18px 20px 24px;
+    position: relative;
+  }
+  .q1-col h3 { font-size: 15px; font-weight: 700; color: #5b3a8c; margin-bottom: 4px; }
+  .q1-col .hint { font-size: 12px; color: #666; font-style: italic; margin-bottom: 14px; }
+
+  .mini-canvas {
+    height: 130px;
+    background: #f4ede0;
+    border: 1px dashed #b8a888;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 18px;
+  }
+  .canvas-label {
+    position: absolute;
+    top: 6px; left: 10px;
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #888;
+    z-index: 5;
+  }
+  .canvas-viewport {
+    position: absolute;
+    top: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60%;
+    height: 90px;
+    border: 2px solid #5b3a8c;
+    background: rgba(91, 58, 140, 0.05);
+    pointer-events: none;
+    z-index: 4;
+  }
+  .canvas-viewport-label {
+    position: absolute;
+    top: -16px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #5b3a8c;
+    font-size: 10px;
+    font-style: italic;
+    white-space: nowrap;
+  }
+  .person-row { position: absolute; height: 110px; top: 16px; transition: left 0.05s linear; }
+  .person-dot {
+    position: absolute;
+    width: 8px; height: 8px;
+    border-radius: 0; /* 0 border-radius / spec § 4 学术编辑硬约束 */
+    background: #5b3a8c;
+    top: 60px;
+  }
+  .person-dot.marx { width: 14px; height: 14px; background: #5b3a8c; box-shadow: 0 0 0 3px rgba(91, 58, 140, 0.2); top: 57px; }
+  .person-label {
+    position: absolute;
+    top: 30px;
+    font-size: 10px;
+    color: #555;
+    white-space: nowrap;
+    transform: translateX(-50%);
+    font-style: italic;
+  }
+  .person-label.marx { font-weight: 700; color: #5b3a8c; top: 22px; font-size: 11px; }
+  .person-year { position: absolute; top: 76px; font-size: 9px; color: #aaa; transform: translateX(-50%); }
+
+  .mini-timeline {
+    height: 50px;
+    background: #faf6ec;
+    border: 1px solid #d8ccb8;
+    border-top: 2px solid #d8ccb8;
+    position: relative;
+    cursor: ew-resize;
+    user-select: none;
+  }
+  .mini-timeline.dragging { background: #f4ede0; }
+  .timeline-axis {
+    position: absolute;
+    left: 5%;
+    right: 5%;
+    top: 24px;
+    height: 1px;
+    background: #888;
+  }
+  .timeline-tick {
+    position: absolute;
+    top: 19px;
+    width: 1px;
+    height: 10px;
+    background: #888;
+  }
+  .timeline-tick.major { background: #5b3a8c; height: 14px; width: 2px; }
+  .timeline-tick-label {
+    position: absolute;
+    top: 32px;
+    transform: translateX(-50%);
+    font-size: 9px;
+    color: #888;
+    font-style: italic;
+  }
+  .timeline-tick-label.major { color: #5b3a8c; font-weight: 700; }
+  .timeline-range-bar {
+    position: absolute;
+    top: 16px;
+    height: 16px;
+    background: #5b3a8c;
+    opacity: 0.35;
+    pointer-events: none;
+  }
+  .timeline-cursor-label {
+    position: absolute;
+    top: 0;
+    transform: translateX(-50%);
+    background: #5b3a8c;
+    color: #fcfaf6;
+    padding: 2px 8px;
+    font-size: 10px;
+    font-style: italic;
+    pointer-events: none;
+  }
+
+  .verdict-line { font-size: 12px; color: #1a1a1a; padding: 8px 12px; background: #f4ede0; border-left: 3px solid #5b3a8c; }
+  .verdict-line .label { color: #5b3a8c; font-weight: 700; }
+  .verdict-line .arrow { color: #8b2635; font-weight: 700; margin: 0 4px; }
+
+  /* === Q2 layout === */
+  .q2-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; }
+  .q2-cell {
+    background: #fff;
+    border: 1px solid #d8ccb8;
+    padding: 18px 20px 30px;
+    position: relative;
+  }
+  .q2-cell h3 { font-size: 14px; font-weight: 700; color: #5b3a8c; margin-bottom: 14px; }
+  .q2-style-A .timeline-range-bar { background: #5b3a8c; opacity: 0.35; }
+  .q2-style-B .timeline-range-bar { background: #5b3a8c; opacity: 0.35; }
+  .q2-style-B .range-edge-tick {
+    position: absolute; top: 14px; width: 2px; height: 20px; background: #5b3a8c;
+  }
+  .q2-style-C .range-frame {
+    position: absolute; top: 14px; height: 20px;
+    border: 1.5px solid #5b3a8c;
+    background: transparent;
+  }
+  .anno-line {
+    margin-top: 10px;
+    font-size: 11px;
+    color: #555;
+    font-style: italic;
+    line-height: 1.5;
+  }
+  .anno-line .red { color: #8b2635; font-weight: 700; }
+
+  /* === decision panel === */
+  .decision-panel {
+    margin-top: 36px;
+    padding: 18px 24px;
+    background: #f4ede0;
+    border-left: 4px solid #5b3a8c;
+    font-size: 14px;
+    line-height: 1.8;
+  }
+  .decision-panel .head { font-weight: 700; color: #5b3a8c; margin-bottom: 6px; font-size: 15px; }
+  .decision-panel code {
+    background: #fcfaf6;
+    border: 1px solid #d8ccb8;
+    padding: 2px 8px;
+    color: #5b3a8c;
+    font-family: 'JetBrains Mono', Consolas, monospace;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+  }
+
+  /* === SVG-style arrow indicators for drag === */
+  .drag-arrow {
+    position: absolute;
+    bottom: 4px;
+    font-size: 18px;
+    color: #5b3a8c;
+    opacity: 0.5;
+    pointer-events: none;
+  }
+  .drag-arrow.left { left: 10px; }
+  .drag-arrow.right { right: 10px; }
+</style>
+</head>
+<body>
+
+<h1>M5 Stage 3 Brainstorm <span class="subtitle">拖动方向 + 范围条样式 · 直接试拖 / 选择最直觉的那个</span></h1>
+
+<!-- ============= Q1 拖动方向 ============= -->
+
+<h2><span class="qtag">Q1</span> 拖动方向语义</h2>
+<p class="intro">两个 mini timeline 都<strong style="color:#5b3a8c">可以用鼠标按住拖动</strong>（不只是看 / 真的能动）。试拖 Model A 跟 Model B 各几下，比较哪个手感更对。<strong>主画布</strong>（上面那张米色框 + 紫色 viewport 框 + 5 个人）会跟随拖动反应。</p>
+
+<div class="q1-row">
+  <!-- Model A · scrollbar 直觉 -->
+  <div class="q1-col">
+    <h3>Model A · 滚动条直觉</h3>
+    <div class="hint">类比浏览器右边的 scrollbar：拖动 thumb 向下 / 内容跟着向下滚（拖动方向 = 想去的方向 / 内容反向跟随）</div>
+
+    <div class="mini-canvas" id="canvas-a">
+      <div class="canvas-label">主画布 · 早 ← 1770 ─── 1950 → 晚</div>
+      <div class="canvas-viewport"><span class="canvas-viewport-label">viewport (当前可见)</span></div>
+      <div class="person-row" id="person-row-a" style="width: 1200px; left: -350px;">
+        <!-- 5 人物 dot 横向均匀分布 -->
+        <div class="person-dot" style="left: 100px;"></div>
+        <div class="person-label" style="left: 104px;">斯密</div>
+        <div class="person-year" style="left: 104px;">1723</div>
+
+        <div class="person-dot" style="left: 350px;"></div>
+        <div class="person-label" style="left: 354px;">黑格尔</div>
+        <div class="person-year" style="left: 354px;">1770</div>
+
+        <div class="person-dot marx" style="left: 600px;"></div>
+        <div class="person-label marx" style="left: 607px;">★ MARX</div>
+        <div class="person-year" style="left: 607px;">1818</div>
+
+        <div class="person-dot" style="left: 850px;"></div>
+        <div class="person-label" style="left: 854px;">恩格斯</div>
+        <div class="person-year" style="left: 854px;">1820</div>
+
+        <div class="person-dot" style="left: 1100px;"></div>
+        <div class="person-label" style="left: 1104px;">列宁</div>
+        <div class="person-year" style="left: 1104px;">1870</div>
+      </div>
+    </div>
+
+    <div class="mini-timeline" id="timeline-a" data-model="A">
+      <div class="timeline-axis"></div>
+      <div class="timeline-tick" style="left: 5%;"></div>
+      <div class="timeline-tick-label" style="left: 5%;">1770</div>
+      <div class="timeline-tick major" style="left: 38.3%;"></div>
+      <div class="timeline-tick-label major" style="left: 38.3%;">1830</div>
+      <div class="timeline-tick" style="left: 50%;"></div>
+      <div class="timeline-tick-label" style="left: 50%;">1860</div>
+      <div class="timeline-tick" style="left: 95%;"></div>
+      <div class="timeline-tick-label" style="left: 95%;">1950</div>
+      <div class="timeline-range-bar" id="range-a" style="left: 35%; width: 30%;"></div>
+      <div class="timeline-cursor-label" id="label-a" style="left: 50%;">游标 1860</div>
+      <span class="drag-arrow left">←</span>
+      <span class="drag-arrow right">→</span>
+    </div>
+
+    <div class="verdict-line" style="margin-top: 14px;">
+      <span class="label">拖时间轴向左</span> <span class="arrow">⟶</span> 范围条 / 游标向<strong>左</strong>（更早年份）<span class="arrow">⟶</span> 主画布的 viewport 框相对画布 = 看到<strong>左侧早期人</strong>（斯密 / 黑格尔露出来）= <strong>画布向右滑</strong>
+    </div>
+  </div>
+
+  <!-- Model B · 推画布直觉 -->
+  <div class="q1-col">
+    <h3>Model B · 推画布直觉</h3>
+    <div class="hint">类比 Google Maps：用手指按住地图向左拖 / 地图整个跟你向左走（拖动方向 = 内容跟随方向 / 完全一致）</div>
+
+    <div class="mini-canvas" id="canvas-b">
+      <div class="canvas-label">主画布 · 早 ← 1770 ─── 1950 → 晚</div>
+      <div class="canvas-viewport"><span class="canvas-viewport-label">viewport (当前可见)</span></div>
+      <div class="person-row" id="person-row-b" style="width: 1200px; left: -350px;">
+        <div class="person-dot" style="left: 100px;"></div>
+        <div class="person-label" style="left: 104px;">斯密</div>
+        <div class="person-year" style="left: 104px;">1723</div>
+
+        <div class="person-dot" style="left: 350px;"></div>
+        <div class="person-label" style="left: 354px;">黑格尔</div>
+        <div class="person-year" style="left: 354px;">1770</div>
+
+        <div class="person-dot marx" style="left: 600px;"></div>
+        <div class="person-label marx" style="left: 607px;">★ MARX</div>
+        <div class="person-year" style="left: 607px;">1818</div>
+
+        <div class="person-dot" style="left: 850px;"></div>
+        <div class="person-label" style="left: 854px;">恩格斯</div>
+        <div class="person-year" style="left: 854px;">1820</div>
+
+        <div class="person-dot" style="left: 1100px;"></div>
+        <div class="person-label" style="left: 1104px;">列宁</div>
+        <div class="person-year" style="left: 1104px;">1870</div>
+      </div>
+    </div>
+
+    <div class="mini-timeline" id="timeline-b" data-model="B">
+      <div class="timeline-axis"></div>
+      <div class="timeline-tick" style="left: 5%;"></div>
+      <div class="timeline-tick-label" style="left: 5%;">1770</div>
+      <div class="timeline-tick major" style="left: 38.3%;"></div>
+      <div class="timeline-tick-label major" style="left: 38.3%;">1830</div>
+      <div class="timeline-tick" style="left: 50%;"></div>
+      <div class="timeline-tick-label" style="left: 50%;">1860</div>
+      <div class="timeline-tick" style="left: 95%;"></div>
+      <div class="timeline-tick-label" style="left: 95%;">1950</div>
+      <div class="timeline-range-bar" id="range-b" style="left: 35%; width: 30%;"></div>
+      <div class="timeline-cursor-label" id="label-b" style="left: 50%;">游标 1860</div>
+      <span class="drag-arrow left">←</span>
+      <span class="drag-arrow right">→</span>
+    </div>
+
+    <div class="verdict-line" style="margin-top: 14px;">
+      <span class="label">拖时间轴向左</span> <span class="arrow">⟶</span> 主画布跟着向<strong>左</strong>滑 = viewport 框相对画布右移 = 看到<strong>右侧晚期人</strong>（列宁露出来）= 范围条 / 游标向<strong>右</strong>（更晚年份）
+    </div>
+  </div>
+</div>
+
+<!-- ============= Q2 范围条样式 ============= -->
+
+<h2><span class="qtag">Q2</span> 视觉范围条样式</h2>
+<p class="intro">紫色范围条 = 时间轴上"现在画布可见的年份段"的视觉指示。zoom 越大 = 范围条越窄。三种样式静态对比 / 红字标关键差异。</p>
+
+<div class="q2-grid">
+  <!-- Style A: 纯紫色半透明 -->
+  <div class="q2-cell q2-style-A">
+    <h3>样式 A · 纯紫色半透明</h3>
+    <div class="mini-timeline" style="cursor: default;">
+      <div class="timeline-axis"></div>
+      <div class="timeline-tick" style="left: 5%;"></div>
+      <div class="timeline-tick-label" style="left: 5%;">1770</div>
+      <div class="timeline-tick major" style="left: 38.3%;"></div>
+      <div class="timeline-tick-label major" style="left: 38.3%;">1830</div>
+      <div class="timeline-tick" style="left: 50%;"></div>
+      <div class="timeline-tick-label" style="left: 50%;">1860</div>
+      <div class="timeline-tick" style="left: 95%;"></div>
+      <div class="timeline-tick-label" style="left: 95%;">1950</div>
+      <div class="timeline-range-bar" style="left: 35%; width: 30%;"></div>
+    </div>
+    <div class="anno-line">
+      <span class="red">→ 优势</span>：最简洁 / 跟主轴线视觉融合 / 紫色半透明<br>
+      <span class="red">→ 劣势</span>：边界不锐利 / 看不清"段从哪到哪"
+    </div>
+  </div>
+
+  <!-- Style B: 半透明 + 两端 ticks -->
+  <div class="q2-cell q2-style-B">
+    <h3>样式 B · 半透明 + 两端 ticks</h3>
+    <div class="mini-timeline" style="cursor: default;">
+      <div class="timeline-axis"></div>
+      <div class="timeline-tick" style="left: 5%;"></div>
+      <div class="timeline-tick-label" style="left: 5%;">1770</div>
+      <div class="timeline-tick major" style="left: 38.3%;"></div>
+      <div class="timeline-tick-label major" style="left: 38.3%;">1830</div>
+      <div class="timeline-tick" style="left: 50%;"></div>
+      <div class="timeline-tick-label" style="left: 50%;">1860</div>
+      <div class="timeline-tick" style="left: 95%;"></div>
+      <div class="timeline-tick-label" style="left: 95%;">1950</div>
+      <div class="timeline-range-bar" style="left: 35%; width: 30%;"></div>
+      <div class="range-edge-tick" style="left: 35%;"></div>
+      <div class="range-edge-tick" style="left: 65%;"></div>
+    </div>
+    <div class="anno-line">
+      <span class="red">→ 优势</span>：两端 <strong style="color:#5b3a8c">紫色实线 tick</strong> 标边界 / 精确知道范围从哪到哪<br>
+      <span class="red">→ 劣势</span>：视觉元素多一点 / 但应该可控
+    </div>
+  </div>
+
+  <!-- Style C: viewport bracket -->
+  <div class="q2-cell q2-style-C">
+    <h3>样式 C · viewport 取景框</h3>
+    <div class="mini-timeline" style="cursor: default;">
+      <div class="timeline-axis"></div>
+      <div class="timeline-tick" style="left: 5%;"></div>
+      <div class="timeline-tick-label" style="left: 5%;">1770</div>
+      <div class="timeline-tick major" style="left: 38.3%;"></div>
+      <div class="timeline-tick-label major" style="left: 38.3%;">1830</div>
+      <div class="timeline-tick" style="left: 50%;"></div>
+      <div class="timeline-tick-label" style="left: 50%;">1860</div>
+      <div class="timeline-tick" style="left: 95%;"></div>
+      <div class="timeline-tick-label" style="left: 95%;">1950</div>
+      <div class="range-frame" style="left: 35%; width: 30%;"></div>
+    </div>
+    <div class="anno-line">
+      <span class="red">→ 优势</span>：只画<strong style="color:#5b3a8c">实线框</strong> / 中间透明 / 像照相机取景框 / 学术干净感<br>
+      <span class="red">→ 劣势</span>：填色取消了 / 段感弱 / 范围紧凑时框不显眼
+    </div>
+  </div>
+</div>
+
+<!-- ============= 决策面板 ============= -->
+
+<div class="decision-panel">
+  <div class="head">⮕ 选完跟 AI 说</div>
+  Q1 选 <code>Model A</code> 还是 <code>Model B</code>？<br>
+  Q2 选 <code>样式 A</code> / <code>样式 B</code> / <code>样式 C</code>？<br>
+  <span style="font-size: 12px; color: #888;">例：「Q1=A / Q2=B」就够，AI 直接进 T6 实施。Q3 已定 20 秒（你之前拍）。Q4 防震荡 spec § 12 R3 已设计 syncingFromTimeline flag / 不用问。</span>
+</div>
+
+<script>
+// === Q1 拖动交互 ===
+
+function setupTimeline(timelineId, personRowId, rangeId, labelId, model) {
+  const timeline = document.getElementById(timelineId);
+  const personRow = document.getElementById(personRowId);
+  const range = document.getElementById(rangeId);
+  const label = document.getElementById(labelId);
+
+  let dragging = false;
+  let startX = 0;
+  let startRangeLeft = 0;  // range bar left % when drag started
+  let startPersonLeft = 0; // person row left px when drag started
+
+  // 1770-1950 mapping. timeline 5%-95% = 90 percentage points = 180 years
+  // 1 percentage point = 2 years
+  function rangeLeftPctToYearCenter(pct) {
+    // range width 30%, range center pct = pct + 15
+    const centerPct = pct + 15;
+    // 5% → 1770, 95% → 1950, linear
+    return Math.round(1770 + ((centerPct - 5) / 90) * 180);
+  }
+
+  timeline.addEventListener('mousedown', function(e) {
+    dragging = true;
+    timeline.classList.add('dragging');
+    startX = e.clientX;
+    startRangeLeft = parseFloat(range.style.left);
+    startPersonLeft = parseFloat(personRow.style.left);
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', function(e) {
+    if (!dragging) return;
+    const dx = e.clientX - startX;
+    const timelineWidth = timeline.offsetWidth;
+    // 拖动 dx px → 在 timeline 上 = dx/timelineWidth × 100 percentage points
+    const dPct = (dx / timelineWidth) * 100;
+
+    // canvas 1200px / viewport ~60% timelineWidth × person row ratio
+    // 简化：1% timeline drag → person row 移动 dx 像素 × 调整系数
+    // 我们让"主画布滑动" = timeline 拖动量 × 4 倍 / 视觉夸张让 PM 看清反应
+    const canvasMoveCoeff = 4;
+
+    if (model === 'A') {
+      // Model A: 拖时间轴 = scrollbar / 范围条跟手指 / 画布反向移动
+      const newRangeLeft = Math.max(5, Math.min(65, startRangeLeft + dPct));
+      range.style.left = newRangeLeft + '%';
+      label.style.left = (newRangeLeft + 15) + '%';
+      label.textContent = '游标 ' + rangeLeftPctToYearCenter(newRangeLeft);
+      // 画布反向：拖时间轴向左 → 画布向右滑（让左边内容露出）
+      personRow.style.left = (startPersonLeft - dx * canvasMoveCoeff) + 'px';
+    } else {
+      // Model B: 拖时间轴 = 推画布 / 画布跟手指 / 范围条反向移动
+      // 拖时间轴向左 (dx<0) → 画布跟着向左移 (personRow.left 减小) → 看到右边晚期内容
+      // 同时范围条向右移（去看晚期）
+      const newRangeLeft = Math.max(5, Math.min(65, startRangeLeft - dPct));
+      range.style.left = newRangeLeft + '%';
+      label.style.left = (newRangeLeft + 15) + '%';
+      label.textContent = '游标 ' + rangeLeftPctToYearCenter(newRangeLeft);
+      // 画布跟随：拖时间轴向左 → 画布也向左（personRow.left 减小）
+      personRow.style.left = (startPersonLeft + dx * canvasMoveCoeff) + 'px';
+    }
+  });
+
+  document.addEventListener('mouseup', function() {
+    if (dragging) {
+      dragging = false;
+      timeline.classList.remove('dragging');
+    }
+  });
+}
+
+setupTimeline('timeline-a', 'person-row-a', 'range-a', 'label-a', 'A');
+setupTimeline('timeline-b', 'person-row-b', 'range-b', 'label-b', 'B');
+</script>
+
+</body>
+</html>

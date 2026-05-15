@@ -1,29 +1,19 @@
-// M4 T7 · 底部横向时间轴组件
-// spec § 6 设计 / plan line 1827-2024 实现
+// M5 T6 · 时间轴大改造（HTML slider → SVG 整条可拖 + 范围条 + 双向同步）
+// 决策：DR-038 (Model A 滚动条直觉) · DR-039 (范围条样式 B 半透明 + 两端 ticks) ·
+//      DR-040 (▶ 播放 20s 跑完 / 9 年/秒) · DR-041 (syncingFromTimeline flag 防震荡)
 //
-// 三个 export:
-//   - computeTickPositions: 1770→1950 / 20 年间隔 / Marx 活跃年 1830/1850/1870 紫色加粗
-//   - yearToPercent: year → 横轴百分比线性映射
-//   - mountTimeline: ▶ 播放按钮 + slider 游标 + tick render + onCursorChange 回调
+// 改动 from M4:
+//   ❌ 删 <input type="range"> slider（PM 反馈: "整条时间轴本身就是单游标"）
+//   ❌ 不画 thumb circle marker（同上）
+//   ✅ 改 SVG axis + drag-area / mousedown anywhere on timeline triggers drag
+//   ✅ 加视觉范围条 rect + 两端 ticks（样式 B）/ 仅显示当前 zoom 可视段 / 不可拖
+//   ✅ 拖动 = Model A：拖向左 → 范围条 / 游标向左 (更早) → 主画布向右 pan
+//   ✅ 新 API: { setCursor, getCurrentYear, updateZoomK }
 //
-// ⭐ PM 视觉期待（subagent task brief 决策）:
-//   spec § 6.1 "位置：画布**底部**横向（独立栏，跟主画布解耦）"。
-//   "独立栏" = 始终可见，不应该 scroll 到画布底部才看到。
-//   T6 后 #app 改 overflow: auto / SVG 高 ≈ canvasHeight (2000+ px) 动态，
-//   plan 原方案 timeline mount 到 #app 末尾 → PM 必须 scroll 到底才看到 → 不符合期待。
-//
-//   方案 B (本实现):
-//     - timeline 用 position: fixed; bottom: 0; left: 0; right: 0; z-index: 10
-//     - mount 到 document.body (而不是 #app 内)
-//     - 保证任何 scroll 位置都能看到 + 拖游标
-//
-//   若 PM 后续反馈"timeline 应跟画布一起 scroll" → 切回方案 A（mount 到 #app 末尾）5 分钟改回。
-//
-// 视觉硬约束（AGENTS.md 三件套 + spec § 4）:
-//   - font-family: 'EB Garamond', Georgia, serif（避开 Inter/Roboto/Arial）
-//   - 米白底 #faf6ec（比主画布 #fcfaf6 略深，区分独立栏边界）
-//   - 紫 #5b3a8c 主导色（Marx 活跃年 tick + 游标 + ▶ 按钮 border）
-//   - 其他年份灰色 #888 standard tick
+// 视觉硬约束（沿 M4）:
+//   - font-family: 'EB Garamond', Georgia, serif
+//   - 米白底 #faf6ec / 紫 #5b3a8c 主导
+//   - 0 border-radius 学术编辑硬约束
 
 export interface TimelineTick {
   year: number;
@@ -35,62 +25,44 @@ export interface TimelineTick {
 const MARX_ACTIVE_YEARS = new Set([1830, 1850, 1870]);
 const STANDARD_YEAR_INTERVAL = 20;
 
-export function computeTickPositions(yearMin: number, yearMax: number): TimelineTick[] {
-  // Note: 20 年 interval 起点从 1780 起跳无法命中 1830/1850/1870（Marx 活跃年是 10-年偏移）
-  // 所以策略 = 标准 interval ticks (灰) + Marx 活跃年强制加 major tick (紫) + 端点
-  const yearSet = new Map<number, TimelineTick>();
+// === Pure helpers (export 给 test) ===
 
-  // 1. 标准 20 年 interval ticks (灰色)
+export function computeTickPositions(yearMin: number, yearMax: number): TimelineTick[] {
+  const yearSet = new Map<number, TimelineTick>();
   for (
     let y = Math.ceil(yearMin / STANDARD_YEAR_INTERVAL) * STANDARD_YEAR_INTERVAL;
     y <= yearMax;
     y += STANDARD_YEAR_INTERVAL
   ) {
-    yearSet.set(y, {
-      year: y,
-      major: false,
-      color: '#888',
-      label: y.toString(),
-    });
+    yearSet.set(y, { year: y, major: false, color: '#888', label: y.toString() });
   }
-
-  // 2. Marx 活跃年强制 override 成 major + 紫 (即使不在 20 年 interval 上)
   for (const my of MARX_ACTIVE_YEARS) {
     if (my >= yearMin && my <= yearMax) {
-      yearSet.set(my, {
-        year: my,
-        major: true,
-        color: '#5b3a8c',
-        label: my.toString(),
-      });
+      yearSet.set(my, { year: my, major: true, color: '#5b3a8c', label: my.toString() });
     }
   }
-
-  // 3. 端点（如果不在已有 ticks 上则补）
   if (!yearSet.has(yearMin)) {
-    yearSet.set(yearMin, {
-      year: yearMin,
-      major: false,
-      color: '#888',
-      label: yearMin.toString(),
-    });
+    yearSet.set(yearMin, { year: yearMin, major: false, color: '#888', label: yearMin.toString() });
   }
   if (!yearSet.has(yearMax)) {
-    yearSet.set(yearMax, {
-      year: yearMax,
-      major: false,
-      color: '#888',
-      label: yearMax.toString(),
-    });
+    yearSet.set(yearMax, { year: yearMax, major: false, color: '#888', label: yearMax.toString() });
   }
-
-  // 4. 按 year 升序返回
   return Array.from(yearSet.values()).sort((a, b) => a.year - b.year);
 }
 
 export function yearToPercent(year: number, yearMin: number, yearMax: number): number {
   return ((year - yearMin) / (yearMax - yearMin)) * 100;
 }
+
+// M5 T6 · 范围条宽度 = timelineWidth / zoomK
+//   推导：SVG viewBox + preserveAspectRatio="xMidYMid meet" + fit-to-content default
+//   k=1 → 全 viewBox 可见 → range = 全 timelineWidth
+//   k=2 → 可见画布段 = 1/2 → 可见年份段 = 全长/2 → range = timelineWidth/2
+export function computeRangeBarWidth(p: { zoomK: number; timelineWidth: number }): number {
+  return p.timelineWidth / p.zoomK;
+}
+
+// === Mount API ===
 
 export interface TimelineOptions {
   container: HTMLElement;
@@ -100,68 +72,257 @@ export interface TimelineOptions {
   onCursorChange?: (year: number) => void;
 }
 
-export function mountTimeline(opts: TimelineOptions): {
+export interface TimelineApi {
   setCursor: (year: number) => void;
-} {
+  getCurrentYear: () => number;
+  updateZoomK: (k: number) => void;
+}
+
+// 播放速度（DR-040 · PM 拍 20s）：180 年 / 20s = 9 年/s / 24 fps → 0.375 年/step / interval 1000/24 ≈ 42ms
+// 取整间隔 50ms / 0.45 年/step → 180/0.45 = 400 step × 50ms = 20s ✓
+const PLAY_INTERVAL_MS = 50;
+const PLAY_YEAR_PER_STEP = 0.45;
+
+const AXIS_PAD_PCT = 5; // 主轴线左右各留 5% padding
+const AXIS_TOP_PX = 24; // axis line y 坐标
+const RANGE_BAR_HEIGHT = 12; // 范围条高度
+const RANGE_BAR_TOP = AXIS_TOP_PX - RANGE_BAR_HEIGHT / 2; // range bar 居中于 axis line
+
+export function mountTimeline(opts: TimelineOptions): TimelineApi {
   const { container, yearMin, yearMax, initialCursor, onCursorChange } = opts;
+  const yearSpan = yearMax - yearMin;
+
+  // === 1. 容器 + 内部布局 ===
   container.innerHTML = `
     <div style="border-top:2px solid #d8cab0;background:#faf6ec;padding:18px 60px 14px;font-family:'EB Garamond','Georgia',serif">
       <div style="font-size:9px;color:#888;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;text-align:center">时间轴 · 参考维度</div>
-      <div id="tl-axis" style="position:relative;height:50px"></div>
-      <div style="display:flex;align-items:center;gap:14px;margin-top:10px">
+      <svg id="tl-svg" width="100%" height="60" style="display:block;cursor:ew-resize;user-select:none"></svg>
+      <div style="display:flex;align-items:center;gap:14px;margin-top:6px">
         <button id="tl-play" style="border:1px solid #5b3a8c;background:#fcfaf6;color:#5b3a8c;padding:4px 14px;font-style:italic;cursor:pointer;font-family:inherit;font-size:12px">▶ 播放思想史</button>
-        <input id="tl-slider" type="range" min="${yearMin}" max="${yearMax}" value="${initialCursor}" style="flex:1;accent-color:#5b3a8c">
-        <span id="tl-cursor-label" style="font-size:12px;color:#5b3a8c;font-style:italic;white-space:nowrap">游标 ${initialCursor}</span>
+        <span id="tl-cursor-label" style="font-size:12px;color:#5b3a8c;font-style:italic;white-space:nowrap;flex:1;text-align:right">游标 ${initialCursor}</span>
       </div>
     </div>
   `;
 
-  const axis = container.querySelector('#tl-axis') as HTMLElement;
-  axis.style.position = 'relative';
+  const svg = container.querySelector('#tl-svg') as SVGSVGElement;
+  const cursorLabel = container.querySelector('#tl-cursor-label') as HTMLElement;
+  const playBtn = container.querySelector('#tl-play') as HTMLButtonElement;
 
-  // 主轴线
-  const line = document.createElement('div');
-  line.style.cssText = 'position:absolute;left:0;right:0;top:24px;height:1px;background:#888';
-  axis.appendChild(line);
+  const SVG_NS = 'http://www.w3.org/2000/svg';
 
-  // ticks
-  const ticks = computeTickPositions(yearMin, yearMax);
-  for (const t of ticks) {
-    const pct = yearToPercent(t.year, yearMin, yearMax);
-    const tickEl = document.createElement('div');
-    tickEl.style.cssText = `position:absolute;left:${pct}%;top:${t.major ? 8 : 14}px`;
-    tickEl.innerHTML = `
-      <div style="width:${t.major ? 2 : 1}px;height:${t.major ? 14 : 8}px;background:${t.color};margin:0 auto"></div>
-      <div style="font-size:10px;color:${t.color};font-style:italic;${t.major ? 'font-weight:700;' : ''}margin-top:${t.major ? 2 : 4}px;text-align:center;transform:translateX(-50%);position:relative">${t.label}</div>
-    `;
-    axis.appendChild(tickEl);
+  // === 2. 内部状态 ===
+  let currentYear = clamp(initialCursor, yearMin, yearMax);
+  let currentZoomK = 1;
+
+  // axis 实际像素宽度 (svg width 100% / 在 mount 时算)
+  // jsdom getBoundingClientRect 对 SVG 返 0 / 加 fallback 600px (test 默认 / 不影响 browser)
+  const FALLBACK_SVG_WIDTH_PX = 600;
+  function getSvgWidthPx(): number {
+    const w = svg.getBoundingClientRect().width;
+    return w > 0 ? w : FALLBACK_SVG_WIDTH_PX;
+  }
+  function getAxisWidthPx(): number {
+    return getSvgWidthPx() * (1 - (2 * AXIS_PAD_PCT) / 100);
+  }
+  function getAxisLeftPx(): number {
+    return getSvgWidthPx() * (AXIS_PAD_PCT / 100);
   }
 
-  // 游标
-  const cursor = document.createElement('div');
-  cursor.id = 'tl-cursor';
-  cursor.style.cssText = `position:absolute;left:${yearToPercent(initialCursor, yearMin, yearMax)}%;top:0;width:2px;height:50px;background:#5b3a8c;opacity:0.6;pointer-events:none`;
-  axis.appendChild(cursor);
+  // year → axis pixel X (axisPxToYear 删除 / 拖动用 dx delta 公式不需要逆向)
+  function yearToAxisPx(year: number): number {
+    return getAxisLeftPx() + ((year - yearMin) / yearSpan) * getAxisWidthPx();
+  }
 
-  // slider 联动
-  const slider = container.querySelector('#tl-slider') as HTMLInputElement;
-  const cursorLabel = container.querySelector('#tl-cursor-label') as HTMLElement;
-  slider.addEventListener('input', () => {
-    const year = parseInt(slider.value);
-    cursor.style.left = `${yearToPercent(year, yearMin, yearMax)}%`;
-    cursorLabel.textContent = `游标 ${year}`;
-    onCursorChange?.(year);
-  });
+  // === 3. 渲染 SVG 内容 ===
 
-  // 播放按钮 toggle pause (M4 closure fix #5 · qa ISSUE-001 / polish backlog B2)
-  // 修复前: 每次 click 起一个 setInterval / 不记 id / 不 toggle 文字
-  //   → 第 2 次 click 第 2 个 interval 并发 / 没法暂停 / cursor 加速跑诡异
-  // 修复后: activeInterval 闭包记录正在播放的 timer id
-  //   null = 未播放 → click 起 interval + 改 ⏸ + aria-pressed=true
-  //   非 null = 正在播放 → click clearInterval + 改 ▶ + aria-pressed=false
-  //   播放从当前 cursor 位置继续 (用户期望) / 若 cursor 已在 yearMax 则 restart 从 yearMin
-  //   跑到 yearMax 自然结束时也 reset textContent + activeInterval
-  const playBtn = container.querySelector('#tl-play') as HTMLButtonElement;
+  // 3.1 Marx 区间 indicator (z 在底)
+  const marxIndicator = document.createElementNS(SVG_NS, 'rect');
+  marxIndicator.setAttribute('class', 'timeline-marx-indicator');
+  marxIndicator.setAttribute('y', String(AXIS_TOP_PX - 4));
+  marxIndicator.setAttribute('height', '8');
+  marxIndicator.setAttribute('fill', '#5b3a8c');
+  marxIndicator.setAttribute('opacity', '0.12');
+  svg.appendChild(marxIndicator);
+
+  // 3.2 主轴线 (灰色)
+  const axisLine = document.createElementNS(SVG_NS, 'line');
+  axisLine.setAttribute('class', 'timeline-axis-line');
+  axisLine.setAttribute('y1', String(AXIS_TOP_PX));
+  axisLine.setAttribute('y2', String(AXIS_TOP_PX));
+  axisLine.setAttribute('stroke', '#888');
+  axisLine.setAttribute('stroke-width', '1');
+  svg.appendChild(axisLine);
+
+  // 3.3 视觉范围条 (样式 B: 半透明 rect + 两端 edge ticks / DR-039)
+  const rangeBar = document.createElementNS(SVG_NS, 'rect');
+  rangeBar.setAttribute('class', 'timeline-range-bar');
+  rangeBar.setAttribute('y', String(RANGE_BAR_TOP));
+  rangeBar.setAttribute('height', String(RANGE_BAR_HEIGHT));
+  rangeBar.setAttribute('fill', '#5b3a8c');
+  rangeBar.setAttribute('opacity', '0.35');
+  rangeBar.setAttribute('pointer-events', 'none');
+  svg.appendChild(rangeBar);
+
+  const edgeTickL = document.createElementNS(SVG_NS, 'line');
+  edgeTickL.setAttribute('class', 'timeline-range-edge-tick');
+  edgeTickL.setAttribute('y1', String(AXIS_TOP_PX - 10));
+  edgeTickL.setAttribute('y2', String(AXIS_TOP_PX + 10));
+  edgeTickL.setAttribute('stroke', '#5b3a8c');
+  edgeTickL.setAttribute('stroke-width', '2');
+  edgeTickL.setAttribute('pointer-events', 'none');
+  svg.appendChild(edgeTickL);
+
+  const edgeTickR = document.createElementNS(SVG_NS, 'line');
+  edgeTickR.setAttribute('class', 'timeline-range-edge-tick');
+  edgeTickR.setAttribute('y1', String(AXIS_TOP_PX - 10));
+  edgeTickR.setAttribute('y2', String(AXIS_TOP_PX + 10));
+  edgeTickR.setAttribute('stroke', '#5b3a8c');
+  edgeTickR.setAttribute('stroke-width', '2');
+  edgeTickR.setAttribute('pointer-events', 'none');
+  svg.appendChild(edgeTickR);
+
+  // 3.4 ticks + labels
+  const ticks = computeTickPositions(yearMin, yearMax);
+  for (const t of ticks) {
+    const line = document.createElementNS(SVG_NS, 'line');
+    line.setAttribute('class', t.major ? 'timeline-tick major' : 'timeline-tick');
+    line.setAttribute('y1', String(t.major ? AXIS_TOP_PX - 7 : AXIS_TOP_PX - 4));
+    line.setAttribute('y2', String(t.major ? AXIS_TOP_PX + 7 : AXIS_TOP_PX + 4));
+    line.setAttribute('stroke', t.color);
+    line.setAttribute('stroke-width', t.major ? '2' : '1');
+    line.setAttribute('pointer-events', 'none');
+    line.dataset.year = String(t.year);
+    svg.appendChild(line);
+
+    const label = document.createElementNS(SVG_NS, 'text');
+    label.setAttribute('class', t.major ? 'timeline-tick-label major' : 'timeline-tick-label');
+    label.setAttribute('y', String(AXIS_TOP_PX + 22));
+    label.setAttribute('text-anchor', 'middle');
+    label.setAttribute('fill', t.color);
+    label.setAttribute('font-size', '10');
+    label.setAttribute('font-style', 'italic');
+    label.setAttribute('pointer-events', 'none');
+    if (t.major) label.setAttribute('font-weight', '700');
+    label.textContent = t.label;
+    label.dataset.year = String(t.year);
+    svg.appendChild(label);
+  }
+
+  // 3.5 drag-area: 透明 rect 覆盖整个 svg / 接收 mousedown
+  // class timeline-drag-area / 测试用
+  const dragArea = document.createElementNS(SVG_NS, 'rect');
+  dragArea.setAttribute('class', 'timeline-drag-area');
+  dragArea.setAttribute('x', '0');
+  dragArea.setAttribute('y', '0');
+  dragArea.setAttribute('width', '100%');
+  dragArea.setAttribute('height', '100%');
+  dragArea.setAttribute('fill', 'transparent');
+  dragArea.setAttribute('cursor', 'ew-resize');
+  svg.appendChild(dragArea);
+
+  // === 4. 渲染位置更新 ===
+
+  function updateMarxIndicator() {
+    // Marx 区间 1830-1880
+    const x1 = yearToAxisPx(1830);
+    const x2 = yearToAxisPx(1880);
+    marxIndicator.setAttribute('x', String(x1));
+    marxIndicator.setAttribute('width', String(x2 - x1));
+  }
+
+  function updateAxisLine() {
+    const left = getAxisLeftPx();
+    const width = getAxisWidthPx();
+    axisLine.setAttribute('x1', String(left));
+    axisLine.setAttribute('x2', String(left + width));
+  }
+
+  function updateTicks() {
+    const tickEls = svg.querySelectorAll<SVGElement>('[data-year]');
+    tickEls.forEach((el) => {
+      const year = parseInt(el.dataset.year ?? '0', 10);
+      const x = yearToAxisPx(year);
+      if (el.tagName === 'line') {
+        el.setAttribute('x1', String(x));
+        el.setAttribute('x2', String(x));
+      } else if (el.tagName === 'text') {
+        el.setAttribute('x', String(x));
+      }
+    });
+  }
+
+  function updateRangeBar() {
+    const axisWidth = getAxisWidthPx();
+    const rangeWidthPx = computeRangeBarWidth({ zoomK: currentZoomK, timelineWidth: axisWidth });
+    const cursorPx = yearToAxisPx(currentYear);
+    let leftPx = cursorPx - rangeWidthPx / 2;
+    let rightPx = cursorPx + rangeWidthPx / 2;
+    // clamp 范围条不出 axis 边界
+    const axisLeft = getAxisLeftPx();
+    const axisRight = axisLeft + axisWidth;
+    if (leftPx < axisLeft) leftPx = axisLeft;
+    if (rightPx > axisRight) rightPx = axisRight;
+    rangeBar.setAttribute('x', String(leftPx));
+    rangeBar.setAttribute('width', String(Math.max(0, rightPx - leftPx)));
+    edgeTickL.setAttribute('x1', String(leftPx));
+    edgeTickL.setAttribute('x2', String(leftPx));
+    edgeTickR.setAttribute('x1', String(rightPx));
+    edgeTickR.setAttribute('x2', String(rightPx));
+  }
+
+  function renderAll() {
+    updateMarxIndicator();
+    updateAxisLine();
+    updateTicks();
+    updateRangeBar();
+    cursorLabel.textContent = `游标 ${Math.round(currentYear)}`;
+  }
+
+  renderAll();
+  // svg getBoundingClientRect 在 jsdom 可能 0 / browser mount 后再 render 一次
+  setTimeout(renderAll, 0);
+
+  // === 5. 拖动交互 (Model A: 拖向左 → 范围条向左 → year 变小 / DR-038) ===
+
+  let dragging = false;
+  let dragStartX = 0; // mousedown 时屏幕 X
+  let dragStartYear = 0; // mousedown 时 currentYear
+
+  function onMouseDown(e: MouseEvent) {
+    dragging = true;
+    dragStartX = e.clientX;
+    dragStartYear = currentYear;
+    svg.style.cursor = 'grabbing';
+    e.preventDefault();
+  }
+
+  function onMouseMove(e: MouseEvent) {
+    if (!dragging) return;
+    const dx = e.clientX - dragStartX;
+    const axisWidth = getAxisWidthPx();
+    if (axisWidth <= 0) return;
+    // Model A: dx>0 (拖右) → 范围条/游标向右 → year 变大
+    //          dx<0 (拖左) → 范围条/游标向左 → year 变小
+    // 即 year 跟手指方向走（scrollbar thumb 直觉）
+    const yearDelta = (dx / axisWidth) * yearSpan;
+    const newYear = clamp(dragStartYear + yearDelta, yearMin, yearMax);
+    currentYear = newYear;
+    renderAll();
+    onCursorChange?.(newYear);
+  }
+
+  function onMouseUp() {
+    if (!dragging) return;
+    dragging = false;
+    svg.style.cursor = 'ew-resize';
+  }
+
+  svg.addEventListener('mousedown', onMouseDown);
+  document.addEventListener('mousemove', onMouseMove);
+  document.addEventListener('mouseup', onMouseUp);
+
+  // === 6. ▶ 播放按钮 (toggle pause / M4 fix #5 同思路 / DR-040 速度 20s) ===
+
   let activeInterval: ReturnType<typeof setInterval> | null = null;
   const PLAY_LABEL = '▶ 播放思想史';
   const PAUSE_LABEL = '⏸ 暂停播放';
@@ -177,21 +338,22 @@ export function mountTimeline(opts: TimelineOptions): {
   }
 
   function startPlayback() {
-    let y = parseInt(slider.value, 10);
-    if (isNaN(y) || y >= yearMax) y = yearMin; // 末尾或异常时从头
+    // restart from yearMin if 已在 yearMax
+    if (currentYear >= yearMax) currentYear = yearMin;
     playBtn.textContent = PAUSE_LABEL;
     playBtn.setAttribute('aria-pressed', 'true');
     activeInterval = setInterval(() => {
-      y += 5;
-      if (y >= yearMax) {
-        slider.value = yearMax.toString();
-        slider.dispatchEvent(new Event('input'));
+      currentYear += PLAY_YEAR_PER_STEP;
+      if (currentYear >= yearMax) {
+        currentYear = yearMax;
+        renderAll();
+        onCursorChange?.(currentYear);
         stopPlayback();
         return;
       }
-      slider.value = y.toString();
-      slider.dispatchEvent(new Event('input'));
-    }, 100);
+      renderAll();
+      onCursorChange?.(currentYear);
+    }, PLAY_INTERVAL_MS);
   }
 
   playBtn.addEventListener('click', () => {
@@ -199,10 +361,20 @@ export function mountTimeline(opts: TimelineOptions): {
     else stopPlayback();
   });
 
+  // === 7. 返回 API ===
   return {
     setCursor: (year: number) => {
-      slider.value = year.toString();
-      slider.dispatchEvent(new Event('input'));
+      currentYear = clamp(year, yearMin, yearMax);
+      renderAll();
+    },
+    getCurrentYear: () => currentYear,
+    updateZoomK: (k: number) => {
+      currentZoomK = k;
+      updateRangeBar();
     },
   };
+}
+
+function clamp(v: number, lo: number, hi: number): number {
+  return Math.max(lo, Math.min(hi, v));
 }

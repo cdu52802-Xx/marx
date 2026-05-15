@@ -438,6 +438,21 @@ ship 前重跑 gstack 4 件套 / 任一警戒线破 = 修了再 ship。
 | DR-023 | 2026-05-14 | 详情卡宽度 350px → 400px | 保持 350px / 增到 450px | bio 事件式 + 关联列表需要更多横向空间 / 400px 是 4 件套 design-review 推荐 |
 | DR-024 | 2026-05-14 | 右上区域 M5 主线 A 不放任何 widget | 缩放控件放右上（前 mockup v2）/ 搜索栏 placeholder 立刻加 | 预留主线 B（避免主线 A 临时占位主线 B 又要拆）/ 主线 A 范围聚焦 zoom 不蔓延 |
 
+> **DR-025 ~ DR-037 实施期补**（详见 [progress anchor](../docs/2026-05-15-m5-linea-progress-anchor.md) § 3 / Stage 1 + 2 PM checkpoint 5 轮反馈累积 13 个）
+
+### 13.1 Stage 3 brainstorm 决策（2026-05-15 实施期补）
+
+| 编号 | 日期 | 决策 | 备选 | 理由 |
+|---|---|---|---|---|
+| DR-038 | 2026-05-15 | 拖时间轴方向 = Model A 滚动条直觉（拖向左 = 看更早 = 主画布向右 pan）| Model B 推画布直觉（手势一致 / 像 Google Maps）| PM 浏览器 mockup 实测 / 时间轴 + 范围条心智模型更接近浏览器 scrollbar / "thumb" 跟手指走 / canvas 反向滚 |
+| DR-039 | 2026-05-15 | 视觉范围条样式 B = 半透明 rect + 两端紫色实线 ticks | A 纯紫色半透明 / C viewport 取景框 | PM 浏览器实测对比 / B 既保留段感（rect fill）又精确显示边界（edge ticks）/ 学术编辑感 + 实用 |
+| DR-040 | 2026-05-15 | ▶ 播放速度 20 秒跑完 1770→1950（9 年/秒）| 15s spec 默认 / 10s 更快 / 可调速 toggle | PM 拍板"播放仅锦上添花 / 不是主线" / 20s 偏慢更稳重 / 不开 toggle 简化 UI / 后续可优化 |
+| DR-041 | 2026-05-15 | 双向同步震荡防护 = `syncingFromTimeline` flag / 同步设置无 race | epsilon tolerance / debouncing | spec § 12 R3 已设计 / svg.call(transform) 同步触发 onZoom / flag set/reset 在同函数内 / 无 async race |
+
+### 13.2 Stage 3 brainstorm mockup 归档
+
+PM 决策依据 mockup 在 `public/m5-stage3-brainstorm.html`（保留作 archive / 后续 ship 前一并清理或保留 m5-stage3-archive 子路径）。
+
 ---
 
 ## 14. 跨窗口续接（M5 主线 A）
