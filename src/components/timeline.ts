@@ -82,21 +82,25 @@ export interface TimelineApi {
 const PLAY_INTERVAL_MS = 50;
 const PLAY_YEAR_PER_STEP = 0.45;
 
+// PM R3 Fix 2 · 时间轴瘦身 (DR-050)
+//   原 svg 60 + padding 18+14 + header label 25 + controls 22 ≈ 130px
+//   新 svg 40 + padding 8+8 + 删 header label + controls 22 ≈ 80px
+//   (header label "时间轴 · 时间游标" 删 / ticks + ▶ 按钮 + 紫色 cursor 竖线视觉自明)
 const AXIS_PAD_PCT = 5;
-const AXIS_TOP_PX = 24;
+const AXIS_TOP_PX = 14;
 
 export function mountTimeline(opts: TimelineOptions): TimelineApi {
   const { container, yearMin, yearMax, initialCursor, onCursorChange } = opts;
   const yearSpan = yearMax - yearMin;
 
   // === 1. 容器 + 内部布局 ===
+  // PM R3 Fix 2 (DR-050) · 瘦身：删 header label / svg 60→40 / padding 18+14→8+8
   container.innerHTML = `
-    <div style="border-top:2px solid #d8cab0;background:#faf6ec;padding:18px 60px 14px;font-family:'EB Garamond','Georgia',serif">
-      <div style="font-size:9px;color:#888;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;text-align:center">时间轴 · 时间游标</div>
-      <svg id="tl-svg" width="100%" height="60" style="display:block;cursor:ew-resize;user-select:none"></svg>
-      <div style="display:flex;align-items:center;gap:14px;margin-top:6px">
-        <button id="tl-play" style="border:1px solid #5b3a8c;background:#fcfaf6;color:#5b3a8c;padding:4px 14px;font-style:italic;cursor:pointer;font-family:inherit;font-size:12px">▶ 播放思想史</button>
-        <span id="tl-cursor-label" style="font-size:12px;color:#5b3a8c;font-style:italic;white-space:nowrap;flex:1;text-align:right">游标 ${initialCursor}</span>
+    <div style="border-top:1px solid #d8cab0;background:#faf6ec;padding:8px 60px 8px;font-family:'EB Garamond','Georgia',serif">
+      <svg id="tl-svg" width="100%" height="40" style="display:block;cursor:ew-resize;user-select:none"></svg>
+      <div style="display:flex;align-items:center;gap:14px;margin-top:4px">
+        <button id="tl-play" style="border:1px solid #5b3a8c;background:#fcfaf6;color:#5b3a8c;padding:3px 12px;font-style:italic;cursor:pointer;font-family:inherit;font-size:11px">▶ 播放思想史</button>
+        <span id="tl-cursor-label" style="font-size:11px;color:#5b3a8c;font-style:italic;white-space:nowrap;flex:1;text-align:right">游标 ${initialCursor}</span>
       </div>
     </div>
   `;
@@ -149,24 +153,23 @@ export function mountTimeline(opts: TimelineOptions): TimelineApi {
   axisLine.setAttribute('stroke-width', '1');
   svg.appendChild(axisLine);
 
-  // 3.3 游标视觉指示 (PM checkpoint 1 反馈：删范围条 / 但还是要让用户看到游标位置)
-  //     用紫色竖线 (2px 宽 / 24px 高 / 跨 axis 上下) / pointer-events none
+  // 3.3 游标视觉指示 紫色竖线 (svg 40 高 / cursor 跨 AXIS ±10)
   const cursorLine = document.createElementNS(SVG_NS, 'line');
   cursorLine.setAttribute('class', 'timeline-cursor-line');
-  cursorLine.setAttribute('y1', String(AXIS_TOP_PX - 12));
-  cursorLine.setAttribute('y2', String(AXIS_TOP_PX + 12));
+  cursorLine.setAttribute('y1', String(AXIS_TOP_PX - 10));
+  cursorLine.setAttribute('y2', String(AXIS_TOP_PX + 10));
   cursorLine.setAttribute('stroke', '#5b3a8c');
   cursorLine.setAttribute('stroke-width', '2');
   cursorLine.setAttribute('pointer-events', 'none');
   svg.appendChild(cursorLine);
 
-  // 3.4 ticks + labels
+  // 3.4 ticks + labels (DR-050 紧凑布局)
   const ticks = computeTickPositions(yearMin, yearMax);
   for (const t of ticks) {
     const line = document.createElementNS(SVG_NS, 'line');
     line.setAttribute('class', t.major ? 'timeline-tick major' : 'timeline-tick');
-    line.setAttribute('y1', String(t.major ? AXIS_TOP_PX - 7 : AXIS_TOP_PX - 4));
-    line.setAttribute('y2', String(t.major ? AXIS_TOP_PX + 7 : AXIS_TOP_PX + 4));
+    line.setAttribute('y1', String(t.major ? AXIS_TOP_PX - 6 : AXIS_TOP_PX - 3));
+    line.setAttribute('y2', String(t.major ? AXIS_TOP_PX + 6 : AXIS_TOP_PX + 3));
     line.setAttribute('stroke', t.color);
     line.setAttribute('stroke-width', t.major ? '2' : '1');
     line.setAttribute('pointer-events', 'none');
@@ -175,10 +178,10 @@ export function mountTimeline(opts: TimelineOptions): TimelineApi {
 
     const label = document.createElementNS(SVG_NS, 'text');
     label.setAttribute('class', t.major ? 'timeline-tick-label major' : 'timeline-tick-label');
-    label.setAttribute('y', String(AXIS_TOP_PX + 22));
+    label.setAttribute('y', String(AXIS_TOP_PX + 20));
     label.setAttribute('text-anchor', 'middle');
     label.setAttribute('fill', t.color);
-    label.setAttribute('font-size', '10');
+    label.setAttribute('font-size', '9');
     label.setAttribute('font-style', 'italic');
     label.setAttribute('pointer-events', 'none');
     if (t.major) label.setAttribute('font-weight', '700');

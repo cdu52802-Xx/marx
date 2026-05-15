@@ -119,7 +119,8 @@ app
   .style('width', '100vw')
   .style('height', '100vh')
   .style('padding-top', '70px')
-  .style('padding-bottom', '160px')
+  // PM R3 Fix 2 · DR-050 · timeline 瘦身 160px → 100px (跟新 timeline 高 ~80px 匹配 + 20px buffer)
+  .style('padding-bottom', '100px')
   .style('padding-left', '48px')
   .style('box-sizing', 'border-box');
 document.documentElement.style.overflow = 'hidden';
@@ -325,7 +326,8 @@ sectionG.each(function (section) {
   const SIDEBAR_PX = 48;
   const POPOVER_PX = 380;
   const HEADER_PX = 70;
-  const TIMELINE_PX = 160;
+  // PM R3 Fix 2 · DR-050 · timeline 瘦身 160 → 100
+  const TIMELINE_PX = 100;
 
   // Stage 2 R5 PM checkpoint · 居中策略升级（句子整体 vs 圆点）
   //   default：句子中点 居中（不是圆点）→ 用 getBBox() 测 claim_text 实际宽度
@@ -471,9 +473,12 @@ document.body.appendChild(timelineContainer);
 //     · claim.year ≤ cursor → opacity 1（已提出 / 正常）
 //     · arc source/target 任一 year > cursor → opacity 0.15 / 否则 1
 //   - 画布 pan/zoom 跟时间轴解耦（滚轮 zoom + 拖空白 pan 仍可用 / 但不被时间轴控制）
-//   - 初始游标 1950 = 全显示（DR-043 / PM 拍 避免首访"页面坏了"）
-const INITIAL_CURSOR_YEAR = 1950;
-const FADED_OPACITY = 0.15; // DR-043 · PM 拍 0.15 强调"未提出"
+//   - 初始游标 = yearMax 全显（DR-043 / PM 拍 避免首访"页面坏了"）
+//   - PM R3 Fix 1 · DR-049 · yearMax 1950 → 2030（含 1950 后的 Marx 学派 + 21 世纪 buffer）
+const TIMELINE_YEAR_MIN = 1770;
+const TIMELINE_YEAR_MAX = 2030;
+const INITIAL_CURSOR_YEAR = TIMELINE_YEAR_MAX;
+const FADED_OPACITY = 0.15;
 const NORMAL_OPACITY = 1;
 
 function applyTimelineFiltering(cursorYear: number): void {
@@ -497,8 +502,8 @@ function applyTimelineFiltering(cursorYear: number): void {
 
 mountTimeline({
   container: timelineContainer,
-  yearMin: 1770,
-  yearMax: 1950,
+  yearMin: TIMELINE_YEAR_MIN,
+  yearMax: TIMELINE_YEAR_MAX,
   initialCursor: INITIAL_CURSOR_YEAR,
   onCursorChange: applyTimelineFiltering,
 });

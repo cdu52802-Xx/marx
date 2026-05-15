@@ -88,14 +88,14 @@ function _doShowClaim(claim: ClaimNode, ctx: ClaimPopoverContext) {
   sidebar.className = 'claim-popover';
   sidebar.dataset.claimId = claim.id; // Issue #2 · same-claim guard 用
   // PM R2 Fix 2 · 详情卡 bottom 0 → 160px (DR-047)
-  //   原 bottom:0 全屏高度 / z-index 1000 在 timeline (z 10) 上 / 挡 timeline
-  //   改 bottom:160px (跟 main.ts padding-bottom:160px 一致 / 跟 TIMELINE_PX 同步)
+  // PM R3 Fix 2 · 160 → 100px (DR-050 timeline 瘦身后同步)
+  //   bottom:100px 跟 main.ts padding-bottom:100px 一致 / 跟 TIMELINE_PX 同步
   //   详情卡只占屏幕中部 → timeline 底部完全可见可拖
   sidebar.style.cssText = `
     position:fixed;
     top:0;
     right:0;
-    bottom:160px;
+    bottom:100px;
     width:380px;
     background:#fcfaf6;
     border-left:1px solid #d8cab0;

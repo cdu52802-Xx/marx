@@ -476,6 +476,20 @@ PM 浏览器实测 Stage 3 R1 后反馈：
 | DR-047 | 2026-05-15 | claim-popover.ts bottom: 0 → 160px（跟 main.ts padding-bottom 一致 / 跟 TIMELINE_PX 同步）| 提高 timeline z-index / 缩短 popover height 别的方式 | 详情卡只占屏幕中部 → timeline 底部全可见 / 用户能拖时间轴 / 跟 popover 内容浏览不冲突 |
 | DR-048 | 2026-05-15 | timeline.ts 加 click-to-seek（mousedown 时 cursor 立即跳到 click 位置 / 之后才是相对拖动）| 仅 drag / 加双击 reset / 拓宽 timeline 物理范围 | 用户点 timeline 任何位置 → cursor 直接到 / 跟 W3C input range slider 一致 / 解决"拖不过去"根因（单次 dx 不足）/ 同时保留拖动精调 |
 
+### 13.2.2 Stage 3 PM checkpoint R3（2026-05-15 实施期补）
+
+PM 浏览器实测 Stage 3 R2 (commit f3e216d) 后反馈：
+
+1. 时间轴只到 1950 / 实际有很多 1950 后的新思想（Marx 学派 + 21 世纪后继者）
+2. timeline 区域有点高 / UX 不舒服 / **不必须现在改 / AI 自行判断阶段** ⭐
+
+AI 判断：Fix 1 + Fix 2 合并做（同 timeline.ts / 同 commit / 同 dev verify cycle / 加长后高度感差异更明显 / 一次性优化比分散迭代 ROI 更高）。
+
+| 编号 | 日期 | 决策 | 备选 | 理由 |
+|---|---|---|---|---|
+| DR-049 | 2026-05-15 | 时间轴 yearMax 1950 → **2030**（260 年 span）/ yearMin 1770 保留 | 2025（到现在）/ 2050（含本世纪中）| 数据现有 max 1959 / 2030 含 1950 后 Marx 学派 + 21 世纪 buffer ~70 年 / round 数 / PM 嫌不够再调一个字搞定 |
+| DR-050 | 2026-05-15 | timeline 高 130 → ~80px：删 header label "时间轴 · 时间游标" + svg 60→40 + padding 18+14→8+8 + 字体 12→11 + tick label 10→9 + 主画布 padding-bottom 160→100 + popover bottom 同步 100 | 保留 label / 仅减 padding / 移到顶部 | PM 反馈"区域高" / ticks + 紫色 cursor 竖线 + ▶ 按钮 视觉自明 / label 冗余 / 主画布多 60px 显示空间 |
+
 ### 13.3 Stage 3 实施改造（DR-042 → main.ts）
 
 - `onCursorChange` 重写：遍历 `g.obs` / `path.arc` / `g.person-section` 按 `year` vs cursor 设 opacity
