@@ -377,8 +377,8 @@ zoom.ts / center.ts / timeline.ts handlers
 - [ ] 拖时间轴单游标 → 画布平滑 pan / 游标停 = 画布停
 - [ ] 时间轴视觉范围条宽度 = 当前画布可视年份段（动态同步）
 - [ ] ▶ 播放点击 → 游标自动 1770 → 1950 + 画布同步飞行 + 再点暂停
-- [ ] 双击鼠标中键 → 画布重置到 1× + 全景居中 + 800ms 飞行
-- [ ] 左下 ⌂ 按钮 → 等同双击中键效果（mac trackpad fallback）
+- ~~双击鼠标中键 → 画布重置到 1× + 全景居中 + 800ms 飞行~~ **DR-060 拍废**：⌂ 已 cover reset 路径 / T9 反成冗余
+- [x] 左下 ⌂ 按钮 → 画布重置到 1× + 全景居中（Stage 1 实施 / 既是 mac trackpad fallback 也是唯一 reset 入口）
 - [ ] Esc 键 → 关详情卡 / 不动 viewport
 - [ ] zoom 时 sidebar / 详情卡 / 缩放控件 / 时间轴**不跟随缩放**（屏幕固定大小）
 
@@ -438,7 +438,7 @@ ship 前重跑 gstack 4 件套 / 任一警戒线破 = 修了再 ship。
 | DR-023 | 2026-05-14 | 详情卡宽度 350px → 400px | 保持 350px / 增到 450px | bio 事件式 + 关联列表需要更多横向空间 / 400px 是 4 件套 design-review 推荐 |
 | DR-024 | 2026-05-14 | 右上区域 M5 主线 A 不放任何 widget | 缩放控件放右上（前 mockup v2）/ 搜索栏 placeholder 立刻加 | 预留主线 B（避免主线 A 临时占位主线 B 又要拆）/ 主线 A 范围聚焦 zoom 不蔓延 |
 
-> **DR-025 ~ DR-037 实施期补**（详见 [progress anchor](../docs/2026-05-15-m5-linea-progress-anchor.md) § 3 / Stage 1 + 2 PM checkpoint 5 轮反馈累积 13 个）
+> **DR-025 ~ DR-060 实施期补**（详见 [progress anchor](../docs/2026-05-15-m5-linea-progress-anchor.md) § 3 / 实施期累积 30+ 决策）
 
 ### 13.1 Stage 3 brainstorm 决策（2026-05-15 实施期补）
 
