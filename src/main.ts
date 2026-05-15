@@ -325,26 +325,72 @@ sectionG.each(function (section) {
   const HEADER_PX = 70;
   const TIMELINE_PX = 160;
 
-  function computeFlyTransform(c: ClaimWithCoords, targetK: number, currentK: number) {
+  // Stage 2 R5 PM checkpoint · 居中策略升级（句子整体 vs 圆点）
+  //   default：句子中点 居中（不是圆点）→ 用 getBBox() 测 claim_text 实际宽度
+  //   clamp：如果句子很长 / 中心居中会让起点跑出可见区左 → 强制让起点在 visLeft + 24px margin
+  //   理由：用户读句子从头读 / 起点必须可见 / 长句末端可后续 pan 查看
+  //   fallback：getBBox 失败或无 obsElement → 回退到圆点居中
+  function computeFlyTransform(
+    c: ClaimWithCoords,
+    targetK: number,
+    currentK: number,
+    obsElement?: SVGGElement,
+  ) {
     const visPxX = (window.innerWidth - SIDEBAR_PX - POPOVER_PX) / 2 + SIDEBAR_PX;
     const visPxY = HEADER_PX + (window.innerHeight - HEADER_PX - TIMELINE_PX) / 2;
-    const visCenterVB = pixelToViewBox(svg.node()!, visPxX, visPxY);
-    return computeCenterTransform({
-      target: { x: c.x, y: c.y },
+    const svgNode = svg.node()!;
+    const visCenterVB = pixelToViewBox(svgNode, visPxX, visPxY);
+
+    // 尝试测 claim_text 实际 width 让 sentence 居中
+    let sentenceStartCanvasX: number | null = null;
+    let sentenceCenterCanvasX: number | null = null;
+    if (obsElement) {
+      const textEl = obsElement.querySelector('.obs-text') as SVGGraphicsElement | null;
+      if (textEl) {
+        try {
+          const tb = textEl.getBBox();
+          // textBBox.x 是 text 元素 local x（应是 8）/ textBBox.width 是 text 实际宽度
+          // obs row 的世界 X 起点 = c.x（obs row transform translate to c.x）
+          sentenceStartCanvasX = c.x + tb.x;
+          sentenceCenterCanvasX = sentenceStartCanvasX + tb.width / 2;
+        } catch {
+          // getBBox 失败（jsdom / 未挂载）→ fallback
+        }
+      }
+    }
+
+    const targetCanvasX = sentenceCenterCanvasX ?? c.x; // sentence center 或圆点
+    const ct = computeCenterTransform({
+      target: { x: targetCanvasX, y: c.y },
       targetK,
       currentK,
       visibleCenter: visCenterVB,
     });
+
+    // Stage 2 R5 · clamp sentence start 在可见区（如果句子长到起点跑出左边）
+    if (sentenceStartCanvasX !== null) {
+      const visLeftPx = SIDEBAR_PX + 24; // sidebar 右边 + 24px 阅读 margin
+      const visLeftVB = pixelToViewBox(svgNode, visLeftPx, visPxY).x;
+      // 飞行后 sentence start 的 viewBox X = sentenceStartCanvasX * k + tx
+      const sentenceStartAfterX = sentenceStartCanvasX * ct.k + ct.x;
+      if (sentenceStartAfterX < visLeftVB) {
+        // 句子起点会跑出可见区左 → clamp tx 让起点对齐 visLeftVB
+        ct.x = visLeftVB - sentenceStartCanvasX * ct.k;
+      }
+    }
+
+    return ct;
   }
 
   obsG.on('click', (event, c) => {
     event.stopPropagation(); // 防止 bubble 到 document outsideHandler
 
     const currentK = zoomCtrl.getCurrentTransform().k;
+    const obsElement = event.currentTarget as SVGGElement;
     // 仅 k=1 全景态触发 flyto（首次进入探索）/ k>1 时只切详情卡
     if (currentK <= 1.001) {
       const targetK = chooseTargetK(currentK); // = 6 at k=1
-      const ct = computeFlyTransform(c, targetK, currentK);
+      const ct = computeFlyTransform(c, targetK, currentK, obsElement);
       flyToTarget(svg, zoomCtrl.zoomBehavior, ct, 600);
     }
     // 否则画布不动 / 详情卡更新即可（保留 pan/zoom 探索 context）
@@ -389,15 +435,14 @@ sectionG.each(function (section) {
   });
 
   // Stage 2 R3 Issue #2 · 双击 obs → 跳到下一档 zoom + 居中
-  // chooseTargetK: 1→6 / <=6→8 / >6 保持（不变就不飞）
-  // 注：单击会 fire 2 次 + dblclick 1 次。但 click handler 用 k<=1.001 guard，
-  // 第二次 click 已经 k>1 不再 flyto。dblclick 单独处理跳档。
+  // Stage 2 R5 · sentence-aware centering（同 click）
   obsG.on('dblclick', (event, c) => {
     event.stopPropagation();
     const currentK = zoomCtrl.getCurrentTransform().k;
     const targetK = chooseTargetK(currentK);
     if (targetK > currentK + 0.01) {
-      const ct = computeFlyTransform(c, targetK, currentK);
+      const obsElement = event.currentTarget as SVGGElement;
+      const ct = computeFlyTransform(c, targetK, currentK, obsElement);
       flyToTarget(svg, zoomCtrl.zoomBehavior, ct, 600);
     }
     // 已在 >= chooseTargetK 不再 flyto / 详情卡已在 click handler 更新
