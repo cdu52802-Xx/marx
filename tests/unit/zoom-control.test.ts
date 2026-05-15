@@ -13,14 +13,14 @@ describe('zoom-control · mount', () => {
     svg = d3.select<SVGSVGElement, unknown>('#test-svg');
   });
 
-  it('mount 后 body 里有 .zoom-control + 4 个 button (+ / − / ⌂ / ✋)', () => {
+  it('mount 后 body 里有 .zoom-control + 3 个 button (+ / − / ⌂)', () => {
     const ctrl = createZoom(svg, { scaleExtent: [1, 8] });
     mountZoomControl({ zoomController: ctrl });
     const control = document.querySelector('.zoom-control');
     expect(control).toBeTruthy();
     const buttons = control!.querySelectorAll('button');
-    // Stage 1 Issue #4: + / − / ⌂ / ✋ pan-toggle = 4 button
-    expect(buttons.length).toBe(4);
+    // Stage 2 R3 Issue #1: 删 ✋ pan-toggle / 回 3 button (+ / − / ⌂)
+    expect(buttons.length).toBe(3);
   });
 
   it('mount 后控件 fixed 位置 left=60 bottom=180 默认', () => {
@@ -82,66 +82,8 @@ describe('zoom-control · mount', () => {
   });
 });
 
-describe('zoom-control · Stage 1 Issue #4 小手 pan mode', () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let svg: d3.Selection<SVGSVGElement, unknown, any, any>;
-
-  beforeEach(() => {
-    document.body.innerHTML = '<svg id="test-svg" width="800" height="600"></svg>';
-    svg = d3.select<SVGSVGElement, unknown>('#test-svg');
-    // 重新 import 确保 module 级 state reset / 实际 vitest 默认 fresh module
-  });
-
-  it('mount 后小手按钮存在 + aria-pressed="false" 默认', async () => {
-    // 动态 re-import 让 _isPanMode reset (vitest 不默认 reset module state)
-    vi.resetModules();
-    const { mountZoomControl: mzc } = await import('../../src/components/zoom-control.ts');
-    const ctrl = createZoom(svg, { scaleExtent: [1, 8] });
-    mzc({ zoomController: ctrl });
-    const handBtn = document.querySelector('.zoom-control .zoom-pan-toggle') as HTMLButtonElement;
-    expect(handBtn).toBeTruthy();
-    expect(handBtn.getAttribute('aria-pressed')).toBe('false');
-  });
-
-  it('点小手 button → onPanModeChange(true) callback 调用', async () => {
-    vi.resetModules();
-    const { mountZoomControl: mzc } = await import('../../src/components/zoom-control.ts');
-    const ctrl = createZoom(svg, { scaleExtent: [1, 8] });
-    const cb = vi.fn();
-    mzc({ zoomController: ctrl, onPanModeChange: cb });
-    const handBtn = document.querySelector('.zoom-control .zoom-pan-toggle') as HTMLButtonElement;
-    handBtn.click();
-    expect(cb).toHaveBeenCalledWith(true);
-    expect(handBtn.getAttribute('aria-pressed')).toBe('true');
-  });
-
-  it('小手 toggle 第二次 → onPanModeChange(false) + aria-pressed 切回', async () => {
-    vi.resetModules();
-    const { mountZoomControl: mzc } = await import('../../src/components/zoom-control.ts');
-    const ctrl = createZoom(svg, { scaleExtent: [1, 8] });
-    const cb = vi.fn();
-    mzc({ zoomController: ctrl, onPanModeChange: cb });
-    const handBtn = document.querySelector('.zoom-control .zoom-pan-toggle') as HTMLButtonElement;
-    handBtn.click();
-    handBtn.click();
-    expect(cb).toHaveBeenLastCalledWith(false);
-    expect(handBtn.getAttribute('aria-pressed')).toBe('false');
-  });
-
-  it('isPanMode() getter 反映状态', async () => {
-    vi.resetModules();
-    const { mountZoomControl: mzc, isPanMode } =
-      await import('../../src/components/zoom-control.ts');
-    const ctrl = createZoom(svg, { scaleExtent: [1, 8] });
-    mzc({ zoomController: ctrl });
-    expect(isPanMode()).toBe(false);
-    const handBtn = document.querySelector('.zoom-control .zoom-pan-toggle') as HTMLButtonElement;
-    handBtn.click();
-    expect(isPanMode()).toBe(true);
-    handBtn.click();
-    expect(isPanMode()).toBe(false);
-  });
-});
+// Stage 2 R3 Issue #1 修：删小手 pan mode tests
+// 原因：PM 实测后反馈光标 drag 已能 pan / explicit pan mode 多余 / 删 button + 模块状态
 
 describe('zoom-control · updateZoomDisplay', () => {
   beforeEach(() => {

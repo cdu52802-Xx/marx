@@ -29,9 +29,13 @@ import {
 import { mountTimeline } from './components/timeline.ts';
 import { mountSidebar } from './components/sidebar.ts';
 import { createZoom } from './viz/zoom.ts';
-import { mountZoomControl, updateZoomDisplay, isPanMode } from './components/zoom-control.ts';
-import { setOutsideClickGuard } from './components/claim-popover.ts';
-import { computeCenterTransform, flyToTarget, chooseTargetK } from './viz/center.ts';
+import { mountZoomControl, updateZoomDisplay } from './components/zoom-control.ts';
+import {
+  computeCenterTransform,
+  flyToTarget,
+  chooseTargetK,
+  pixelToViewBox,
+} from './viz/center.ts';
 import { showClaimPopover } from './components/claim-popover.ts';
 import { applyClaimFilters } from './components/apply-claim-filters.ts';
 import type { ClaimNode, ClaimRelation } from './types/Claim.ts';
@@ -165,19 +169,12 @@ const zoomCtrl = createZoom(svg, {
 });
 
 // T3 · mount 左下缩放控件 + 接到 zoomCtrl
-// Stage 1 Issue #4 · 小手 toggle pan mode 接 cursor + popover guard
-zoomControlEl = mountZoomControl({
-  zoomController: zoomCtrl,
-  onPanModeChange: (panOn) => {
-    // 切 cursor （pan mode 用 grab / 非 pan 默认 / obs + arc 后续 T5/T8 override pointer）
-    svg.style('cursor', panOn ? 'grab' : 'default');
-  },
-});
-
-// Stage 1 Issue #3 + #4 · 详情卡 outside-click guard
-// pan mode active → guard 返回 false → 不关详情卡（防误关）
-// pan mode inactive → guard 返回 true → 任何外部 click 关详情卡（含画布空白）
-setOutsideClickGuard(() => !isPanMode());
+// Stage 2 R3 Issue #1 修：删 onPanModeChange + 小手 button + setOutsideClickGuard
+//   原因：PM 实测后反馈光标 drag 已能 pan / explicit pan mode 多余
+//   d3.zoom drag = pan / click = mouse 不移动时触发 / 天然分离
+//   单击空白 → click 触发 → popover outside listener 关详情卡
+//   拖动空白 → mouseup 后 click 不触发（因为 mouse moved）→ 不关详情卡
+zoomControlEl = mountZoomControl({ zoomController: zoomCtrl });
 
 // === 6. 弧线层（在节点之前画，z-order 在底）===
 
@@ -278,7 +275,8 @@ sectionG.each(function (section) {
     .attr('data-claim-id', (c) => c.id)
     // 相对 section 坐标（section 已 translate 到 section.x/y，obs 相对偏移）
     .attr('transform', (c) => `translate(${c.x - section.x},${c.y - section.y})`)
-    .style('cursor', 'pointer');
+    // Stage 2 R3 Issue #2 · cursor zoom-in 视觉暗示双击可放大
+    .style('cursor', 'zoom-in');
 
   // tag (keywords，右对齐到圆点前)
   obsG
@@ -312,24 +310,44 @@ sectionG.each(function (section) {
     .attr('font-style', 'italic')
     .text((c) => c.claim_text);
 
-  // 点击 obs → 飞行居中 + 详情卡同时（M5 T5 / spec § 7.3 · DR-017）
-  // Stage 2 PM checkpoint 修：
-  //   Issue 2.1 · Y 居中偏上 → 加 headerHeight 70 + timelineHeight 160 算可见区
-  //   Issue 2.2 · 固定 targetK=3 不对 → chooseTargetK(currentK) 递进 (1→6 / <=6→8 / >6 保持)
-  obsG.on('click', (_event, c) => {
-    const currentK = zoomCtrl.getCurrentTransform().k;
-    const targetK = chooseTargetK(currentK);
-    const ct = computeCenterTransform({
+  // Stage 2 R3 · obs 单击 + 双击行为（PM resident product 设计）
+  //   单击 obs：始终更新详情卡
+  //     · k <= 1.001（全景）→ 附加 flyto + chooseTargetK(1)=6（首次进入探索模式）
+  //     · k > 1（已 zoom in）→ 仅切详情 / 画布不动（保留用户 pan/zoom 探索 context）
+  //   双击 obs：flyto + chooseTargetK(currentK) + 居中（1→6 / <=6→8 / >6 保持）
+  //     · 用户主动决定升级 zoom 级别（cursor:zoom-in 视觉暗示）
+  //   event.stopPropagation() 防止 bubble 到 document outsideHandler 关详情卡
+  // 居中算法（Issue 2.3 X 偏移修）：
+  //   pixel screen visible center → pixelToViewBox 转 viewBox 坐标 → computeCenterTransform
+  //   correct viewBox + preserveAspectRatio="xMidYMid meet" 的 meet scale + letterbox
+  const SIDEBAR_PX = 48;
+  const POPOVER_PX = 380;
+  const HEADER_PX = 70;
+  const TIMELINE_PX = 160;
+
+  function computeFlyTransform(c: ClaimWithCoords, targetK: number, currentK: number) {
+    const visPxX = (window.innerWidth - SIDEBAR_PX - POPOVER_PX) / 2 + SIDEBAR_PX;
+    const visPxY = HEADER_PX + (window.innerHeight - HEADER_PX - TIMELINE_PX) / 2;
+    const visCenterVB = pixelToViewBox(svg.node()!, visPxX, visPxY);
+    return computeCenterTransform({
       target: { x: c.x, y: c.y },
       targetK,
       currentK,
-      viewport: { width: window.innerWidth, height: window.innerHeight },
-      sidebarWidth: 48,
-      popoverWidth: 380,
-      headerHeight: 70, // M4 closure fix #4 加的 fixed header
-      timelineHeight: 160, // T7 fixed timeline
+      visibleCenter: visCenterVB,
     });
-    flyToTarget(svg, zoomCtrl.zoomBehavior, ct, 600);
+  }
+
+  obsG.on('click', (event, c) => {
+    event.stopPropagation(); // 防止 bubble 到 document outsideHandler
+
+    const currentK = zoomCtrl.getCurrentTransform().k;
+    // 仅 k=1 全景态触发 flyto（首次进入探索）/ k>1 时只切详情卡
+    if (currentK <= 1.001) {
+      const targetK = chooseTargetK(currentK); // = 6 at k=1
+      const ct = computeFlyTransform(c, targetK, currentK);
+      flyToTarget(svg, zoomCtrl.zoomBehavior, ct, 600);
+    }
+    // 否则画布不动 / 详情卡更新即可（保留 pan/zoom 探索 context）
 
     // 详情卡同时滑入（350ms slide-in 跟 600ms 飞行重叠）
     const author = persons.find((p) => p.id === c.author_id);
@@ -369,7 +387,25 @@ sectionG.each(function (section) {
       disagreementClaims,
     });
   });
+
+  // Stage 2 R3 Issue #2 · 双击 obs → 跳到下一档 zoom + 居中
+  // chooseTargetK: 1→6 / <=6→8 / >6 保持（不变就不飞）
+  // 注：单击会 fire 2 次 + dblclick 1 次。但 click handler 用 k<=1.001 guard，
+  // 第二次 click 已经 k>1 不再 flyto。dblclick 单独处理跳档。
+  obsG.on('dblclick', (event, c) => {
+    event.stopPropagation();
+    const currentK = zoomCtrl.getCurrentTransform().k;
+    const targetK = chooseTargetK(currentK);
+    if (targetK > currentK + 0.01) {
+      const ct = computeFlyTransform(c, targetK, currentK);
+      flyToTarget(svg, zoomCtrl.zoomBehavior, ct, 600);
+    }
+    // 已在 >= chooseTargetK 不再 flyto / 详情卡已在 click handler 更新
+  });
 });
+
+// Stage 2 R3 · disable d3 默认 dblclick zoom（默认是 k*2 / 跟我们 chooseTargetK 策略冲突）
+svg.on('dblclick.zoom', null);
 
 // === 8. T7 · 底部横向时间轴（spec § 6 / 独立参考维度）===
 // PM 视觉期待: timeline 是 "独立栏" 始终可见，不能 scroll 到画布底才看到

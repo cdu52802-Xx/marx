@@ -13,13 +13,11 @@
 
 import type { ClaimNode } from '../types/Claim.ts';
 
-// Stage 1 PM checkpoint Issue #3 + #4 · outside click guard 注入点
-// main.ts 注入 () => !isPanMode() / pan mode 下不关详情卡
-// 默认无 guard → outsideHandler 原行为（任何外部 click 关）
-let _outsideClickGuard: (() => boolean) | null = null;
-export function setOutsideClickGuard(fn: (() => boolean) | null): void {
-  _outsideClickGuard = fn;
-}
+// Stage 2 R3 Issue #1 修：删 outsideClickGuard 注入点
+// 原因：小手 pan mode 删除 / 不再需要 guard 区分 pan vs 默认 mode
+// d3.zoom drag = pan（mouse 移动）/ click = 不移动 / 天然分离
+// 单击空白 → click 触发 outsideHandler → 关详情卡
+// 拖动空白 → click 不触发（mouse 移动）→ 不关详情卡
 
 export interface ClaimPopoverContext {
   authorName: string;
@@ -294,9 +292,6 @@ export function showClaimPopover(claim: ClaimNode, ctx: ClaimPopoverContext) {
   // click 事件 d3.zoom 不监听 / 正常 bubble 到 document
   // setTimeout 0 trick 仍然必要（防"打开本次 click"立即被识别为外部关闭）
   const outsideHandler = (e: MouseEvent) => {
-    // Stage 1 PM checkpoint Issue #4 · guard 检查（main.ts 注入 () => !isPanMode()）
-    // pan mode active 时 guard 返回 false → 不关详情卡（防 Issue #3 误关）
-    if (_outsideClickGuard && !_outsideClickGuard()) return;
     if (!sidebar.contains(e.target as Node)) hideClaimPopover();
   };
   const outsideTimer = setTimeout(() => document.addEventListener('click', outsideHandler), 0);

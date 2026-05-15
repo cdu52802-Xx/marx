@@ -1,43 +1,31 @@
-// M5 主线 A · T4 · 居中飞行算法
+// M5 主线 A · T4 + Stage 2 R3 · 居中飞行算法
 // spec § 7.3 单击 obs 同时居中 + 详情卡 · DR-017 · 居中算法 offset 详情卡宽度
 //
-// 核心数学：
-//   visibleCenterX = (viewport.width - sidebar - popover) / 2 + sidebar
-//     = 可见区（屏幕减去 sidebar + popover 后）的横向中点 / 用屏幕坐标表达
-//   visibleCenterY = viewport.height / 2
-//     = 屏幕纵向中点（header / timeline 上下 padding 让 SVG fill 区域跟 viewport 一致 / 简化处理）
-//
-//   目标 transform 让画布坐标 (target.x, target.y) 飞到 visibleCenter（屏幕坐标）:
-//     transform.k = max(targetK, currentK)  // 已经 zoom in 时不缩小
-//     transform.x = visibleCenterX - target.x * k
-//     transform.y = visibleCenterY - target.y * k
-//
-//   flyToTarget = 调 d3 transition 应用 [k, x, y] / 600ms cubic-in-out / spec § 4.1
+// Stage 2 R3 Issue #3 修：x 居中偏移
+//   根因：viewBox + preserveAspectRatio="xMidYMid meet" → viewBox 坐标 ↔ pixel 坐标 差
+//          一个 meet scale (s = min(svgPxWidth/vbWidth, svgPxHeight/vbHeight)) + letterbox offset
+//   修法：分两层
+//     · computeCenterTransform: pure math · 输入全在 viewBox 坐标（含 visibleCenter）
+//     · pixelToViewBox: SVG-aware helper · 把 pixel screen 坐标转 viewBox 坐标
+//     · main.ts 组合：用 pixelToViewBox 算 visCenter 的 viewBox 坐标 / 传给 computeCenterTransform
+
 import * as d3 from 'd3';
 import type { ZoomBehavior, ZoomTransform } from 'd3-zoom';
 import type { Selection } from 'd3-selection';
 
 export interface CenterParams {
-  target: { x: number; y: number };
+  target: { x: number; y: number }; // viewBox / canvas coords
   targetK: number;
   /**
    * 如果 currentK > targetK 则保持 currentK（不缩小 / 用户已经 zoom in 不破坏）
    * 不传则用 targetK
    */
   currentK?: number;
-  viewport: { width: number; height: number };
-  sidebarWidth: number;
-  popoverWidth: number;
   /**
-   * Stage 2 PM checkpoint Issue 2.1 修：屏幕固定 header 高度（默认 0 / Marx 项目 70px）
-   * Y 居中算法用：visibleCenterY = headerHeight + (viewport.height - headerHeight - timelineHeight) / 2
-   * 不传则不偏移（视为 viewport.height 全是可见区）
+   * 屏幕可见区中心（在 target 同一坐标系 = viewBox 坐标）
+   * main.ts 用 pixelToViewBox helper 把 pixel screen center 转 viewBox 坐标后传入
    */
-  headerHeight?: number;
-  /**
-   * Stage 2 PM checkpoint Issue 2.1 修：屏幕固定底部 timeline 高度（默认 0 / Marx 项目 160px）
-   */
-  timelineHeight?: number;
+  visibleCenter: { x: number; y: number };
 }
 
 export interface CenterTransform {
@@ -48,32 +36,61 @@ export interface CenterTransform {
 
 export function computeCenterTransform(p: CenterParams): CenterTransform {
   const k = p.currentK && p.currentK > p.targetK ? p.currentK : p.targetK;
-  const headerHeight = p.headerHeight ?? 0;
-  const timelineHeight = p.timelineHeight ?? 0;
-  const visibleCenterX = (p.viewport.width - p.sidebarWidth - p.popoverWidth) / 2 + p.sidebarWidth;
-  // Stage 2 Issue 2.1 修：Y 居中算可见区（header / timeline 占用屏幕固定 padding）
-  const visibleCenterY = headerHeight + (p.viewport.height - headerHeight - timelineHeight) / 2;
   return {
     k,
-    x: visibleCenterX - p.target.x * k,
-    y: visibleCenterY - p.target.y * k,
+    x: p.visibleCenter.x - p.target.x * k,
+    y: p.visibleCenter.y - p.target.y * k,
+  };
+}
+
+/**
+ * Stage 2 R3 Issue #3 · pixel screen 坐标 → viewBox 坐标转换
+ *
+ * SVG viewBox + preserveAspectRatio="xMidYMid meet" 行为：
+ *   - meet scale s = min(svgPxWidth / vbWidth, svgPxHeight / vbHeight)
+ *   - 限制 dim 充满 SVG 元素 / 非限制 dim letterbox 居中
+ *   - letterboxX = (svgPxWidth - vbWidth * s) / 2  if width 非限制
+ *   - letterboxY = (svgPxHeight - vbHeight * s) / 2  if height 非限制
+ *   - pixel (px, py) → viewBox: ((px - svgLeft - letterboxX) / s, (py - svgTop - letterboxY) / s)
+ *
+ * 输入 px, py 是 window pixel 坐标（相对 window 左上角）
+ * 输出 viewBox 坐标（相对 viewBox 原点）
+ */
+export function pixelToViewBox(
+  svgElement: SVGSVGElement,
+  pxX: number,
+  pxY: number,
+): { x: number; y: number } {
+  const rect = svgElement.getBoundingClientRect();
+  const viewBox = svgElement.viewBox.baseVal;
+  if (viewBox.width === 0 || viewBox.height === 0) {
+    // 兜底：viewBox 没设 / 视为 1:1
+    return { x: pxX - rect.left, y: pxY - rect.top };
+  }
+  const sWidth = rect.width / viewBox.width;
+  const sHeight = rect.height / viewBox.height;
+  const s = Math.min(sWidth, sHeight);
+  // letterbox 在非限制 dim 上
+  const letterboxX = sWidth > sHeight ? (rect.width - viewBox.width * s) / 2 : 0;
+  const letterboxY = sHeight > sWidth ? (rect.height - viewBox.height * s) / 2 : 0;
+  return {
+    x: (pxX - rect.left - letterboxX) / s,
+    y: (pxY - rect.top - letterboxY) / s,
   };
 }
 
 /**
  * Stage 2 PM checkpoint Issue 2.2 修：单击 obs 时 targetK 递进策略
+ * Stage 2 R3 调整：用于双击触发的 zoom step / 单击不再触发 zoom（k>1 时只切详情）
+ *
  * - currentK <= 3：跳 6（从全景或局部跳到能看 obs 周围关系 / 不一步到底）
  * - 3 < currentK <= 6：跳 8（用户已在中等 zoom / 跳到细节最大）
  * - currentK > 6：保持 currentK（已在细节区 / 不再放大）
- *
- * PM 原话："用户从全景状态或者2、3这种全局上点到具体观点时，他的视野还是需要放得开一点，
- *           看一看各观点之间得关系...等他看看，拖动拖动，在已经放大一部分的情况下再点击某个节点时，
- *           再给他放大到 8"
  */
 export function chooseTargetK(currentK: number): number {
   if (currentK <= 3) return 6;
   if (currentK <= 6) return 8;
-  return Math.min(currentK, 8); // 已 > 6 保持当前 / 8 是 scaleExtent max
+  return Math.min(currentK, 8);
 }
 
 export function flyToTarget(
@@ -84,7 +101,6 @@ export function flyToTarget(
   duration = 600,
 ): void {
   const t: ZoomTransform = d3.zoomIdentity.translate(transform.x, transform.y).scale(transform.k);
-  // duration === 0 → 直接 set / 跳 transition（jsdom + 即刻 set 场景）
   if (duration === 0) {
     zoomBehavior.transform(svg, t);
     return;
