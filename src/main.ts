@@ -119,8 +119,8 @@ app
   .style('width', '100vw')
   .style('height', '100vh')
   .style('padding-top', '70px')
-  // PM R3 Fix 2 · DR-050 · timeline 瘦身 160px → 100px (跟新 timeline 高 ~80px 匹配 + 20px buffer)
-  .style('padding-bottom', '100px')
+  // PM R4 Fix · DR-051 · timeline 再瘦身（单行 + floating badge）100px → 60px (新 timeline 高 ~48px + 12px buffer)
+  .style('padding-bottom', '60px')
   .style('padding-left', '48px')
   .style('box-sizing', 'border-box');
 document.documentElement.style.overflow = 'hidden';
@@ -177,7 +177,9 @@ const zoomCtrl = createZoom(svg, {
 //   d3.zoom drag = pan / click = mouse 不移动时触发 / 天然分离
 //   单击空白 → click 触发 → popover outside listener 关详情卡
 //   拖动空白 → mouseup 后 click 不触发（因为 mouse moved）→ 不关详情卡
-zoomControlEl = mountZoomControl({ zoomController: zoomCtrl });
+// PM R4 DR-051 · timeline 单行后 ~48px / zoom-control 默认 bottom 180px 离 timeline 太远
+//   改 bottom 70px (timeline 48 + 22px gap) / 跟 timeline 顶端贴近
+zoomControlEl = mountZoomControl({ zoomController: zoomCtrl, position: { left: 60, bottom: 70 } });
 
 // === 6. 弧线层（在节点之前画，z-order 在底）===
 
@@ -326,8 +328,8 @@ sectionG.each(function (section) {
   const SIDEBAR_PX = 48;
   const POPOVER_PX = 380;
   const HEADER_PX = 70;
-  // PM R3 Fix 2 · DR-050 · timeline 瘦身 160 → 100
-  const TIMELINE_PX = 100;
+  // PM R4 Fix · DR-051 · timeline 单行后 100 → 60
+  const TIMELINE_PX = 60;
 
   // Stage 2 R5 PM checkpoint · 居中策略升级（句子整体 vs 圆点）
   //   default：句子中点 居中（不是圆点）→ 用 getBBox() 测 claim_text 实际宽度

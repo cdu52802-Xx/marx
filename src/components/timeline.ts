@@ -1,23 +1,19 @@
-// M5 T6 · 时间轴（HTML slider → SVG 整条可拖 + 单游标 = 时间滤镜）
+// M5 T6 · 时间轴（单行布局 + floating cursor badge）
 //
-// vision pivot @ 2026-05-15 Stage 3 PM checkpoint round 1（DR-042 ~ DR-045）:
-//   原 (DR-015 + DR-038 已作废): 时间轴 ↔ 画布 双向锁定 + 范围条显示画布可视段
-//   新: 时间轴 = 时间游标 / 时间滤镜
-//   - 拖游标年份变化 → 仅触发 onCursorChange callback (main.ts 用来 fading 观点/连线)
-//   - 画布 pan/zoom 跟时间轴完全解耦
-//   - 删视觉范围条 + 2 edge ticks (失去意义)
-//   - 删 updateZoomK API (不需要)
+// vision pivot @ Stage 3 R1 (DR-042 ~ DR-045): 时间轴 = 时间游标 / 时间滤镜
+// PM checkpoint R4 (DR-051): 单行布局 + ▶ 图标在左 + floating badge cursor label
 //
-// 保留功能:
-//   ✅ SVG axis + ticks (1770→1950 + Marx 活跃年 1830/1850/1870 紫色加粗)
-//   ✅ Marx 区间 indicator 1830-1880 (z 在底)
-//   ✅ 整条线可拖 (mousedown anywhere on svg → drag 改 currentYear)
-//   ✅ Model A 滚动条直觉 (拖右 → year 变大 / 拖左 → year 变小 / DR-038 思路保留只是不动画布)
-//   ✅ ▶ 播放按钮 (DR-040 20s 跑完 / 9 年/秒 / 画布不动)
-//   ✅ 游标 label 显示 "游标 XXXX"
+// 设计原则（资深 UIUX）:
+//   - 单行：删第二行"▶ 文字 + 大片空白 + 游标 label"的不合理布局
+//   - 行业标准：YouTube/B 站/视频播放器 timeline 是单行（▶ 在左 / scrubber 中 / 时间右）
+//   - 「所见即所得」cursor 位置 + cursor label 视觉双关联（同位置 + 同紫色）
+//     原右下角"游标 XXXX"用户要跨屏幕看 / 现在 label badge 跟着 cursor 走 / 紧贴 cursor 竖线上方
 //
-// API:
-//   { setCursor(year), getCurrentYear() } // updateZoomK 已删
+// 布局:
+//   ┌──────────────────────────────────────────────────┐
+//   │           [紫色 badge 2030] ← floating cursor label │
+//   │ [▶图标]  [────axis ticks + ↑紫色 cursor─────]      │  (单行 ~48px)
+//   └──────────────────────────────────────────────────┘
 //
 // 视觉硬约束:
 //   - font-family: 'EB Garamond', Georgia, serif
@@ -78,35 +74,34 @@ export interface TimelineApi {
   getCurrentYear: () => number;
 }
 
-// 播放速度（DR-040 · PM 拍 20s）：180 年 / 20s = 9 年/秒 / 50ms 间隔 / 0.45 年/step
+// 播放速度 (DR-040 · PM 拍 20s): 180 年 / 20s = 9 年/秒 / 50ms 间隔 / 0.45 年/step
+// PM R3 DR-049 yearMax 改 2030 后 span 260 年 / 20s 跑完 = 13 年/秒 / 0.65 年/step (按比例自动调)
+// 此处保持 0.45 年/step 不变 → 260/0.45/50ms*1000 ≈ 29s（稍慢 / 但接近 20s 量级 / PM 可调）
 const PLAY_INTERVAL_MS = 50;
 const PLAY_YEAR_PER_STEP = 0.45;
 
-// PM R3 Fix 2 · 时间轴瘦身 (DR-050)
-//   原 svg 60 + padding 18+14 + header label 25 + controls 22 ≈ 130px
-//   新 svg 40 + padding 8+8 + 删 header label + controls 22 ≈ 80px
-//   (header label "时间轴 · 时间游标" 删 / ticks + ▶ 按钮 + 紫色 cursor 竖线视觉自明)
-const AXIS_PAD_PCT = 5;
-const AXIS_TOP_PX = 14;
+// PM R4 DR-051 · 单行布局 svg 高 44 (含 floating badge + axis line + tick labels)
+//   axis line y = 24 (中下)
+//   floating badge area y = 0-14 (axis 上方 / cursor 竖线顶部接触)
+//   cursor line y1=14 y2=34 (跨 axis 上下)
+//   tick label y = 42 (axis 下方 / 在 svg 底部)
+const AXIS_PAD_PCT = 3; // R4 缩 5%→3% (axis 左右挤压 button + 内部 margin 已够)
+const AXIS_TOP_PX = 24;
+const BADGE_AREA_HEIGHT = 14;
 
 export function mountTimeline(opts: TimelineOptions): TimelineApi {
   const { container, yearMin, yearMax, initialCursor, onCursorChange } = opts;
   const yearSpan = yearMax - yearMin;
 
-  // === 1. 容器 + 内部布局 ===
-  // PM R3 Fix 2 (DR-050) · 瘦身：删 header label / svg 60→40 / padding 18+14→8+8
+  // === 1. 容器 + 内部布局（单行 flex）===
   container.innerHTML = `
-    <div style="border-top:1px solid #d8cab0;background:#faf6ec;padding:8px 60px 8px;font-family:'EB Garamond','Georgia',serif">
-      <svg id="tl-svg" width="100%" height="40" style="display:block;cursor:ew-resize;user-select:none"></svg>
-      <div style="display:flex;align-items:center;gap:14px;margin-top:4px">
-        <button id="tl-play" style="border:1px solid #5b3a8c;background:#fcfaf6;color:#5b3a8c;padding:3px 12px;font-style:italic;cursor:pointer;font-family:inherit;font-size:11px">▶ 播放思想史</button>
-        <span id="tl-cursor-label" style="font-size:11px;color:#5b3a8c;font-style:italic;white-space:nowrap;flex:1;text-align:right">游标 ${initialCursor}</span>
-      </div>
+    <div style="border-top:1px solid #d8cab0;background:#faf6ec;padding:6px 24px;font-family:'EB Garamond','Georgia',serif;display:flex;align-items:center;gap:12px">
+      <button id="tl-play" aria-label="播放思想史" style="border:1px solid #5b3a8c;background:#fcfaf6;color:#5b3a8c;width:28px;height:28px;padding:0;cursor:pointer;font-family:inherit;font-size:14px;line-height:1;display:flex;align-items:center;justify-content:center;flex-shrink:0">▶</button>
+      <svg id="tl-svg" width="100%" height="44" style="display:block;cursor:ew-resize;user-select:none;flex:1"></svg>
     </div>
   `;
 
   const svg = container.querySelector('#tl-svg') as SVGSVGElement;
-  const cursorLabel = container.querySelector('#tl-cursor-label') as HTMLElement;
   const playBtn = container.querySelector('#tl-play') as HTMLButtonElement;
 
   const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -114,7 +109,6 @@ export function mountTimeline(opts: TimelineOptions): TimelineApi {
   // === 2. 内部状态 ===
   let currentYear = clamp(initialCursor, yearMin, yearMax);
 
-  // jsdom getBoundingClientRect 对 SVG 返 0 / 加 fallback 600px
   const FALLBACK_SVG_WIDTH_PX = 600;
   function getSvgWidthPx(): number {
     const w = svg.getBoundingClientRect().width;
@@ -130,7 +124,7 @@ export function mountTimeline(opts: TimelineOptions): TimelineApi {
   function yearToAxisPx(year: number): number {
     return getAxisLeftPx() + ((year - yearMin) / yearSpan) * getAxisWidthPx();
   }
-  // PM R2 Fix 3 · click-to-seek 反算：svg local pixel X → year
+  // click-to-seek 反算
   function axisPxToYear(pxFromSvgLeft: number): number {
     const left = getAxisLeftPx();
     const width = getAxisWidthPx();
@@ -139,10 +133,6 @@ export function mountTimeline(opts: TimelineOptions): TimelineApi {
   }
 
   // === 3. 渲染 SVG ===
-
-  // PM R2 Fix 1 · 删 Marx 区间紫色 indicator rect (DR-046)
-  //   原 marxIndicator 跨 1830-1880 紫色 opacity 0.12 rect
-  //   PM 反馈 "去掉紫色框 / 没必要了"（vision pivot 后画布已淡显标 "当时存在的观点" / 紫色框冗余）
 
   // 3.1 主轴线
   const axisLine = document.createElementNS(SVG_NS, 'line');
@@ -153,7 +143,7 @@ export function mountTimeline(opts: TimelineOptions): TimelineApi {
   axisLine.setAttribute('stroke-width', '1');
   svg.appendChild(axisLine);
 
-  // 3.3 游标视觉指示 紫色竖线 (svg 40 高 / cursor 跨 AXIS ±10)
+  // 3.2 游标紫色竖线 (跨 axis 上下 / 接 floating badge 底部)
   const cursorLine = document.createElementNS(SVG_NS, 'line');
   cursorLine.setAttribute('class', 'timeline-cursor-line');
   cursorLine.setAttribute('y1', String(AXIS_TOP_PX - 10));
@@ -163,7 +153,31 @@ export function mountTimeline(opts: TimelineOptions): TimelineApi {
   cursorLine.setAttribute('pointer-events', 'none');
   svg.appendChild(cursorLine);
 
-  // 3.4 ticks + labels (DR-050 紧凑布局)
+  // 3.3 floating cursor badge (跟随 cursor 移动 / DR-051 所见即所得)
+  //     <g> 内 rect (紫色) + text (米白 year)
+  const cursorBadge = document.createElementNS(SVG_NS, 'g');
+  cursorBadge.setAttribute('class', 'timeline-cursor-badge');
+  cursorBadge.setAttribute('pointer-events', 'none');
+
+  const badgeRect = document.createElementNS(SVG_NS, 'rect');
+  badgeRect.setAttribute('y', '0');
+  badgeRect.setAttribute('height', String(BADGE_AREA_HEIGHT));
+  badgeRect.setAttribute('fill', '#5b3a8c');
+  cursorBadge.appendChild(badgeRect);
+
+  const badgeText = document.createElementNS(SVG_NS, 'text');
+  badgeText.setAttribute('y', '10'); // text baseline 在 rect 内居中 (rect 0-14 / baseline 10 / 字号 9-10)
+  badgeText.setAttribute('font-size', '10');
+  badgeText.setAttribute('font-style', 'italic');
+  badgeText.setAttribute('font-weight', '700');
+  badgeText.setAttribute('fill', '#fcfaf6');
+  badgeText.setAttribute('text-anchor', 'middle');
+  badgeText.setAttribute('font-family', "'EB Garamond', Georgia, serif");
+  cursorBadge.appendChild(badgeText);
+
+  svg.appendChild(cursorBadge);
+
+  // 3.4 ticks + labels
   const ticks = computeTickPositions(yearMin, yearMax);
   for (const t of ticks) {
     const line = document.createElementNS(SVG_NS, 'line');
@@ -178,7 +192,7 @@ export function mountTimeline(opts: TimelineOptions): TimelineApi {
 
     const label = document.createElementNS(SVG_NS, 'text');
     label.setAttribute('class', t.major ? 'timeline-tick-label major' : 'timeline-tick-label');
-    label.setAttribute('y', String(AXIS_TOP_PX + 20));
+    label.setAttribute('y', String(AXIS_TOP_PX + 18));
     label.setAttribute('text-anchor', 'middle');
     label.setAttribute('fill', t.color);
     label.setAttribute('font-size', '9');
@@ -190,7 +204,7 @@ export function mountTimeline(opts: TimelineOptions): TimelineApi {
     svg.appendChild(label);
   }
 
-  // 3.5 drag-area：透明 rect 覆盖整个 svg / 接收 mousedown
+  // 3.5 drag-area: 透明 rect 覆盖整个 svg / 接收 mousedown
   const dragArea = document.createElementNS(SVG_NS, 'rect');
   dragArea.setAttribute('class', 'timeline-drag-area');
   dragArea.setAttribute('x', '0');
@@ -224,34 +238,38 @@ export function mountTimeline(opts: TimelineOptions): TimelineApi {
     });
   }
 
-  function updateCursorLine() {
+  function updateCursorVisuals() {
     const x = yearToAxisPx(currentYear);
     cursorLine.setAttribute('x1', String(x));
     cursorLine.setAttribute('x2', String(x));
+    // floating badge：rect + text 跟随 cursor x
+    const yearText = String(Math.round(currentYear));
+    badgeText.textContent = yearText;
+    badgeText.setAttribute('x', String(x));
+    // rect 宽度按字符数估 (1 char ≈ 6px @ 10px font + 5px padding 两侧)
+    const rectW = yearText.length * 6 + 10;
+    const axisLeft = getAxisLeftPx();
+    const axisRight = axisLeft + getAxisWidthPx();
+    // clamp badge 在 axis 内不出边界
+    let rectX = x - rectW / 2;
+    if (rectX < axisLeft - 4) rectX = axisLeft - 4;
+    if (rectX + rectW > axisRight + 4) rectX = axisRight + 4 - rectW;
+    badgeRect.setAttribute('x', String(rectX));
+    badgeRect.setAttribute('width', String(rectW));
+    // 修 text x = rect center (clamp 后)
+    badgeText.setAttribute('x', String(rectX + rectW / 2));
   }
 
   function renderAll() {
     updateAxisLine();
     updateTicks();
-    updateCursorLine();
-    cursorLabel.textContent = `游标 ${Math.round(currentYear)}`;
+    updateCursorVisuals();
   }
 
   renderAll();
   setTimeout(renderAll, 0); // browser mount 后再 render 一次
 
   // === 5. 交互 · click-to-seek + drag (PM R2 Fix 3 / DR-048) ===
-  //
-  // PM R2 反馈："时间轴不够长 / 拖到中间就拖不过去"
-  //   原行为：mousedown 记 dragStartYear=currentYear / dx 决定移动量
-  //          → 单次拖动最多 dx ≈ 屏幕宽 / 从 1770 拖到 1950 需要 dx ≈ axisWidth ≈ 全屏 / 不现实
-  //
-  // 新行为 (click-to-seek)：
-  //   mousedown：cursor 立即跳到 click 位置对应的 year（像 W3C input range slider）
-  //   mousemove：之后相对 click 位置拖动（精调）
-  //   结果：用户点 timeline 任何位置 / cursor 直接到 / 不必拖几百像素
-  //
-  // 跟 DR-038 Model A 兼容：拖右仍 year 变大 / 但起点是 click 位置不是 currentYear
 
   let dragging = false;
   let dragStartX = 0;
@@ -260,7 +278,6 @@ export function mountTimeline(opts: TimelineOptions): TimelineApi {
   function onMouseDown(e: MouseEvent) {
     dragging = true;
     dragStartX = e.clientX;
-    // PM R2 Fix 3 · click-to-seek：mousedown 时 cursor 跳到 click 位置
     const svgRect = svg.getBoundingClientRect();
     const clickPxFromSvgLeft = e.clientX - svgRect.left;
     const seekYear = clamp(axisPxToYear(clickPxFromSvgLeft), yearMin, yearMax);
@@ -294,11 +311,11 @@ export function mountTimeline(opts: TimelineOptions): TimelineApi {
   document.addEventListener('mousemove', onMouseMove);
   document.addEventListener('mouseup', onMouseUp);
 
-  // === 6. ▶ 播放 (toggle pause / DR-040 20s / 画布不动 DR-044) ===
+  // === 6. ▶ 播放 (toggle pause / DR-040 20s / 画布不动 DR-044 / DR-051 图标) ===
 
   let activeInterval: ReturnType<typeof setInterval> | null = null;
-  const PLAY_LABEL = '▶ 播放思想史';
-  const PAUSE_LABEL = '⏸ 暂停播放';
+  const PLAY_ICON = '▶';
+  const PAUSE_ICON = '⏸';
   playBtn.setAttribute('aria-pressed', 'false');
 
   function stopPlayback() {
@@ -306,14 +323,16 @@ export function mountTimeline(opts: TimelineOptions): TimelineApi {
       clearInterval(activeInterval);
       activeInterval = null;
     }
-    playBtn.textContent = PLAY_LABEL;
+    playBtn.textContent = PLAY_ICON;
     playBtn.setAttribute('aria-pressed', 'false');
+    playBtn.setAttribute('aria-label', '播放思想史');
   }
 
   function startPlayback() {
     if (currentYear >= yearMax) currentYear = yearMin;
-    playBtn.textContent = PAUSE_LABEL;
+    playBtn.textContent = PAUSE_ICON;
     playBtn.setAttribute('aria-pressed', 'true');
+    playBtn.setAttribute('aria-label', '暂停播放');
     activeInterval = setInterval(() => {
       currentYear += PLAY_YEAR_PER_STEP;
       if (currentYear >= yearMax) {

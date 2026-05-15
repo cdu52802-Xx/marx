@@ -88,6 +88,30 @@ describe('timeline · M5 新 API', () => {
     expect(cursorLine?.getAttribute('stroke')).toBe('#5b3a8c');
   });
 
+  it('floating cursor badge 渲染 + 显示 year (DR-051 所见即所得)', () => {
+    mountTimeline({ container, yearMin: 1770, yearMax: 1950, initialCursor: 1860 });
+    const badge = container.querySelector('.timeline-cursor-badge');
+    expect(badge).not.toBeNull();
+    const rect = badge?.querySelector('rect');
+    const text = badge?.querySelector('text');
+    expect(rect?.getAttribute('fill')).toBe('#5b3a8c');
+    expect(text?.textContent).toBe('1860');
+  });
+
+  it('删第二行外部 #tl-cursor-label HTML span (DR-051 单行布局)', () => {
+    mountTimeline({ container, yearMin: 1770, yearMax: 1950, initialCursor: 1860 });
+    const oldLabel = container.querySelector('#tl-cursor-label');
+    expect(oldLabel).toBeNull();
+  });
+
+  it('▶ button = 单图标无文字 (DR-051 单行布局)', () => {
+    mountTimeline({ container, yearMin: 1770, yearMax: 1950, initialCursor: 1860 });
+    const btn = container.querySelector('#tl-play');
+    expect(btn?.textContent).toBe('▶');
+    // a11y: aria-label 仍含全文 / 屏幕阅读器友好
+    expect(btn?.getAttribute('aria-label')).toBe('播放思想史');
+  });
+
   it('整条 timeline 可拖：drag-area + cursor: ew-resize', () => {
     mountTimeline({ container, yearMin: 1770, yearMax: 1950, initialCursor: 1860 });
     const dragArea = container.querySelector('.timeline-drag-area');
@@ -165,7 +189,7 @@ describe('timeline · play button toggle (B2 fix)', () => {
   it('初始态: textContent 显示 "▶ 播放思想史" / aria-pressed = false', () => {
     api = mountTimeline({ container, yearMin: 1770, yearMax: 1950, initialCursor: 1880 });
     const btn = getPlayBtn();
-    expect(btn.textContent).toBe('▶ 播放思想史');
+    expect(btn.textContent).toBe('▶');
     expect(btn.getAttribute('aria-pressed')).toBe('false');
   });
 
@@ -173,7 +197,7 @@ describe('timeline · play button toggle (B2 fix)', () => {
     api = mountTimeline({ container, yearMin: 1770, yearMax: 1950, initialCursor: 1880 });
     const btn = getPlayBtn();
     btn.click();
-    expect(btn.textContent).toBe('⏸ 暂停播放');
+    expect(btn.textContent).toBe('⏸');
     expect(btn.getAttribute('aria-pressed')).toBe('true');
   });
 
@@ -182,7 +206,7 @@ describe('timeline · play button toggle (B2 fix)', () => {
     const btn = getPlayBtn();
     btn.click();
     btn.click();
-    expect(btn.textContent).toBe('▶ 播放思想史');
+    expect(btn.textContent).toBe('▶');
     expect(btn.getAttribute('aria-pressed')).toBe('false');
   });
 
@@ -191,7 +215,7 @@ describe('timeline · play button toggle (B2 fix)', () => {
     const btn = getPlayBtn();
     btn.click();
     vi.advanceTimersByTime(2000);
-    expect(btn.textContent).toBe('▶ 播放思想史');
+    expect(btn.textContent).toBe('▶');
     expect(btn.getAttribute('aria-pressed')).toBe('false');
   });
 

@@ -490,6 +490,35 @@ AI 判断：Fix 1 + Fix 2 合并做（同 timeline.ts / 同 commit / 同 dev ver
 | DR-049 | 2026-05-15 | 时间轴 yearMax 1950 → **2030**（260 年 span）/ yearMin 1770 保留 | 2025（到现在）/ 2050（含本世纪中）| 数据现有 max 1959 / 2030 含 1950 后 Marx 学派 + 21 世纪 buffer ~70 年 / round 数 / PM 嫌不够再调一个字搞定 |
 | DR-050 | 2026-05-15 | timeline 高 130 → ~80px：删 header label "时间轴 · 时间游标" + svg 60→40 + padding 18+14→8+8 + 字体 12→11 + tick label 10→9 + 主画布 padding-bottom 160→100 + popover bottom 同步 100 | 保留 label / 仅减 padding / 移到顶部 | PM 反馈"区域高" / ticks + 紫色 cursor 竖线 + ▶ 按钮 视觉自明 / label 冗余 / 主画布多 60px 显示空间 |
 
+### 13.2.3 Stage 3 PM checkpoint R4（2026-05-15 实施期补 · 资深 UIUX 重设布局）
+
+PM 浏览器实测 Stage 3 R3 (commit fef4d67) 后反馈："**第一行时间轴 / 第二行只有 ▶ 按钮 / 其他空 → 离谱布局 / ▶ 改图标放最左 / 单行**" + "**你作为资深 UIUX 设计师好好想想**"。
+
+资深 UIUX 分析三方案对比，选 **方案 B** (PM 方案 A 上 incremental improvement):
+
+| 元素 | PM 方案 A | 我方案 B (DR-051) |
+|---|---|---|
+| 布局 | 单行 | 单行 ✓ 共识 |
+| ▶ 按钮 | 图标在左 | 图标 28×28 在左 ✓ |
+| 游标 label | 右端文字"游标 XXXX" | **floating badge 跟随 cursor 走** / 紫色矩形米白年份字 / float over axis 上方 |
+
+**方案 B 理由（行业 + UX 原则）**：
+- 「所见即所得」：cursor 位置 + label 视觉双关联（同位置 + 同紫色）/ 用户眼睛不跨屏幕找游标位置 ↔ 右端数字
+- 行业惯例：YouTube/B 站/视频播放器 timeline scrubber hover 提示时间 / 我改 always-on（产品核心信息 / 不藏）
+- 数据可视化（NYT/Bloomberg interactive）也用类似 floating tooltip 跟 cursor
+
+| 编号 | 日期 | 决策 | 备选 | 理由 |
+|---|---|---|---|---|
+| DR-051 | 2026-05-15 | 单行布局 + ▶ 图标在左 (28×28) + floating cursor badge | PM 方案 A 右端 label / 极简 inline label | 行业标准 + 所见即所得原则 + 紫色双视觉关联 / a11y aria-label 保留 "播放思想史" 屏幕阅读器友好 |
+
+**实施同步改动（高度连锁）**：
+- timeline.ts svg 40→44（加 14px floating badge 区）/ container padding 8+8→6+6 / 字号 11→10 / **总高 84→57px**
+- main.ts padding-bottom 100→60 / TIMELINE_PX 100→60
+- claim-popover.ts bottom 100→60（DR-047/050/051 累计 0→160→100→60）
+- zoom-control 位置 bottom 180→70（timeline 变矮 / zoom-control 不能还以 180 悬空 / 紧贴 timeline 上方）
+
+**累计 timeline 瘦身**：M5 init 130 → R3 84 → R4 57 = **-56%** / 主画布多 100px 显示空间。
+
 ### 13.3 Stage 3 实施改造（DR-042 → main.ts）
 
 - `onCursorChange` 重写：遍历 `g.obs` / `path.arc` / `g.person-section` 按 `year` vs cursor 设 opacity

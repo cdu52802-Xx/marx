@@ -17,7 +17,8 @@
 | **Stage 3 round 1** 时间轴改造 v1 | T6 整条可拖 + 范围条 B + 双向同步 / T7 ▶ 20s 播放 | ✅ commit `b669c1f` | push origin |
 | **Stage 3 R1 PM checkpoint** | **vision pivot**：时间轴 = 时间游标 / 删双向同步 / 删范围条 (DR-042~045) | ✅ commit `057bd36` | push origin |
 | **Stage 3 R2 PM checkpoint** | 3 fix：删紫框 + popover bottom 160 + click-to-seek (DR-046~048) | ✅ commit `f3e216d` | push origin |
-| **Stage 3 R3 PM checkpoint** | 2 fix：yearMax 1950→2030 + timeline 瘦身 130→80px + popover bottom 100 (DR-049~050) | ✅ 实施完 / 等 PM R4 | （pending commit）|
+| **Stage 3 R3 PM checkpoint** | 2 fix：yearMax 1950→2030 + timeline 瘦身 130→80px + popover bottom 100 (DR-049~050) | ✅ commit `fef4d67` | push origin |
+| **Stage 3 R4 PM checkpoint** | 资深 UIUX 重设布局：单行 + ▶ 28×28 图标 + floating cursor badge (DR-051) / timeline 57px | ✅ 实施完 / 等 PM R5 | （pending commit）|
 | **Stage 4** 弧线 + 双击中键 | T8 点弧线 / T9 双击中键 reset | ⏸ 待启动 | — |
 | **Final** E2E + 4 件套 + ship | T10 | ⏸ 待启动 | — |
 
@@ -75,6 +76,7 @@
 | **DR-048** | **Stage 3 R2 Fix 3**：timeline click-to-seek / mousedown 即跳 cursor / 解"拖不过去" | 同上 |
 | **DR-049** | **Stage 3 R3 Fix 1**：yearMax 1950→2030（260 年 span / 含 21 世纪 Marx 学派 70 年 buffer）| （R3 commit）|
 | **DR-050** | **Stage 3 R3 Fix 2**：timeline 高 130→80px（删 label + svg 60→40 + padding 缩 + popover bottom 100）| 同上 |
+| **DR-051** | **Stage 3 R4 重设布局**：单行 + ▶ 28×28 图标在左 + floating cursor badge 跟随 cursor + popover bottom 60 + zoom-control bottom 70 / **timeline 57px (-56% from M5 init)** | （R4 commit）|
 
 ---
 
