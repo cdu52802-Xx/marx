@@ -15,7 +15,8 @@
 | **Stage 1** zoom 基础设施 | T1 zoom.ts / T2 pan clamp / T3 zoom-control | ✅ done | `cf1b16f` / `02f26ea` / `a64cdeb` / `de9d094` (lint polish) / `9f3d163` (PM round 1 4 修) |
 | **Stage 2** 点 obs 居中 + 详情卡 | T4 center.ts / T5 click handler | ✅ done | `bf34d2b` / `d06cc5e` / `6af9ffc` (R2 3 修) / `9fc82fb` (R3 3 修) / `84edf49` (R4 4 修) / `a1fa3ac` (R5 句子居中) |
 | **Stage 3 round 1** 时间轴改造 v1 | T6 整条可拖 + 范围条 B + 双向同步 / T7 ▶ 20s 播放 | ✅ commit `b669c1f` | push origin |
-| **Stage 3 R1 PM checkpoint** | **vision pivot**：时间轴 = 时间游标 / 删双向同步 / 删范围条 (DR-042~045) | ✅ 重做完 / 等 PM R2 | （pending commit）|
+| **Stage 3 R1 PM checkpoint** | **vision pivot**：时间轴 = 时间游标 / 删双向同步 / 删范围条 (DR-042~045) | ✅ commit `057bd36` | push origin |
+| **Stage 3 R2 PM checkpoint** | 3 fix：删紫框 + popover bottom 160 + click-to-seek (DR-046~048) | ✅ 实施完 / 等 PM R3 | （pending commit）|
 | **Stage 4** 弧线 + 双击中键 | T8 点弧线 / T9 双击中键 reset | ⏸ 待启动 | — |
 | **Final** E2E + 4 件套 + ship | T10 | ⏸ 待启动 | — |
 
@@ -68,6 +69,9 @@
 | **DR-043** | 初始游标 1950 全显 + 未提出 opacity 0.15（PM 拍：避免"页面坏了" + 强对比）| 同上 |
 | **DR-044** | ▶ 播放期间画布完全不动 / 仅游标 + 观点 fade in/out | 同上 |
 | **DR-045** | 删视觉范围条 + 2 edge ticks（DR-039 作废）/ zoom 比例已在左下 display | 同上 |
+| **DR-046** | **Stage 3 R2 Fix 1**：删 timeline Marx 紫色 indicator rect / vision pivot 后冗余 | （R2 commit）|
+| **DR-047** | **Stage 3 R2 Fix 2**：claim-popover bottom 0→160px / timeline 不被挡 | 同上 |
+| **DR-048** | **Stage 3 R2 Fix 3**：timeline click-to-seek / mousedown 即跳 cursor / 解"拖不过去" | 同上 |
 
 ---
 

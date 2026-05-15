@@ -462,6 +462,20 @@ PM 重新定义时间轴价值：**让用户看到「X 年时存在哪些观点 
 | DR-044 | 2026-05-15 | ▶ 播放期间画布**完全不动** | 画布跟着 pan 到游标年代 | PM vision 一致 / 用户看"不变画布上让思想生长起来" / 跟 DR-042 配套 |
 | DR-045 | 2026-05-15 | 删视觉范围条 + 2 edge ticks（DR-039 作废）| 保留改语义 | 原意义（画布 viewport 年份段）解耦后失效 / zoom 比例已在左下 zoom-display / 范围条冗余 |
 
+### 13.2.1 Stage 3 PM checkpoint R2（2026-05-15 实施期补）
+
+PM 浏览器实测 Stage 3 R1 后反馈：
+
+1. 时间轴紫色 Marx 区间 indicator rect 应该去掉 / vision pivot 后不需要
+2. 详情卡 bottom:0 全屏高 / z-index 1000 在 timeline 之上 / **挡 timeline 看不到拖不了**
+3. 时间轴不够长 / 拖到中间就拖不过去（单次 mousedown→mouseup 拖动范围有限 / 拖几百像素还到不了边）
+
+| 编号 | 日期 | 决策 | 备选 | 理由 |
+|---|---|---|---|---|
+| DR-046 | 2026-05-15 | 删 timeline.ts Marx 紫色 indicator rect | 保留 / 改色 | vision pivot 后画布已淡显标"当时存在观点" / 紫色 indicator 冗余 / 简化时间轴视觉 |
+| DR-047 | 2026-05-15 | claim-popover.ts bottom: 0 → 160px（跟 main.ts padding-bottom 一致 / 跟 TIMELINE_PX 同步）| 提高 timeline z-index / 缩短 popover height 别的方式 | 详情卡只占屏幕中部 → timeline 底部全可见 / 用户能拖时间轴 / 跟 popover 内容浏览不冲突 |
+| DR-048 | 2026-05-15 | timeline.ts 加 click-to-seek（mousedown 时 cursor 立即跳到 click 位置 / 之后才是相对拖动）| 仅 drag / 加双击 reset / 拓宽 timeline 物理范围 | 用户点 timeline 任何位置 → cursor 直接到 / 跟 W3C input range slider 一致 / 解决"拖不过去"根因（单次 dx 不足）/ 同时保留拖动精调 |
+
 ### 13.3 Stage 3 实施改造（DR-042 → main.ts）
 
 - `onCursorChange` 重写：遍历 `g.obs` / `path.arc` / `g.person-section` 按 `year` vs cursor 设 opacity

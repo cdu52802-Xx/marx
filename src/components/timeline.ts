@@ -126,19 +126,21 @@ export function mountTimeline(opts: TimelineOptions): TimelineApi {
   function yearToAxisPx(year: number): number {
     return getAxisLeftPx() + ((year - yearMin) / yearSpan) * getAxisWidthPx();
   }
+  // PM R2 Fix 3 · click-to-seek 反算：svg local pixel X → year
+  function axisPxToYear(pxFromSvgLeft: number): number {
+    const left = getAxisLeftPx();
+    const width = getAxisWidthPx();
+    if (width <= 0) return yearMin;
+    return yearMin + ((pxFromSvgLeft - left) / width) * yearSpan;
+  }
 
   // === 3. 渲染 SVG ===
 
-  // 3.1 Marx 区间 indicator 1830-1880
-  const marxIndicator = document.createElementNS(SVG_NS, 'rect');
-  marxIndicator.setAttribute('class', 'timeline-marx-indicator');
-  marxIndicator.setAttribute('y', String(AXIS_TOP_PX - 4));
-  marxIndicator.setAttribute('height', '8');
-  marxIndicator.setAttribute('fill', '#5b3a8c');
-  marxIndicator.setAttribute('opacity', '0.12');
-  svg.appendChild(marxIndicator);
+  // PM R2 Fix 1 · 删 Marx 区间紫色 indicator rect (DR-046)
+  //   原 marxIndicator 跨 1830-1880 紫色 opacity 0.12 rect
+  //   PM 反馈 "去掉紫色框 / 没必要了"（vision pivot 后画布已淡显标 "当时存在的观点" / 紫色框冗余）
 
-  // 3.2 主轴线
+  // 3.1 主轴线
   const axisLine = document.createElementNS(SVG_NS, 'line');
   axisLine.setAttribute('class', 'timeline-axis-line');
   axisLine.setAttribute('y1', String(AXIS_TOP_PX));
@@ -198,13 +200,6 @@ export function mountTimeline(opts: TimelineOptions): TimelineApi {
 
   // === 4. 渲染更新 ===
 
-  function updateMarxIndicator() {
-    const x1 = yearToAxisPx(1830);
-    const x2 = yearToAxisPx(1880);
-    marxIndicator.setAttribute('x', String(x1));
-    marxIndicator.setAttribute('width', String(x2 - x1));
-  }
-
   function updateAxisLine() {
     const left = getAxisLeftPx();
     const width = getAxisWidthPx();
@@ -233,7 +228,6 @@ export function mountTimeline(opts: TimelineOptions): TimelineApi {
   }
 
   function renderAll() {
-    updateMarxIndicator();
     updateAxisLine();
     updateTicks();
     updateCursorLine();
@@ -243,7 +237,18 @@ export function mountTimeline(opts: TimelineOptions): TimelineApi {
   renderAll();
   setTimeout(renderAll, 0); // browser mount 后再 render 一次
 
-  // === 5. 拖动 (Model A scrollbar 直觉 / DR-038 思路保留) ===
+  // === 5. 交互 · click-to-seek + drag (PM R2 Fix 3 / DR-048) ===
+  //
+  // PM R2 反馈："时间轴不够长 / 拖到中间就拖不过去"
+  //   原行为：mousedown 记 dragStartYear=currentYear / dx 决定移动量
+  //          → 单次拖动最多 dx ≈ 屏幕宽 / 从 1770 拖到 1950 需要 dx ≈ axisWidth ≈ 全屏 / 不现实
+  //
+  // 新行为 (click-to-seek)：
+  //   mousedown：cursor 立即跳到 click 位置对应的 year（像 W3C input range slider）
+  //   mousemove：之后相对 click 位置拖动（精调）
+  //   结果：用户点 timeline 任何位置 / cursor 直接到 / 不必拖几百像素
+  //
+  // 跟 DR-038 Model A 兼容：拖右仍 year 变大 / 但起点是 click 位置不是 currentYear
 
   let dragging = false;
   let dragStartX = 0;
@@ -252,7 +257,14 @@ export function mountTimeline(opts: TimelineOptions): TimelineApi {
   function onMouseDown(e: MouseEvent) {
     dragging = true;
     dragStartX = e.clientX;
-    dragStartYear = currentYear;
+    // PM R2 Fix 3 · click-to-seek：mousedown 时 cursor 跳到 click 位置
+    const svgRect = svg.getBoundingClientRect();
+    const clickPxFromSvgLeft = e.clientX - svgRect.left;
+    const seekYear = clamp(axisPxToYear(clickPxFromSvgLeft), yearMin, yearMax);
+    currentYear = seekYear;
+    dragStartYear = seekYear;
+    renderAll();
+    onCursorChange?.(seekYear);
     svg.style.cursor = 'grabbing';
     e.preventDefault();
   }

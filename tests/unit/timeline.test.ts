@@ -104,8 +104,41 @@ describe('timeline · M5 新 API', () => {
       onCursorChange: fn,
     });
     api.setCursor(1900);
-    // setCursor 仅改内部 state / 不 fire callback（callback 只在 drag/play 触发）
+    // setCursor 仅改内部 state / 不 fire callback（callback 只在 drag / click-to-seek / play 触发）
     expect(fn).not.toHaveBeenCalled();
+  });
+
+  it('click-to-seek: mousedown 立即把 cursor 跳到 click 位置 + fire callback (PM R2 Fix 3 / DR-048)', () => {
+    const fn = vi.fn();
+    const api = mountTimeline({
+      container,
+      yearMin: 1770,
+      yearMax: 1950,
+      initialCursor: 1860,
+      onCursorChange: fn,
+    });
+    const svg = container.querySelector('#tl-svg') as SVGSVGElement;
+    // mock svg.getBoundingClientRect 让 click 位置在 axis 80% 处（对应年份 ~ 1914）
+    // jsdom 默认返 0 / 让 svg.getBoundingClientRect 返 { left:0, width:600 }
+    svg.getBoundingClientRect = () => ({
+      left: 0,
+      width: 600,
+      top: 0,
+      height: 60,
+      right: 600,
+      bottom: 60,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    });
+    // mousedown 在 svg local x=480 (= 80% / axis 5%-95% 间 80% = 1770 + 180×(75/90) ≈ 1920)
+    svg.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, clientX: 480, clientY: 30 }));
+    // cursor 立即跳到 click 位置 / fire callback
+    expect(fn).toHaveBeenCalledTimes(1);
+    expect(api.getCurrentYear()).toBeGreaterThan(1860);
+    expect(api.getCurrentYear()).toBeLessThanOrEqual(1950);
+    // cleanup
+    document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
   });
 });
 

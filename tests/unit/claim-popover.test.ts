@@ -63,13 +63,14 @@ describe('claim-popover · 详情右侧栏 (M4 T9 改造 / spec § 8.2)', () => 
     expect(document.querySelector('.claim-popover')).toBeNull();
   });
 
-  it('sidebar 位置 = position:fixed right:0 top:0 bottom:0 width:380px (PM Q2 决策 = 朋友项目滑入风格)', () => {
+  it('sidebar 位置 = position:fixed right:0 top:0 bottom:160px width:380px (Stage 3 R2 Fix 2 / DR-047 详情卡不挡 timeline)', () => {
     showClaimPopover(mockClaim, mockCtx);
     const sidebar = document.querySelector('.claim-popover') as HTMLElement;
     expect(sidebar.style.position).toBe('fixed');
     expect(sidebar.style.right).toBe('0px');
     expect(sidebar.style.top).toBe('0px');
-    expect(sidebar.style.bottom).toBe('0px');
+    // PM R2 Fix 2: bottom 0 → 160px (跟 main.ts padding-bottom:160px 一致 / 留出 timeline 空间)
+    expect(sidebar.style.bottom).toBe('160px');
     expect(sidebar.style.width).toBe('380px');
   });
 
