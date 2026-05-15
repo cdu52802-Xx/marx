@@ -38,7 +38,6 @@ import {
   pixelToViewBox,
 } from './viz/center.ts';
 import { showClaimPopover } from './components/claim-popover.ts';
-import { mountArcTooltip, showArcTooltip, hideArcTooltip } from './components/arc-tooltip.ts';
 import { applyClaimFilters } from './components/apply-claim-filters.ts';
 import type { ClaimNode, ClaimRelation } from './types/Claim.ts';
 import type { PersonNode } from './types/Node.ts';
@@ -183,9 +182,6 @@ const zoomCtrl = createZoom(svg, {
 //   改 bottom 70px (timeline 48 + 22px gap) / 跟 timeline 顶端贴近
 zoomControlEl = mountZoomControl({ zoomController: zoomCtrl, position: { left: 60, bottom: 70 } });
 
-// Stage 5 T8 · arc tooltip 懒挂（show 时自动挂 / 这里显式 mount 让初次 click 无 first-paint flash）
-mountArcTooltip();
-
 // === 6. 弧线层（在节点之前画，z-order 在底）===
 
 const claimIdToCoords = new Map<string, { x: number; y: number }>();
@@ -218,6 +214,7 @@ zoomLayer
     return generateArcPath(s.x, s.y - 3, t.x, t.y - 3, r.type);
   })
   .attr('fill', 'none')
+  .style('pointer-events', 'none') // R1 Fix 1 · 视觉层不接 click / 改 hit overlay
   .each(function (r) {
     const style = getArcStyle(r.type);
     const sel = d3.select(this);
@@ -228,13 +225,36 @@ zoomLayer
     if (style.dasharray !== 'none') {
       sel.attr('stroke-dasharray', style.dasharray);
     }
+  });
+
+// Stage 5 R1 Fix 1 (DR-061) · 弧线 hit overlay 层
+//   PM 反馈"弧线太细难选中" / 解：透明 16px stroke + non-scaling / 视觉不变 / hit area ~16 屏幕 px
+//   data + d 跟 visible arc-layer 同顺序 / click 时按 index 查同位 visible path
+zoomLayer
+  .append('g')
+  .attr('class', 'arc-hit-layer')
+  .selectAll('path.arc-hit')
+  .data(visibleRelations)
+  .join('path')
+  .attr('class', 'arc-hit')
+  .attr('d', (r) => {
+    const s = claimIdToCoords.get(r.source)!;
+    const t = claimIdToCoords.get(r.target)!;
+    return generateArcPath(s.x, s.y - 3, t.x, t.y - 3, r.type);
   })
-  // Stage 5 T8 · 弧线 click → 两端居中 + 高亮 + tooltip 关系类型
-  // spec § 7.4 · DR-014 / focus mode 下隐藏的 arc display:none 自然不响应
+  .attr('fill', 'none')
+  .attr('stroke', 'transparent')
+  .attr('stroke-width', 16)
+  .attr('vector-effect', 'non-scaling-stroke') // hit 区固定 16 屏幕 px / 不跟 zoom 缩放
+  .style('pointer-events', 'stroke')
   .style('cursor', 'pointer')
   .on('click', function (event: MouseEvent, r) {
     event.stopPropagation();
-    handleArcClick(this as SVGPathElement, r as ClaimRelation);
+    // hit path 跟 visible path 同 index 对应（同 data + 同 join 顺序）
+    const hitParent = (this as Element).parentElement!;
+    const idx = Array.prototype.indexOf.call(hitParent.children, this);
+    const visiblePath = document.querySelectorAll<SVGPathElement>('g.arc-layer > path.arc')[idx];
+    if (visiblePath) handleArcClick(visiblePath, r as ClaimRelation);
   });
 
 // === 7. Person section 标题 + obs 行 ===
@@ -403,8 +423,7 @@ sectionG.each(function (section) {
   obsG.on('click', (event, c) => {
     event.stopPropagation(); // 防止 bubble 到 document outsideHandler
 
-    // Stage 5 T8 · 点 obs → 关 arc tooltip + 复原所有弧线（避免上次点弧线残留视觉）
-    hideArcTooltip();
+    // Stage 5 T8 · 点 obs → 复原上次点过的高亮弧线
     restoreArcOpacity();
 
     const currentK = zoomCtrl.getCurrentTransform().k;
@@ -478,11 +497,10 @@ sectionG.each(function (section) {
 // Stage 2 R3 · disable d3 默认 dblclick zoom（默认是 k*2 / 跟我们 chooseTargetK 策略冲突）
 svg.on('dblclick.zoom', null);
 
-// Stage 5 T8 · 点画布空白 → 关 arc tooltip + 复原弧线
+// Stage 5 T8 · 点画布空白 → 复原弧线高亮
 //   d3.zoom 监听 mousedown / mousewheel / dblclick / 不监听 click → 不冲突
-//   obs 和 arc 自身 .on('click') 都 stopPropagation / 仅空白区域 click bubble 到 svg
+//   obs 和 arc hit overlay 自身 .on('click') 都 stopPropagation / 仅空白区域 click bubble 到 svg
 svg.on('click', () => {
-  hideArcTooltip();
   restoreArcOpacity();
 });
 
@@ -665,8 +683,8 @@ function applyFocusLayout(fs: FocusSet): void {
       });
   });
 
-  // arc 用新坐标重画 d
-  d3.selectAll<SVGPathElement, ClaimRelation>('path.arc').each(function (r) {
+  // arc 用新坐标重画 d / R1 Fix 1 · visible + hit overlay 同步
+  d3.selectAll<SVGPathElement, ClaimRelation>('path.arc, path.arc-hit').each(function (r) {
     if (!fs.obsIds.has(r.source) || !fs.obsIds.has(r.target)) return;
     const s = obsCoordsMap.get(r.source);
     const t = obsCoordsMap.get(r.target);
@@ -691,8 +709,8 @@ function restoreOriginalLayout(): void {
       });
   });
 
-  // arc 用原 datum 坐标重画 d
-  d3.selectAll<SVGPathElement, ClaimRelation>('path.arc').each(function (r) {
+  // arc 用原 datum 坐标重画 d / R1 Fix 1 · visible + hit overlay 同步
+  d3.selectAll<SVGPathElement, ClaimRelation>('path.arc, path.arc-hit').each(function (r) {
     const s = claimIdToCoords.get(r.source);
     const t = claimIdToCoords.get(r.target);
     if (!s || !t) return;
@@ -708,7 +726,8 @@ function enterFocusMode(c0Id: string): void {
   d3.selectAll<SVGGElement, ClaimWithCoords>('g.obs').style('display', (c) =>
     fs.obsIds.has(c.id) ? null : 'none',
   );
-  d3.selectAll<SVGPathElement, ClaimRelation>('path.arc').style('display', (r) =>
+  // R1 Fix 1 · visible + hit overlay 同步隐藏 / 非焦点 arc 不响应 click
+  d3.selectAll<SVGPathElement, ClaimRelation>('path.arc, path.arc-hit').style('display', (r) =>
     fs.obsIds.has(r.source) && fs.obsIds.has(r.target) ? null : 'none',
   );
   d3.selectAll<SVGGElement, PersonSection>('g.person-section').style('display', (s) =>
@@ -738,7 +757,8 @@ function exitFocusMode(): void {
 
   // 恢复 display
   d3.selectAll<SVGGElement, ClaimWithCoords>('g.obs').style('display', null);
-  d3.selectAll<SVGPathElement, ClaimRelation>('path.arc').style('display', null);
+  // R1 Fix 1 · visible + hit overlay 同步恢复
+  d3.selectAll<SVGPathElement, ClaimRelation>('path.arc, path.arc-hit').style('display', null);
   d3.selectAll<SVGGElement, PersonSection>('g.person-section').style('display', null);
 
   // DR-058 · 焦点紧凑 layout 恢复原 datum 坐标（section + obs transform + arc d）
@@ -756,19 +776,34 @@ function exitFocusMode(): void {
 }
 
 // Stage 5 T8 · 弧线 click handler 主逻辑
-//   1. 取 path.getBBox 算两端弧的 viewBox bbox + center
-//   2. 算 targetK 让 bbox 占可见区 70% (留 30% padding)
-//   3. flyTo visCenterVB (POPOVER_PX=0 / 弧线点击不弹 popover / 屏幕中心 = 可见区中心)
-//   4. 弧线高亮 stroke-width 2.5 + opacity 1.0 / 复原其他弧线
-//   5. 飞行结束 650ms 后显示 tooltip 在屏幕可见区中心偏右上
-function handleArcClick(pathEl: SVGPathElement, r: ClaimRelation): void {
-  const pathBBox = pathEl.getBBox();
-  if (pathBBox.width === 0 && pathBBox.height === 0) return; // 异常 path / 跳过
-  const bboxCenterX = pathBBox.x + pathBBox.width / 2;
-  const bboxCenterY = pathBBox.y + pathBBox.height / 2;
+//   1. 取弧 endpoint(s,t) + apex 中点 (getPointAtLength 0 / mid / end)
+//      · 用 path geometry 自动 cover focus 模式 compact 坐标 (path.d 已经被 applyFocusLayout 重写)
+//      · CAD zoom-selected 等价：union bbox of 2 obs endpoints + 弧 apex
+//   2. fit factor 0.55 留 45% 边距 / 保证 endpoint 即使被 translateExtent clamp 也不出 viewport
+//   3. flyTo visCenterVB (POPOVER_PX=0 弧不弹 popover)
+//   4. 高亮 visible path stroke-width 2.5 + opacity 1.0 / 复原其他
+//   5. R1 PM 反馈：删 tooltip / 颜色+方向已分关系类型
+function handleArcClick(pathEl: SVGPathElement, _r: ClaimRelation): void {
+  // R1 Fix 2 · 用 path.getPointAtLength 取真实 endpoints + apex（替代 getBBox 含弧顶主导）
+  //   getBBox 给的 bbox 被弧 apex extension 主导 / 端点在 bbox 边缘 / 飞行后可能溢出
+  //   改取 endpoint + apex 三个点 / bbox 紧贴对象 / 端点恰在 bbox 中可见
+  const totalLen = pathEl.getTotalLength();
+  if (totalLen === 0) return;
+  const sPt = pathEl.getPointAtLength(0);
+  const tPt = pathEl.getPointAtLength(totalLen);
+  const midPt = pathEl.getPointAtLength(totalLen / 2);
+
+  const bboxMinX = Math.min(sPt.x, tPt.x, midPt.x);
+  const bboxMaxX = Math.max(sPt.x, tPt.x, midPt.x);
+  const bboxMinY = Math.min(sPt.y, tPt.y, midPt.y);
+  const bboxMaxY = Math.max(sPt.y, tPt.y, midPt.y);
+  const bboxW = Math.max(bboxMaxX - bboxMinX, 50); // min 50 防止极短弧 zoom 爆表
+  const bboxH = Math.max(bboxMaxY - bboxMinY, 50);
+  const bboxCenterX = (bboxMinX + bboxMaxX) / 2;
+  const bboxCenterY = (bboxMinY + bboxMaxY) / 2;
 
   const SIDEBAR_PX = 48;
-  const POPOVER_PX = 0; // 弧线点击不弹 popover (spec § 7.4)
+  const POPOVER_PX = 0; // 弧不弹 popover
   const HEADER_PX = 70;
   const TIMELINE_PX = 60;
   const visPxW = window.innerWidth - SIDEBAR_PX - POPOVER_PX;
@@ -779,18 +814,17 @@ function handleArcClick(pathEl: SVGPathElement, r: ClaimRelation): void {
   if (!svgNode) return;
   const visCenterVB = pixelToViewBox(svgNode, visPxX, visPxY);
 
-  // viewBox 中可见区占多少 viewBox 单位（meet scale 反推）
+  // R1 Fix 2 · fit 直接按 pixel 算 (避免 meetScale 在 letterbox 维度 over-estimate)
+  //   bbox W (viewBox 单位) × k × meetScale = 渲染 pixel 宽 / 应 <= visPxW × padFactor
+  //   k <= visPxW × padFactor / (bboxW × meetScale)
   const rect = svgNode.getBoundingClientRect();
   const vb = svgNode.viewBox.baseVal;
   if (vb.width === 0 || vb.height === 0) return;
   const meetScale = Math.min(rect.width / vb.width, rect.height / vb.height);
-  const visibleVBWidth = visPxW / meetScale;
-  const visibleVBHeight = visPxH / meetScale;
 
-  // bbox 占可见区 70% 留 padding (避免端点紧贴边)
-  const padFactor = 0.7;
-  const kFitX = (visibleVBWidth * padFactor) / Math.max(pathBBox.width, 1);
-  const kFitY = (visibleVBHeight * padFactor) / Math.max(pathBBox.height, 1);
+  const padFactor = 0.55; // R1: 比 0.7 更松 / 给端点留更多 margin / translateExtent clamp 不溢出
+  const kFitX = (visPxW * padFactor) / (bboxW * meetScale);
+  const kFitY = (visPxH * padFactor) / (bboxH * meetScale);
   const targetK = Math.max(1, Math.min(kFitX, kFitY, 8));
 
   const currentK = zoomCtrl.getCurrentTransform().k;
@@ -802,7 +836,7 @@ function handleArcClick(pathEl: SVGPathElement, r: ClaimRelation): void {
   });
   flyToTarget(svg, zoomCtrl.zoomBehavior, ct, 600);
 
-  // 弧线高亮 + 复原其他
+  // 弧线高亮 + 复原其他（visible path 在 g.arc-layer / hit overlay 不变样式）
   restoreArcOpacity();
   d3.select(pathEl)
     .raise()
@@ -810,17 +844,6 @@ function handleArcClick(pathEl: SVGPathElement, r: ClaimRelation): void {
     .duration(300)
     .attr('stroke-width', 2.5)
     .attr('opacity', 1.0);
-
-  // 飞行后 tooltip 在屏幕可见区中心偏右上（弧线 midpoint 飞到 visCenterVB → 屏幕 visPxX/Y）
-  //   reference 字段是 ClaimNode 的（出处书名）/ ClaimRelation 自身无 reference / 故不传
-  //   tooltip 只显示关系类型 / 用户想看具体引用 → 点 obs 看详情卡
-  setTimeout(() => {
-    showArcTooltip({
-      x: visPxX + 16,
-      y: visPxY - 32,
-      relationType: r.type,
-    });
-  }, 650);
 }
 
 // Stage 5 T8 · 复原所有弧线到原始 stroke-width + opacity（点其他弧线 / 点 obs / 点空白时调）
