@@ -38,6 +38,7 @@ import {
   pixelToViewBox,
 } from './viz/center.ts';
 import { showClaimPopover } from './components/claim-popover.ts';
+import { mountArcTooltip, showArcTooltip, hideArcTooltip } from './components/arc-tooltip.ts';
 import { applyClaimFilters } from './components/apply-claim-filters.ts';
 import type { ClaimNode, ClaimRelation } from './types/Claim.ts';
 import type { PersonNode } from './types/Node.ts';
@@ -182,6 +183,9 @@ const zoomCtrl = createZoom(svg, {
 //   改 bottom 70px (timeline 48 + 22px gap) / 跟 timeline 顶端贴近
 zoomControlEl = mountZoomControl({ zoomController: zoomCtrl, position: { left: 60, bottom: 70 } });
 
+// Stage 5 T8 · arc tooltip 懒挂（show 时自动挂 / 这里显式 mount 让初次 click 无 first-paint flash）
+mountArcTooltip();
+
 // === 6. 弧线层（在节点之前画，z-order 在底）===
 
 const claimIdToCoords = new Map<string, { x: number; y: number }>();
@@ -224,6 +228,13 @@ zoomLayer
     if (style.dasharray !== 'none') {
       sel.attr('stroke-dasharray', style.dasharray);
     }
+  })
+  // Stage 5 T8 · 弧线 click → 两端居中 + 高亮 + tooltip 关系类型
+  // spec § 7.4 · DR-014 / focus mode 下隐藏的 arc display:none 自然不响应
+  .style('cursor', 'pointer')
+  .on('click', function (event: MouseEvent, r) {
+    event.stopPropagation();
+    handleArcClick(this as SVGPathElement, r as ClaimRelation);
   });
 
 // === 7. Person section 标题 + obs 行 ===
@@ -392,6 +403,10 @@ sectionG.each(function (section) {
   obsG.on('click', (event, c) => {
     event.stopPropagation(); // 防止 bubble 到 document outsideHandler
 
+    // Stage 5 T8 · 点 obs → 关 arc tooltip + 复原所有弧线（避免上次点弧线残留视觉）
+    hideArcTooltip();
+    restoreArcOpacity();
+
     const currentK = zoomCtrl.getCurrentTransform().k;
     const obsElement = event.currentTarget as SVGGElement;
     // 仅 k=1 全景态触发 flyto（首次进入探索）/ k>1 时只切详情卡
@@ -462,6 +477,14 @@ sectionG.each(function (section) {
 
 // Stage 2 R3 · disable d3 默认 dblclick zoom（默认是 k*2 / 跟我们 chooseTargetK 策略冲突）
 svg.on('dblclick.zoom', null);
+
+// Stage 5 T8 · 点画布空白 → 关 arc tooltip + 复原弧线
+//   d3.zoom 监听 mousedown / mousewheel / dblclick / 不监听 click → 不冲突
+//   obs 和 arc 自身 .on('click') 都 stopPropagation / 仅空白区域 click bubble 到 svg
+svg.on('click', () => {
+  hideArcTooltip();
+  restoreArcOpacity();
+});
 
 // === 8. T7 · 底部横向时间轴（spec § 6 / 独立参考维度）===
 // PM 视觉期待: timeline 是 "独立栏" 始终可见，不能 scroll 到画布底才看到
@@ -732,9 +755,92 @@ function exitFocusMode(): void {
   breadcrumbApi?.hideFocus();
 }
 
+// Stage 5 T8 · 弧线 click handler 主逻辑
+//   1. 取 path.getBBox 算两端弧的 viewBox bbox + center
+//   2. 算 targetK 让 bbox 占可见区 70% (留 30% padding)
+//   3. flyTo visCenterVB (POPOVER_PX=0 / 弧线点击不弹 popover / 屏幕中心 = 可见区中心)
+//   4. 弧线高亮 stroke-width 2.5 + opacity 1.0 / 复原其他弧线
+//   5. 飞行结束 650ms 后显示 tooltip 在屏幕可见区中心偏右上
+function handleArcClick(pathEl: SVGPathElement, r: ClaimRelation): void {
+  const pathBBox = pathEl.getBBox();
+  if (pathBBox.width === 0 && pathBBox.height === 0) return; // 异常 path / 跳过
+  const bboxCenterX = pathBBox.x + pathBBox.width / 2;
+  const bboxCenterY = pathBBox.y + pathBBox.height / 2;
+
+  const SIDEBAR_PX = 48;
+  const POPOVER_PX = 0; // 弧线点击不弹 popover (spec § 7.4)
+  const HEADER_PX = 70;
+  const TIMELINE_PX = 60;
+  const visPxW = window.innerWidth - SIDEBAR_PX - POPOVER_PX;
+  const visPxH = window.innerHeight - HEADER_PX - TIMELINE_PX;
+  const visPxX = SIDEBAR_PX + visPxW / 2;
+  const visPxY = HEADER_PX + visPxH / 2;
+  const svgNode = svg.node();
+  if (!svgNode) return;
+  const visCenterVB = pixelToViewBox(svgNode, visPxX, visPxY);
+
+  // viewBox 中可见区占多少 viewBox 单位（meet scale 反推）
+  const rect = svgNode.getBoundingClientRect();
+  const vb = svgNode.viewBox.baseVal;
+  if (vb.width === 0 || vb.height === 0) return;
+  const meetScale = Math.min(rect.width / vb.width, rect.height / vb.height);
+  const visibleVBWidth = visPxW / meetScale;
+  const visibleVBHeight = visPxH / meetScale;
+
+  // bbox 占可见区 70% 留 padding (避免端点紧贴边)
+  const padFactor = 0.7;
+  const kFitX = (visibleVBWidth * padFactor) / Math.max(pathBBox.width, 1);
+  const kFitY = (visibleVBHeight * padFactor) / Math.max(pathBBox.height, 1);
+  const targetK = Math.max(1, Math.min(kFitX, kFitY, 8));
+
+  const currentK = zoomCtrl.getCurrentTransform().k;
+  const ct = computeCenterTransform({
+    target: { x: bboxCenterX, y: bboxCenterY },
+    targetK,
+    currentK,
+    visibleCenter: visCenterVB,
+  });
+  flyToTarget(svg, zoomCtrl.zoomBehavior, ct, 600);
+
+  // 弧线高亮 + 复原其他
+  restoreArcOpacity();
+  d3.select(pathEl)
+    .raise()
+    .transition()
+    .duration(300)
+    .attr('stroke-width', 2.5)
+    .attr('opacity', 1.0);
+
+  // 飞行后 tooltip 在屏幕可见区中心偏右上（弧线 midpoint 飞到 visCenterVB → 屏幕 visPxX/Y）
+  //   reference 字段是 ClaimNode 的（出处书名）/ ClaimRelation 自身无 reference / 故不传
+  //   tooltip 只显示关系类型 / 用户想看具体引用 → 点 obs 看详情卡
+  setTimeout(() => {
+    showArcTooltip({
+      x: visPxX + 16,
+      y: visPxY - 32,
+      relationType: r.type,
+    });
+  }, 650);
+}
+
+// Stage 5 T8 · 复原所有弧线到原始 stroke-width + opacity（点其他弧线 / 点 obs / 点空白时调）
+function restoreArcOpacity(): void {
+  d3.selectAll<SVGPathElement, ClaimRelation>('path.arc').each(function (r) {
+    const style = getArcStyle(r.type);
+    d3.select(this)
+      .interrupt() // 取消进行中的 transition
+      .attr('stroke-width', style.strokeWidth)
+      .attr('opacity', style.opacity);
+  });
+}
+
 // DR-058 · zoom-fit 接受紧凑后的新坐标 Map（不再用原 claimIdToCoords）
+// Stage 5 R2 polish · bbox center 飞到 visCenterVB 而非 viewBox center
+//   原 bug：bbox center 飞到 canvasWidth/2,canvasHeight/2 (viewBox 中心) / 焦点元素显示在屏幕中
+//   focus 模式后用户大概率点 focus obs 弹 popover（380px 占右）/ 屏幕中心元素被遮挡
+//   修法：visCenterVB = popover-offset 后可见区中心 / 焦点元素天然在可见区中心 / 后续开 popover 不再抖动
+//   tradeoff：focus 模式 popover 关时元素偏左 (PM 反馈 "关详情卡再调回" 留 polish 二期 hook hideClaimPopover)
 function zoomFitToFocusCoords(obsCoordsMap: Map<string, { x: number; y: number }>): void {
-  // 算紧凑后 obs 的 bbox
   let minX = Infinity,
     minY = Infinity,
     maxX = -Infinity,
@@ -747,7 +853,6 @@ function zoomFitToFocusCoords(obsCoordsMap: Map<string, { x: number; y: number }
   }
   if (!isFinite(minX)) return;
 
-  // 加 padding (canvas 单位) / 算 viewport 中心
   const padX = 200;
   const padY = 80;
   const bboxW = maxX - minX + 2 * padX;
@@ -755,21 +860,35 @@ function zoomFitToFocusCoords(obsCoordsMap: Map<string, { x: number; y: number }
   const bboxCenterX = (minX + maxX) / 2;
   const bboxCenterY = (minY + maxY) / 2;
 
-  // viewBox 是 0,0 canvasW canvasH / preserveAspectRatio meet
-  // 算 fit-to-bbox 需要的 k：viewBox 中 bbox 占的比例
-  // viewBox aspect ratio = canvasW/canvasH / viewport aspect = visPxW/visPxH
-  // d3.zoom transform applies after viewBox fit
-  // 简化：k = min(canvasW/bboxW, canvasH/bboxH) (让 bbox 填满 viewBox visible region)
-  const kFitX = canvasWidth / bboxW;
-  const kFitY = canvasHeight / bboxH;
-  const targetK = Math.min(kFitX, kFitY, 8); // clamp to scaleExtent max 8
+  // R2 polish · 算可见区中心 + 可见区 viewBox 尺寸
+  const SIDEBAR_PX = 48;
+  const POPOVER_PX = 380; // focus 模式预留 popover (用户大概率立即开 popover 看 obs)
+  const HEADER_PX = 70;
+  const TIMELINE_PX = 60;
+  const visPxW = window.innerWidth - SIDEBAR_PX - POPOVER_PX;
+  const visPxH = window.innerHeight - HEADER_PX - TIMELINE_PX;
+  const visPxX = SIDEBAR_PX + visPxW / 2;
+  const visPxY = HEADER_PX + visPxH / 2;
+  const svgNode = svg.node();
 
-  // 算 transform.x/y 让 bboxCenter 居中到 viewBox center
-  // viewBox center = canvasWidth/2, canvasHeight/2
-  // 居中后 bbox 在 viewBox = bboxCenter * k + tx = canvasWidth/2 + (visPxW/2 - viewportCenter)...
-  // 简单方式：transform.x = canvasWidth/2 - bboxCenter * k (让 bbox center 在 viewBox center)
-  const tx = canvasWidth / 2 - bboxCenterX * targetK;
-  const ty = canvasHeight / 2 - bboxCenterY * targetK;
+  let targetK: number;
+  let visCenter: { x: number; y: number };
+  const rect = svgNode?.getBoundingClientRect();
+  const vb = svgNode?.viewBox.baseVal;
+  if (svgNode && rect && vb && vb.width > 0 && vb.height > 0 && rect.width > 0 && rect.height > 0) {
+    const meetScale = Math.min(rect.width / vb.width, rect.height / vb.height);
+    const visibleVBWidth = visPxW / meetScale;
+    const visibleVBHeight = visPxH / meetScale;
+    targetK = Math.min(visibleVBWidth / bboxW, visibleVBHeight / bboxH, 8);
+    visCenter = pixelToViewBox(svgNode, visPxX, visPxY);
+  } else {
+    // fallback (test/jsdom / SVG 未挂)：回退到 viewBox 中心 + canvas 全宽算 fit
+    targetK = Math.min(canvasWidth / bboxW, canvasHeight / bboxH, 8);
+    visCenter = { x: canvasWidth / 2, y: canvasHeight / 2 };
+  }
+
+  const tx = visCenter.x - bboxCenterX * targetK;
+  const ty = visCenter.y - bboxCenterY * targetK;
 
   svg
     .transition()
