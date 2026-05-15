@@ -1,19 +1,28 @@
-// M5 T6 · 时间轴大改造（HTML slider → SVG 整条可拖 + 范围条 + 双向同步）
-// 决策：DR-038 (Model A 滚动条直觉) · DR-039 (范围条样式 B 半透明 + 两端 ticks) ·
-//      DR-040 (▶ 播放 20s 跑完 / 9 年/秒) · DR-041 (syncingFromTimeline flag 防震荡)
+// M5 T6 · 时间轴（HTML slider → SVG 整条可拖 + 单游标 = 时间滤镜）
 //
-// 改动 from M4:
-//   ❌ 删 <input type="range"> slider（PM 反馈: "整条时间轴本身就是单游标"）
-//   ❌ 不画 thumb circle marker（同上）
-//   ✅ 改 SVG axis + drag-area / mousedown anywhere on timeline triggers drag
-//   ✅ 加视觉范围条 rect + 两端 ticks（样式 B）/ 仅显示当前 zoom 可视段 / 不可拖
-//   ✅ 拖动 = Model A：拖向左 → 范围条 / 游标向左 (更早) → 主画布向右 pan
-//   ✅ 新 API: { setCursor, getCurrentYear, updateZoomK }
+// vision pivot @ 2026-05-15 Stage 3 PM checkpoint round 1（DR-042 ~ DR-045）:
+//   原 (DR-015 + DR-038 已作废): 时间轴 ↔ 画布 双向锁定 + 范围条显示画布可视段
+//   新: 时间轴 = 时间游标 / 时间滤镜
+//   - 拖游标年份变化 → 仅触发 onCursorChange callback (main.ts 用来 fading 观点/连线)
+//   - 画布 pan/zoom 跟时间轴完全解耦
+//   - 删视觉范围条 + 2 edge ticks (失去意义)
+//   - 删 updateZoomK API (不需要)
 //
-// 视觉硬约束（沿 M4）:
+// 保留功能:
+//   ✅ SVG axis + ticks (1770→1950 + Marx 活跃年 1830/1850/1870 紫色加粗)
+//   ✅ Marx 区间 indicator 1830-1880 (z 在底)
+//   ✅ 整条线可拖 (mousedown anywhere on svg → drag 改 currentYear)
+//   ✅ Model A 滚动条直觉 (拖右 → year 变大 / 拖左 → year 变小 / DR-038 思路保留只是不动画布)
+//   ✅ ▶ 播放按钮 (DR-040 20s 跑完 / 9 年/秒 / 画布不动)
+//   ✅ 游标 label 显示 "游标 XXXX"
+//
+// API:
+//   { setCursor(year), getCurrentYear() } // updateZoomK 已删
+//
+// 视觉硬约束:
 //   - font-family: 'EB Garamond', Georgia, serif
-//   - 米白底 #faf6ec / 紫 #5b3a8c 主导
-//   - 0 border-radius 学术编辑硬约束
+//   - 米白底 #faf6ec / 紫 #5b3a8c
+//   - 0 border-radius
 
 export interface TimelineTick {
   year: number;
@@ -25,7 +34,7 @@ export interface TimelineTick {
 const MARX_ACTIVE_YEARS = new Set([1830, 1850, 1870]);
 const STANDARD_YEAR_INTERVAL = 20;
 
-// === Pure helpers (export 给 test) ===
+// === Pure helpers ===
 
 export function computeTickPositions(yearMin: number, yearMax: number): TimelineTick[] {
   const yearSet = new Map<number, TimelineTick>();
@@ -54,14 +63,6 @@ export function yearToPercent(year: number, yearMin: number, yearMax: number): n
   return ((year - yearMin) / (yearMax - yearMin)) * 100;
 }
 
-// M5 T6 · 范围条宽度 = timelineWidth / zoomK
-//   推导：SVG viewBox + preserveAspectRatio="xMidYMid meet" + fit-to-content default
-//   k=1 → 全 viewBox 可见 → range = 全 timelineWidth
-//   k=2 → 可见画布段 = 1/2 → 可见年份段 = 全长/2 → range = timelineWidth/2
-export function computeRangeBarWidth(p: { zoomK: number; timelineWidth: number }): number {
-  return p.timelineWidth / p.zoomK;
-}
-
 // === Mount API ===
 
 export interface TimelineOptions {
@@ -75,18 +76,14 @@ export interface TimelineOptions {
 export interface TimelineApi {
   setCursor: (year: number) => void;
   getCurrentYear: () => number;
-  updateZoomK: (k: number) => void;
 }
 
-// 播放速度（DR-040 · PM 拍 20s）：180 年 / 20s = 9 年/s / 24 fps → 0.375 年/step / interval 1000/24 ≈ 42ms
-// 取整间隔 50ms / 0.45 年/step → 180/0.45 = 400 step × 50ms = 20s ✓
+// 播放速度（DR-040 · PM 拍 20s）：180 年 / 20s = 9 年/秒 / 50ms 间隔 / 0.45 年/step
 const PLAY_INTERVAL_MS = 50;
 const PLAY_YEAR_PER_STEP = 0.45;
 
-const AXIS_PAD_PCT = 5; // 主轴线左右各留 5% padding
-const AXIS_TOP_PX = 24; // axis line y 坐标
-const RANGE_BAR_HEIGHT = 12; // 范围条高度
-const RANGE_BAR_TOP = AXIS_TOP_PX - RANGE_BAR_HEIGHT / 2; // range bar 居中于 axis line
+const AXIS_PAD_PCT = 5;
+const AXIS_TOP_PX = 24;
 
 export function mountTimeline(opts: TimelineOptions): TimelineApi {
   const { container, yearMin, yearMax, initialCursor, onCursorChange } = opts;
@@ -95,7 +92,7 @@ export function mountTimeline(opts: TimelineOptions): TimelineApi {
   // === 1. 容器 + 内部布局 ===
   container.innerHTML = `
     <div style="border-top:2px solid #d8cab0;background:#faf6ec;padding:18px 60px 14px;font-family:'EB Garamond','Georgia',serif">
-      <div style="font-size:9px;color:#888;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;text-align:center">时间轴 · 参考维度</div>
+      <div style="font-size:9px;color:#888;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;text-align:center">时间轴 · 时间游标</div>
       <svg id="tl-svg" width="100%" height="60" style="display:block;cursor:ew-resize;user-select:none"></svg>
       <div style="display:flex;align-items:center;gap:14px;margin-top:6px">
         <button id="tl-play" style="border:1px solid #5b3a8c;background:#fcfaf6;color:#5b3a8c;padding:4px 14px;font-style:italic;cursor:pointer;font-family:inherit;font-size:12px">▶ 播放思想史</button>
@@ -112,10 +109,8 @@ export function mountTimeline(opts: TimelineOptions): TimelineApi {
 
   // === 2. 内部状态 ===
   let currentYear = clamp(initialCursor, yearMin, yearMax);
-  let currentZoomK = 1;
 
-  // axis 实际像素宽度 (svg width 100% / 在 mount 时算)
-  // jsdom getBoundingClientRect 对 SVG 返 0 / 加 fallback 600px (test 默认 / 不影响 browser)
+  // jsdom getBoundingClientRect 对 SVG 返 0 / 加 fallback 600px
   const FALLBACK_SVG_WIDTH_PX = 600;
   function getSvgWidthPx(): number {
     const w = svg.getBoundingClientRect().width;
@@ -128,14 +123,13 @@ export function mountTimeline(opts: TimelineOptions): TimelineApi {
     return getSvgWidthPx() * (AXIS_PAD_PCT / 100);
   }
 
-  // year → axis pixel X (axisPxToYear 删除 / 拖动用 dx delta 公式不需要逆向)
   function yearToAxisPx(year: number): number {
     return getAxisLeftPx() + ((year - yearMin) / yearSpan) * getAxisWidthPx();
   }
 
-  // === 3. 渲染 SVG 内容 ===
+  // === 3. 渲染 SVG ===
 
-  // 3.1 Marx 区间 indicator (z 在底)
+  // 3.1 Marx 区间 indicator 1830-1880
   const marxIndicator = document.createElementNS(SVG_NS, 'rect');
   marxIndicator.setAttribute('class', 'timeline-marx-indicator');
   marxIndicator.setAttribute('y', String(AXIS_TOP_PX - 4));
@@ -144,7 +138,7 @@ export function mountTimeline(opts: TimelineOptions): TimelineApi {
   marxIndicator.setAttribute('opacity', '0.12');
   svg.appendChild(marxIndicator);
 
-  // 3.2 主轴线 (灰色)
+  // 3.2 主轴线
   const axisLine = document.createElementNS(SVG_NS, 'line');
   axisLine.setAttribute('class', 'timeline-axis-line');
   axisLine.setAttribute('y1', String(AXIS_TOP_PX));
@@ -153,33 +147,16 @@ export function mountTimeline(opts: TimelineOptions): TimelineApi {
   axisLine.setAttribute('stroke-width', '1');
   svg.appendChild(axisLine);
 
-  // 3.3 视觉范围条 (样式 B: 半透明 rect + 两端 edge ticks / DR-039)
-  const rangeBar = document.createElementNS(SVG_NS, 'rect');
-  rangeBar.setAttribute('class', 'timeline-range-bar');
-  rangeBar.setAttribute('y', String(RANGE_BAR_TOP));
-  rangeBar.setAttribute('height', String(RANGE_BAR_HEIGHT));
-  rangeBar.setAttribute('fill', '#5b3a8c');
-  rangeBar.setAttribute('opacity', '0.35');
-  rangeBar.setAttribute('pointer-events', 'none');
-  svg.appendChild(rangeBar);
-
-  const edgeTickL = document.createElementNS(SVG_NS, 'line');
-  edgeTickL.setAttribute('class', 'timeline-range-edge-tick');
-  edgeTickL.setAttribute('y1', String(AXIS_TOP_PX - 10));
-  edgeTickL.setAttribute('y2', String(AXIS_TOP_PX + 10));
-  edgeTickL.setAttribute('stroke', '#5b3a8c');
-  edgeTickL.setAttribute('stroke-width', '2');
-  edgeTickL.setAttribute('pointer-events', 'none');
-  svg.appendChild(edgeTickL);
-
-  const edgeTickR = document.createElementNS(SVG_NS, 'line');
-  edgeTickR.setAttribute('class', 'timeline-range-edge-tick');
-  edgeTickR.setAttribute('y1', String(AXIS_TOP_PX - 10));
-  edgeTickR.setAttribute('y2', String(AXIS_TOP_PX + 10));
-  edgeTickR.setAttribute('stroke', '#5b3a8c');
-  edgeTickR.setAttribute('stroke-width', '2');
-  edgeTickR.setAttribute('pointer-events', 'none');
-  svg.appendChild(edgeTickR);
+  // 3.3 游标视觉指示 (PM checkpoint 1 反馈：删范围条 / 但还是要让用户看到游标位置)
+  //     用紫色竖线 (2px 宽 / 24px 高 / 跨 axis 上下) / pointer-events none
+  const cursorLine = document.createElementNS(SVG_NS, 'line');
+  cursorLine.setAttribute('class', 'timeline-cursor-line');
+  cursorLine.setAttribute('y1', String(AXIS_TOP_PX - 12));
+  cursorLine.setAttribute('y2', String(AXIS_TOP_PX + 12));
+  cursorLine.setAttribute('stroke', '#5b3a8c');
+  cursorLine.setAttribute('stroke-width', '2');
+  cursorLine.setAttribute('pointer-events', 'none');
+  svg.appendChild(cursorLine);
 
   // 3.4 ticks + labels
   const ticks = computeTickPositions(yearMin, yearMax);
@@ -208,8 +185,7 @@ export function mountTimeline(opts: TimelineOptions): TimelineApi {
     svg.appendChild(label);
   }
 
-  // 3.5 drag-area: 透明 rect 覆盖整个 svg / 接收 mousedown
-  // class timeline-drag-area / 测试用
+  // 3.5 drag-area：透明 rect 覆盖整个 svg / 接收 mousedown
   const dragArea = document.createElementNS(SVG_NS, 'rect');
   dragArea.setAttribute('class', 'timeline-drag-area');
   dragArea.setAttribute('x', '0');
@@ -220,10 +196,9 @@ export function mountTimeline(opts: TimelineOptions): TimelineApi {
   dragArea.setAttribute('cursor', 'ew-resize');
   svg.appendChild(dragArea);
 
-  // === 4. 渲染位置更新 ===
+  // === 4. 渲染更新 ===
 
   function updateMarxIndicator() {
-    // Marx 区间 1830-1880
     const x1 = yearToAxisPx(1830);
     const x2 = yearToAxisPx(1880);
     marxIndicator.setAttribute('x', String(x1));
@@ -251,42 +226,28 @@ export function mountTimeline(opts: TimelineOptions): TimelineApi {
     });
   }
 
-  function updateRangeBar() {
-    const axisWidth = getAxisWidthPx();
-    const rangeWidthPx = computeRangeBarWidth({ zoomK: currentZoomK, timelineWidth: axisWidth });
-    const cursorPx = yearToAxisPx(currentYear);
-    let leftPx = cursorPx - rangeWidthPx / 2;
-    let rightPx = cursorPx + rangeWidthPx / 2;
-    // clamp 范围条不出 axis 边界
-    const axisLeft = getAxisLeftPx();
-    const axisRight = axisLeft + axisWidth;
-    if (leftPx < axisLeft) leftPx = axisLeft;
-    if (rightPx > axisRight) rightPx = axisRight;
-    rangeBar.setAttribute('x', String(leftPx));
-    rangeBar.setAttribute('width', String(Math.max(0, rightPx - leftPx)));
-    edgeTickL.setAttribute('x1', String(leftPx));
-    edgeTickL.setAttribute('x2', String(leftPx));
-    edgeTickR.setAttribute('x1', String(rightPx));
-    edgeTickR.setAttribute('x2', String(rightPx));
+  function updateCursorLine() {
+    const x = yearToAxisPx(currentYear);
+    cursorLine.setAttribute('x1', String(x));
+    cursorLine.setAttribute('x2', String(x));
   }
 
   function renderAll() {
     updateMarxIndicator();
     updateAxisLine();
     updateTicks();
-    updateRangeBar();
+    updateCursorLine();
     cursorLabel.textContent = `游标 ${Math.round(currentYear)}`;
   }
 
   renderAll();
-  // svg getBoundingClientRect 在 jsdom 可能 0 / browser mount 后再 render 一次
-  setTimeout(renderAll, 0);
+  setTimeout(renderAll, 0); // browser mount 后再 render 一次
 
-  // === 5. 拖动交互 (Model A: 拖向左 → 范围条向左 → year 变小 / DR-038) ===
+  // === 5. 拖动 (Model A scrollbar 直觉 / DR-038 思路保留) ===
 
   let dragging = false;
-  let dragStartX = 0; // mousedown 时屏幕 X
-  let dragStartYear = 0; // mousedown 时 currentYear
+  let dragStartX = 0;
+  let dragStartYear = 0;
 
   function onMouseDown(e: MouseEvent) {
     dragging = true;
@@ -301,9 +262,6 @@ export function mountTimeline(opts: TimelineOptions): TimelineApi {
     const dx = e.clientX - dragStartX;
     const axisWidth = getAxisWidthPx();
     if (axisWidth <= 0) return;
-    // Model A: dx>0 (拖右) → 范围条/游标向右 → year 变大
-    //          dx<0 (拖左) → 范围条/游标向左 → year 变小
-    // 即 year 跟手指方向走（scrollbar thumb 直觉）
     const yearDelta = (dx / axisWidth) * yearSpan;
     const newYear = clamp(dragStartYear + yearDelta, yearMin, yearMax);
     currentYear = newYear;
@@ -321,7 +279,7 @@ export function mountTimeline(opts: TimelineOptions): TimelineApi {
   document.addEventListener('mousemove', onMouseMove);
   document.addEventListener('mouseup', onMouseUp);
 
-  // === 6. ▶ 播放按钮 (toggle pause / M4 fix #5 同思路 / DR-040 速度 20s) ===
+  // === 6. ▶ 播放 (toggle pause / DR-040 20s / 画布不动 DR-044) ===
 
   let activeInterval: ReturnType<typeof setInterval> | null = null;
   const PLAY_LABEL = '▶ 播放思想史';
@@ -338,7 +296,6 @@ export function mountTimeline(opts: TimelineOptions): TimelineApi {
   }
 
   function startPlayback() {
-    // restart from yearMin if 已在 yearMax
     if (currentYear >= yearMax) currentYear = yearMin;
     playBtn.textContent = PAUSE_LABEL;
     playBtn.setAttribute('aria-pressed', 'true');
@@ -368,10 +325,6 @@ export function mountTimeline(opts: TimelineOptions): TimelineApi {
       renderAll();
     },
     getCurrentYear: () => currentYear,
-    updateZoomK: (k: number) => {
-      currentZoomK = k;
-      updateRangeBar();
-    },
   };
 }
 

@@ -1,6 +1,6 @@
 # M5 主线 A 实施期 progress anchor
 
-> **状态**：Stage 1 + Stage 2 + Stage 3 实施完成 / 等 PM 浏览器 checkpoint
+> **状态**：Stage 1 + Stage 2 完成 / **Stage 3 经 PM checkpoint R1 vision pivot 重做完成**（时间轴 = 时间游标 / 不联动画布）/ 等 PM checkpoint R2
 > **日期**：2026-05-15
 > **关联**：[M5 spec](../specs/2026-05-14-m5-linea-explorability-design.md) · [M5 plan](../plans/2026-05-14-marx-m5-linea-explorability.md) · [M4 takeaway](./2026-05-13-m4-takeaway.md)
 > **跨窗口续接**：本文件是 SSOT / 新窗口 AI 读这一份立即知当前进度
@@ -14,13 +14,16 @@
 | **T0** Pre-flight | archive M4 demo + baseline test | ✅ done | `ac3dfc8` + tag `m5-pre-archive` |
 | **Stage 1** zoom 基础设施 | T1 zoom.ts / T2 pan clamp / T3 zoom-control | ✅ done | `cf1b16f` / `02f26ea` / `a64cdeb` / `de9d094` (lint polish) / `9f3d163` (PM round 1 4 修) |
 | **Stage 2** 点 obs 居中 + 详情卡 | T4 center.ts / T5 click handler | ✅ done | `bf34d2b` / `d06cc5e` / `6af9ffc` (R2 3 修) / `9fc82fb` (R3 3 修) / `84edf49` (R4 4 修) / `a1fa3ac` (R5 句子居中) |
-| **Stage 3** 时间轴改造 | T6 整条可拖 + 范围条 B + 双向同步 / T7 ▶ 20s 播放 | ✅ 实施完 / 等 PM | （pending commit）|
+| **Stage 3 round 1** 时间轴改造 v1 | T6 整条可拖 + 范围条 B + 双向同步 / T7 ▶ 20s 播放 | ✅ commit `b669c1f` | push origin |
+| **Stage 3 R1 PM checkpoint** | **vision pivot**：时间轴 = 时间游标 / 删双向同步 / 删范围条 (DR-042~045) | ✅ 重做完 / 等 PM R2 | （pending commit）|
 | **Stage 4** 弧线 + 双击中键 | T8 点弧线 / T9 双击中键 reset | ⏸ 待启动 | — |
 | **Final** E2E + 4 件套 + ship | T10 | ⏸ 待启动 | — |
 
-**Stage 1 + 2 合计 14 commits push origin** / 头 `a1fa3ac` / 测试 140/143（106 baseline → 140 / +34 / 3 fail 仍 M3 pre-existing 不变）。
+**Stage 1 + 2 合计 14 commits push origin** / 头 `a1fa3ac` / 测试 140/143。
 
-**Stage 3 实施完**（T6 + T7 合并到 1 个 atomic commit）/ timeline.ts 全重写 SVG / main.ts onCursorChange 接 zoom / 测试 153/156 / +13 新测全 pass / lint clean / tsc clean / 待 PM 浏览器 checkpoint 后再 push。
+**Stage 3 round 1 commit `b669c1f`** push origin（时间轴双向锁定 v1 / 测试 153/156）— **被 PM checkpoint R1 vision pivot 颠覆**。
+
+**Stage 3 vision pivot 重做完**：时间轴改纯时间游标 / 拖 + ▶ 都不动画布 / 测试 149/152（删 4 范围条相关测 + 加 2 新测）/ lint clean / tsc clean / 待 commit + PM checkpoint R2。
 
 ---
 
@@ -57,10 +60,14 @@
 | DR-035 | popover sequence 切换：旧 200ms 滑出 → 等结束 → 新 450ms 滑入 / `querySelectorAll` 防堆叠 / `_pendingShowTimer` 防 race | `84edf49` |
 | DR-036 | popover 动画出快入慢：滑入 450ms easeOutQuart / 滑出 200ms easeInQuart | `84edf49` |
 | DR-037 | sentence-aware centering：默认句子中点居中 + clamp 起点 ≥ visLeft + 24px margin（用户从头读）| `a1fa3ac` |
-| **DR-038** | **Stage 3 brainstorm Q1**：拖时间轴方向 = Model A 滚动条直觉（拖向左 = 看更早 = 主画布向右 pan）/ PM mockup 实测 | （Stage 3 commit 内）|
-| **DR-039** | **Stage 3 brainstorm Q2**：视觉范围条样式 B = 半透明 rect + 两端紫色实线 ticks / PM mockup 实测 | （同上）|
-| **DR-040** | **Stage 3 brainstorm Q3**：▶ 播放速度 20s 跑完（9 年/秒）/ PM 拍"播放仅锦上添花" | （同上）|
-| **DR-041** | **Stage 3 brainstorm Q4**：syncingFromTimeline flag / 同步设置无 race / svg.call(transform) 同步触发 onZoom | （同上）|
+| ~~DR-038~~ | ~~Q1 拖动方向 Model A~~ **作废 → DR-042** | `b669c1f` 实施过 / R1 颠覆 |
+| ~~DR-039~~ | ~~Q2 范围条样式 B~~ **作废 → DR-045 删** | 同上 |
+| DR-040 | Q3 ▶ 播放 20s 跑完 / PM 拍"锦上添花" | `b669c1f` |
+| ~~DR-041~~ | ~~Q4 syncingFromTimeline flag~~ **作废 → DR-042 单向** | 同上 |
+| **DR-042** | **Stage 3 R1 vision pivot**：时间轴 = 时间游标 / 时间滤镜 / 画布完全解耦 / PM 反馈"画布 ≠ 时间走向 / 探索性目的"| （Stage 3 R1 commit）|
+| **DR-043** | 初始游标 1950 全显 + 未提出 opacity 0.15（PM 拍：避免"页面坏了" + 强对比）| 同上 |
+| **DR-044** | ▶ 播放期间画布完全不动 / 仅游标 + 观点 fade in/out | 同上 |
+| **DR-045** | 删视觉范围条 + 2 edge ticks（DR-039 作废）/ zoom 比例已在左下 display | 同上 |
 
 ---
 

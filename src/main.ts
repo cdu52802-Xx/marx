@@ -26,7 +26,7 @@ import {
   type PersonSection,
   type ClaimWithCoords,
 } from './components/claim-layout.ts';
-import { mountTimeline, type TimelineApi } from './components/timeline.ts';
+import { mountTimeline } from './components/timeline.ts';
 import { mountSidebar } from './components/sidebar.ts';
 import { createZoom } from './viz/zoom.ts';
 import { mountZoomControl, updateZoomDisplay } from './components/zoom-control.ts';
@@ -155,45 +155,18 @@ zoomLayer
 // T2 会加 contentBBox option → translateExtent pan clamp
 // onZoom 回调给 T3 zoom-control + T6 timeline 范围条同步用
 // T3 · zoomControlEl 先声明 / onZoom callback 闭包引用 / 在 createZoom 后 mount 赋值
-// T6 · timelineApi 同思路 / syncingFromTimeline flag 防双向同步震荡 (DR-041 · spec § 12 R3)
 let zoomControlEl: HTMLElement | null = null;
-let timelineApi: TimelineApi | null = null;
-let syncingFromTimeline = false;
-
-// 同步用 viewport 中心计算常量（跟 obs click handler 一致）
-const SIDEBAR_PX_SYNC = 48;
-const HEADER_PX_SYNC = 70;
-const TIMELINE_PX_SYNC = 160;
-
-function viewportCenterCanvasX(t: { x: number; k: number }): number {
-  // viewport 中心屏幕 X (不算 popover offset / sync 仅居中年份不算 popover 影响)
-  const visPxX = (window.innerWidth - SIDEBAR_PX_SYNC) / 2 + SIDEBAR_PX_SYNC;
-  const visPxY = HEADER_PX_SYNC + (window.innerHeight - HEADER_PX_SYNC - TIMELINE_PX_SYNC) / 2;
-  const visCenterVB = pixelToViewBox(svg.node()!, visPxX, visPxY);
-  return (visCenterVB.x - t.x) / t.k;
-}
-
-function canvasXToYear(canvasX: number): number {
-  return 1770 + (canvasX / canvasWidth) * 180;
-}
-
-function yearToCanvasX(year: number): number {
-  return ((year - 1770) / 180) * canvasWidth;
-}
 
 const zoomCtrl = createZoom(svg, {
   scaleExtent: [1, 8],
   // T2 · pan boundary clamp 到 content + 5% padding（user 不能拖到全空白）
   contentBBox: { x: 0, y: 0, width: canvasWidth, height: canvasHeight },
   onZoom: (t) => {
-    // T3 · 同步缩放控件比例 display（滚轮 + 按钮 都触发 / 始终准确）
+    // T3 · 同步缩放控件比例 display
     if (zoomControlEl) updateZoomDisplay(zoomControlEl, t.k);
-    // T6 · 时间轴范围条 + 游标双向同步（DR-041 / 仅当不是 timeline 触发的反向同步时跑）
-    if (timelineApi && !syncingFromTimeline) {
-      timelineApi.updateZoomK(t.k);
-      const centerYear = canvasXToYear(viewportCenterCanvasX(t));
-      timelineApi.setCursor(centerYear);
-    }
+    // M5 Stage 3 R1 vision pivot (DR-042)：时间轴 ≠ 画布 viewport navigator
+    //   不再反向同步 timeline.setCursor / 画布跟时间轴解耦
+    //   onZoom 仅更新 zoom-control 比例 display
   },
 });
 
@@ -492,33 +465,45 @@ timelineContainer.style.cssText =
   'position:fixed;bottom:0;left:0;right:0;z-index:10;box-shadow:0 -4px 12px rgba(58,35,96,0.08)';
 document.body.appendChild(timelineContainer);
 
-timelineApi = mountTimeline({
+// M5 Stage 3 R1 vision pivot (DR-042 ~ DR-045)：时间轴 = 时间游标 / 时间滤镜
+//   - 拖游标 / ▶ 播放 → 更新画布上观点 + 弧线的 opacity
+//     · claim.year > cursor → opacity 0.15（未提出 / 淡显）
+//     · claim.year ≤ cursor → opacity 1（已提出 / 正常）
+//     · arc source/target 任一 year > cursor → opacity 0.15 / 否则 1
+//   - 画布 pan/zoom 跟时间轴解耦（滚轮 zoom + 拖空白 pan 仍可用 / 但不被时间轴控制）
+//   - 初始游标 1950 = 全显示（DR-043 / PM 拍 避免首访"页面坏了"）
+const INITIAL_CURSOR_YEAR = 1950;
+const FADED_OPACITY = 0.15; // DR-043 · PM 拍 0.15 强调"未提出"
+const NORMAL_OPACITY = 1;
+
+function applyTimelineFiltering(cursorYear: number): void {
+  // 观点（紫圆点 + claim_text 行）淡显
+  d3.selectAll<SVGGElement, ClaimWithCoords>('g.obs').attr('opacity', (c) =>
+    c.year > cursorYear ? FADED_OPACITY : NORMAL_OPACITY,
+  );
+  // 弧线：两端 claim 都已提出才正常 / 否则淡显
+  d3.selectAll<SVGPathElement, ClaimRelation>('path.arc').attr('opacity', (r) => {
+    const sourceClaim = claimById.get(r.source);
+    const targetClaim = claimById.get(r.target);
+    if (!sourceClaim || !targetClaim) return FADED_OPACITY;
+    const bothEmitted = sourceClaim.year <= cursorYear && targetClaim.year <= cursorYear;
+    return bothEmitted ? NORMAL_OPACITY : FADED_OPACITY;
+  });
+  // 沿用 M4: person section（整组淡显）/ birth_year > cursor 还未出生
+  d3.selectAll<SVGGElement, PersonSection>('g.person-section').attr('opacity', (s) =>
+    s.birth_year > cursorYear ? FADED_OPACITY : NORMAL_OPACITY,
+  );
+}
+
+mountTimeline({
   container: timelineContainer,
   yearMin: 1770,
   yearMax: 1950,
-  initialCursor: 1860,
-  onCursorChange: (year) => {
-    // M5 T6 · 拖时间轴 → 画布 pan 同步 (Model A / DR-038)
-    //   用户拖向左 → year 变小 → 画布向右 pan (让左侧早期人入 viewport)
-    //   用户拖向右 → year 变大 → 画布向左 pan (让右侧晚期人入 viewport)
-    // syncingFromTimeline flag 防 onZoom 反向同步 (R3 震荡 / DR-041)
-    syncingFromTimeline = true;
-    const t = zoomCtrl.getCurrentTransform();
-    const targetCanvasX = yearToCanvasX(year);
-    const visPxX = (window.innerWidth - SIDEBAR_PX_SYNC) / 2 + SIDEBAR_PX_SYNC;
-    const visPxY = HEADER_PX_SYNC + (window.innerHeight - HEADER_PX_SYNC - TIMELINE_PX_SYNC) / 2;
-    const visCenterVB = pixelToViewBox(svg.node()!, visPxX, visPxY);
-    // visCenterVB.x = targetCanvasX × k + newTx → newTx = visCenterVB.x - targetCanvasX × k
-    const newTx = visCenterVB.x - targetCanvasX * t.k;
-    svg.call(zoomCtrl.zoomBehavior.transform, d3.zoomIdentity.translate(newTx, t.y).scale(t.k));
-    syncingFromTimeline = false;
-
-    // 沿用 M4: 之后年代的 person section 淡出（opacity 0.4 / spec § 6.2 游标联动）
-    d3.selectAll<SVGGElement, PersonSection>('g.person-section').attr('opacity', (s) =>
-      s.birth_year > year ? 0.4 : 1,
-    );
-  },
+  initialCursor: INITIAL_CURSOR_YEAR,
+  onCursorChange: applyTimelineFiltering,
 });
+// 初始 fading apply 一次（1950 = 全显示 / 但保持模式一致性）
+applyTimelineFiltering(INITIAL_CURSOR_YEAR);
 
 // === 9. T8 · 左侧颗粒度过滤栏（spec § 7 / 独立栏）===
 // PM 视觉期待: sidebar 是 "独立栏" 始终可见，hover icon 触发主画布高亮预览语义需要 sidebar 在视口

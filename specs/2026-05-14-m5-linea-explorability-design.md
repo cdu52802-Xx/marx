@@ -444,14 +444,36 @@ ship 前重跑 gstack 4 件套 / 任一警戒线破 = 修了再 ship。
 
 | 编号 | 日期 | 决策 | 备选 | 理由 |
 |---|---|---|---|---|
-| DR-038 | 2026-05-15 | 拖时间轴方向 = Model A 滚动条直觉（拖向左 = 看更早 = 主画布向右 pan）| Model B 推画布直觉（手势一致 / 像 Google Maps）| PM 浏览器 mockup 实测 / 时间轴 + 范围条心智模型更接近浏览器 scrollbar / "thumb" 跟手指走 / canvas 反向滚 |
-| DR-039 | 2026-05-15 | 视觉范围条样式 B = 半透明 rect + 两端紫色实线 ticks | A 纯紫色半透明 / C viewport 取景框 | PM 浏览器实测对比 / B 既保留段感（rect fill）又精确显示边界（edge ticks）/ 学术编辑感 + 实用 |
-| DR-040 | 2026-05-15 | ▶ 播放速度 20 秒跑完 1770→1950（9 年/秒）| 15s spec 默认 / 10s 更快 / 可调速 toggle | PM 拍板"播放仅锦上添花 / 不是主线" / 20s 偏慢更稳重 / 不开 toggle 简化 UI / 后续可优化 |
-| DR-041 | 2026-05-15 | 双向同步震荡防护 = `syncingFromTimeline` flag / 同步设置无 race | epsilon tolerance / debouncing | spec § 12 R3 已设计 / svg.call(transform) 同步触发 onZoom / flag set/reset 在同函数内 / 无 async race |
+| ~~DR-038~~ | ~~2026-05-15~~ | ~~拖时间轴方向 = Model A 滚动条直觉~~ **作废 → DR-042 vision pivot** | — | 时间轴不再控制画布 pan / Model A vs B 的"画布反应方向"概念失去意义 / 但拖动改 cursor year 的方向仍是 Model A（拖右→年大）|
+| ~~DR-039~~ | ~~2026-05-15~~ | ~~视觉范围条样式 B~~ **作废 → DR-045 删范围条** | — | 范围条原意义 = 画布 viewport 对应年份段 / 画布解耦后失去意义 |
+| DR-040 | 2026-05-15 | ▶ 播放速度 20 秒跑完 1770→1950（9 年/秒）| 15s spec 默认 / 10s 更快 / 可调速 toggle | PM 拍板"播放仅锦上添花 / 不是主线" / 20s 偏慢更稳重 / 不开 toggle 简化 UI |
+| ~~DR-041~~ | ~~2026-05-15~~ | ~~双向同步震荡防护 = syncingFromTimeline flag~~ **作废 → DR-042 单向 unidirectional** | — | 时间轴跟画布解耦 / 无双向同步 / flag 不需要 |
 
-### 13.2 Stage 3 brainstorm mockup 归档
+### 13.2 Stage 3 PM checkpoint R1 vision pivot（2026-05-15 实施期补 · 颠覆 DR-015）
 
-PM 决策依据 mockup 在 `public/m5-stage3-brainstorm.html`（保留作 archive / 后续 ship 前一并清理或保留 m5-stage3-archive 子路径）。
+PM 浏览器实测 Stage 3 后反馈："**画布是观点的文字列表 / 不是和时间强关联的线形走向 / 时间轴不应该移动画布**"。
+
+PM 重新定义时间轴价值：**让用户看到「X 年时存在哪些观点 / 有哪些局限 / 谁提了什么 / 跟前人是支持还是反对 / 怎么影响」→ 引导深思「这观点为什么能提出」→ 探索性、深思性**（这是 Marx 产品功能目的之一）。
+
+| 编号 | 日期 | 决策 | 备选 | 理由 |
+|---|---|---|---|---|
+| DR-042 | 2026-05-15 | **时间轴 = 时间游标 / 时间滤镜**（颠覆 DR-015 双向锁定）/ 画布 pan/zoom 跟时间轴完全解耦 | 保留 DR-015 双向锁定 | PM 实测后反馈"画布 ≠ 时间走向" / 时间轴控制画布违背"探索性"功能目的 / 改时间游标控制观点 + 弧线 fade in/out |
+| DR-043 | 2026-05-15 | 初始游标 = 1950（全显示）+ 未提出 opacity 0.15 | 1880 Marx 死后 / 1770 起点 + 0.3 / 0.5 | PM 拍 1950 避免首访"页面坏了" / 0.15 强对比"未提出 vs 已提出" / 拖游标往回退 = 揭示历史展开 |
+| DR-044 | 2026-05-15 | ▶ 播放期间画布**完全不动** | 画布跟着 pan 到游标年代 | PM vision 一致 / 用户看"不变画布上让思想生长起来" / 跟 DR-042 配套 |
+| DR-045 | 2026-05-15 | 删视觉范围条 + 2 edge ticks（DR-039 作废）| 保留改语义 | 原意义（画布 viewport 年份段）解耦后失效 / zoom 比例已在左下 zoom-display / 范围条冗余 |
+
+### 13.3 Stage 3 实施改造（DR-042 → main.ts）
+
+- `onCursorChange` 重写：遍历 `g.obs` / `path.arc` / `g.person-section` 按 `year` vs cursor 设 opacity
+  - `claim.year > cursor` → 0.15 / 否则 1
+  - `arc source/target 任一 year > cursor` → 0.15 / 否则 1
+  - `person.birth_year > cursor` → 0.15 / 否则 1（PM 增强 M4 原 0.4 改 0.15 全栈一致）
+- `onZoom` 删 timeline 反向同步部分（不再 setCursor）
+- 删 `syncingFromTimeline` flag + `viewportCenterCanvasX` + `yearToCanvasX` helpers
+
+### 13.4 Stage 3 brainstorm mockup 归档
+
+PM 决策依据 mockup 在 `public/m5-stage3-brainstorm.html`（保留作 archive / 虽 DR-038/039 作废 / 但保留 mockup 记录 PM 当时心智演变）。
 
 ---
 
