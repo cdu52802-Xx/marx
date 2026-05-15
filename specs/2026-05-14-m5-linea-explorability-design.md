@@ -257,10 +257,12 @@
 
 ### 7.4 单击弧线（半圆弧 SVG path）
 
+- 点击命中：g.arc-hit-layer 透明 16 屏幕 px stroke overlay（DR-061 / 解 PM "太细难选中"）
 - 单击半圆弧 → 触发：
-  1. 弧线两端 obs 圆点同时进入 viewport（zoom + pan 自动调整到两端可见 + padding）
-  2. 弧线高亮 stroke-width × 1.5 + opacity 1.0 + 紫色阴影
-  3. tooltip 显示在弧线中点：显示关系类型（agreement / disagreement / extends）+ 引用源
+  1. 弧线两端 obs 圆点 + 弧 apex 同时进入 viewport（fit 可见区 55% padding 留 45% 边距 · DR-062 CAD zoom-selected 效果）
+     · 用 pathEl.getPointAtLength(0/mid/end) 取 endpoints + apex / 不用 getBBox 含弧 apex extension 主导
+  2. 弧线高亮 stroke-width 2.5 + opacity 1.0
+  3. ~~tooltip 关系类型~~ **DR-063 拍废**：颜色（绿/红/灰虚）+ 方向（左下/右上/右弯）已分关系 / tooltip 多余
 - **不**自动弹详情卡（弧线代表的是关系不是单条主张 / 详情卡留给单击 obs）
 
 ### 7.5 双击鼠标中键 = 重置全景

@@ -1,6 +1,6 @@
 # M5 主线 A 实施期 progress anchor
 
-> **状态**：Stage 1+2+3+4+5 R0 全部完成 / **T9 双击中键 reset 拍废**（⌂ 已 cover）/ Stage 5 R1+ 等 PM checkpoint / Final ship 待启动
+> **状态**：Stage 1+2+3+4+5 R0+R1 完成 / **T9 双击中键 reset 拍废**（⌂ 已 cover）/ Stage 5 R2 等 PM checkpoint / Final ship 待启动
 > **日期**：2026-05-15
 > **关联**：[M5 spec](../specs/2026-05-14-m5-linea-explorability-design.md) · [M5 plan](../plans/2026-05-14-marx-m5-linea-explorability.md) · [M4 takeaway](./2026-05-13-m4-takeaway.md)
 > **跨窗口续接**：本文件是 SSOT / 新窗口 AI 读这一份立即知当前进度 / 完整 prompt 模板见 § 10
@@ -23,7 +23,8 @@
 | **Stage 4 R0** 焦点模式 | 查看关联按钮 + hover preview + 完全切换 + 面包屑 + zoom-fit (DR-053~057) | ✅ commit `bad234b` | push origin |
 | **Stage 4 R1 PM** | 紧密重排 (DR-058) / X spread 54× 紧凑 / 像 CAD zoom-selected | ✅ commit `f52aeb4` | push origin |
 | **Stage 4 R2 polish backlog** ⚠ | 详情卡弹出时焦点元素需在"被详情卡侵占后"画布中居中 / 关详情卡再调回 | ✅ done (Stage 5 R0 顺便修 DR-059) | `438b590` |
-| **Stage 5 R0** T8 点弧线 + R2 polish | arc-tooltip + handleArcClick + restoreArcOpacity + zoomFitToFocusCoords visCenterVB | ✅ done / 待 PM checkpoint | `438b590` push origin |
+| **Stage 5 R0** T8 点弧线 + R2 polish | arc-tooltip + handleArcClick + restoreArcOpacity + zoomFitToFocusCoords visCenterVB | ✅ done | `438b590` push origin |
+| **Stage 5 R1 PM** | 3 修：hit overlay 16px (DR-061) + endpoint fit CAD (DR-062) + 删 tooltip (DR-063) + focus mode hit 同步 | ✅ done | `10d2070` push origin |
 | **T9 双击中键 reset** | ⌂ 已 cover reset 路径 / T9 拍废 (spec § 11.1 acceptance 11→10) | ❌ 拍废 | — |
 | **Final** E2E + 4 件套 + ship | T10 | ⏸ 待启动 | — |
 
@@ -91,6 +92,9 @@
 | **DR-058** | **Stage 4 R1 PM**：焦点模式紧密重排（复用 computePersonSectionPositions / 飞到紧凑坐标 / 退出恢复原 datum）/ X spread 2708→50 / 54× 紧凑 | （R1 commit）|
 | **DR-059** | **Stage 5 R0 R2 polish**：zoomFitToFocusCoords 用 visCenterVB / 焦点元素天然在 popover-offset 后可见区中心 / POPOVER_PX=380 焦点模式预留 / targetK 改用 visibleVBWidth 而非 canvasW / fallback jsdom 用 canvasW + viewBox center / **tradeoff**: popover 关时元素偏左 (PM 反馈"关详情卡再调回"留 polish 二期 hook hideClaimPopover) | `438b590` |
 | **DR-060** | **T9 双击中键 reset 拍废**：⌂ 按钮已实现并 cover reset 路径（spec § 7.5 原本设计 ⌂ 是 T9 fallback）/ T9 反成 ⌂ 冗余 / spec § 11.1 acceptance 从 11 项减为 10 项 | — |
+| **DR-061** | **Stage 5 R1 Fix 1**：弧线 hit overlay / g.arc-hit-layer + path.arc-hit 透明 16px stroke + vector-effect non-scaling-stroke / hit area 固定 16 屏幕 px / 视觉 visible path.arc 不变 / 解 PM "弧线太细难选中" | `10d2070` |
+| **DR-062** | **Stage 5 R1 Fix 2**：handleArcClick 改 pathEl.getPointAtLength(0/mid/end) 算 endpoint+apex bbox / fit factor 0.7→0.55 / pixel 直接比避免 letterbox over-estimate / 解 PM "端点没飞进画布 / CAD zoom-selected 效果" | 同上 |
+| **DR-063** | **Stage 5 R1 Fix 3**：删 arc tooltip 完整模块 / arc-tooltip.ts + 10 单测删 / PM 反馈"颜色（绿/红/灰虚）+ 方向（左下/右上/右弯）已分关系类型 / tooltip 多余" | 同上 |
 
 ---
 
@@ -193,19 +197,22 @@ PM 复制这段到新窗口对话开头：
 3. specs/2026-05-14-m5-linea-explorability-design.md（M5 spec / DR-001~060）
 4. plans/2026-05-14-marx-m5-linea-explorability.md（M5 plan / T6~T10 TDD steps）
 
-当前状态（HEAD 438b590 / push origin）:
+当前状态（HEAD 10d2070 / push origin）:
 - Stage 1+2 完成（点 obs 居中 / DR-025~037 共 13 决策）
 - Stage 3 完成（时间轴改造 / 经 5 轮 PM checkpoint R0~R5 / DR-038~052 共 15 决策 / 其中
   DR-038/039/041 已作废 / 取代为 DR-042 vision pivot：时间轴 = 时间游标 / 不联动画布）
 - Stage 4 完成（焦点模式 / DR-053~058 / 详情卡「查看关联」按钮 + hover preview + 完全切换
   + 紧密重排 + 顶部面包屑 + zoom-fit）
-- Stage 5 R0 完成（T8 点弧线 + R2 polish / DR-059 + DR-060）：
-  · arc-tooltip.ts 新建 / mountArcTooltip + showArcTooltip + hideArcTooltip
-  · main.ts handleArcClick: pathBBox 算 fit 可见区 70% + 高亮 2.5/1.0 + tooltip
-  · main.ts restoreArcOpacity + svg.on('click') 兜底 + obsG.on('click') 联动 hide
-  · zoomFitToFocusCoords 改 visCenterVB（R2 polish）/ focus 模式预留 popover 380
-  · T9 双击中键 reset 拍废（⌂ 按钮已 cover / spec acceptance 11→10）
-- 测试 163/166（+10 arc-tooltip 新测）/ lint clean / tsc clean
+- Stage 5 R0 完成（DR-059 + DR-060）：
+  · main.ts handleArcClick + restoreArcOpacity（getBBox + tooltip / R1 重写）
+  · zoomFitToFocusCoords 用 visCenterVB（R2 polish）/ focus 模式预留 popover 380
+  · T9 双击中键 reset 拍废（⌂ 按钮已 cover）
+- Stage 5 R1 完成 PM 3 修（DR-061~063）：
+  · Fix 1 弧线 hit overlay 16px 透明 stroke + non-scaling / 视觉不变 / 解"太细难选中"
+  · Fix 2 handleArcClick 改 getPointAtLength endpoint+apex bbox + fit 0.55 / 解 CAD zoom-selected
+  · Fix 3 删 tooltip 完整模块 / 颜色+方向已分关系类型 / 多余
+  · focus mode 同步 hit overlay display + d (path.arc, path.arc-hit comma selector)
+- 测试 153/156 / lint clean / tsc clean
 - 3 fail 仍是 M3 pre-existing successor_notes 不变
 
 ⚠ 已知 polish backlog（不阻塞 ship）:
@@ -213,10 +220,13 @@ PM 复制这段到新窗口对话开头：
   修法: hook hideClaimPopover() / focus 模式下监听 popover close / 触发 zoomFitToFocusCoords 重算
   PM 用过实测看是否真痛 / 不痛就留着
 
-Stage 5 R1+ PM checkpoint（浏览器实测）:
-  - 点任意弧线 → 两端 obs 自动飞行 fit 进可见区 + 弧线高亮 + tooltip "同意 / 反对 / 延伸" 显示
-  - 点 obs / 点空白 / 点另一弧线 → 当前弧线复原 + tooltip 消失
-  - Focus 模式触发：详情卡「查看关联」→ 焦点元素飞到可见区中心（不是屏幕中心）
+Stage 5 R2 PM checkpoint（浏览器实测 R1 修后）:
+  - 点弧线（无视太细 / hit overlay 16 屏幕 px 容易点）→ 两端 obs 飞行 fit 可见区中心 + 弧线高亮（粗 2.5 + opacity 1.0）
+  - 端点不溢出 viewport（fit 0.55 + endpoint+apex bbox / CAD zoom-selected 等价效果）
+  - 不再弹屏幕中心 tooltip（颜色+方向已分关系）
+  - 点 obs / 点空白 / 点另一弧线 → 当前弧线复原原 style
+  - Focus 模式触发 → 焦点元素飞到可见区中心（不是屏幕中心 / DR-059）
+  - Focus 模式下点焦点弧线也 work（hit overlay 同步隐藏非焦点 + 同步 d 焦点紧凑坐标 / R1 顺手修）
   - 验证回归：Stage 1~4 全部交互（缩放 / pan / 时间游标拖 / ▶ 播放 / 焦点紧凑重排）不退化
 
 ship 路径 (Stage 5 R 轮收尾后启动):
