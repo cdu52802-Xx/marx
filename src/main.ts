@@ -519,10 +519,16 @@ applyTimelineFiltering(INITIAL_CURSOR_YEAR);
 // #app padding-left: 48px 避免 SVG 被遮挡（前面已设）
 // 若 PM 反馈 "sidebar 应跟画布一起 scroll" → 切回 flex layout 内部方案（5 分钟改回）
 
+// PM R5 Fix · DR-052 · sidebar bottom 0 → 60px 让出 timeline
+//   原 sidebar fixed top:0 bottom:0 / 跟 timeline (fixed bottom:0 left:0 right:0) 在底部重叠
+//   sidebar 后挂 DOM / 同 z-index 10 / 覆盖 timeline 最左 48px (含 ▶ 按钮)
+//   PM 反馈 "左侧边栏把时间轴最左侧挡住了 / 播放按钮也挡住了"
+//   修法：sidebar 不延伸到 timeline 区（bottom:60 跟 main.ts padding-bottom + popover bottom 同步）
+//   6 个 filter icon 仅占 sidebar 上方 ~270px / 远短于 viewport / 60px 留底不影响功能
 const sidebarContainer = document.createElement('div');
 sidebarContainer.id = 'sidebar-fixed';
 sidebarContainer.style.cssText =
-  'position:fixed;left:0;top:0;bottom:0;z-index:10;box-shadow:2px 0 8px rgba(58,35,96,0.06)';
+  'position:fixed;left:0;top:0;bottom:60px;z-index:10;box-shadow:2px 0 8px rgba(58,35,96,0.06)';
 document.body.appendChild(sidebarContainer);
 
 mountSidebar({
