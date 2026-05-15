@@ -628,6 +628,18 @@ function computeFocusSet(c0: ClaimNode, relations: ClaimRelation[]): {
 | `src/components/claim-popover.test.ts` | 加按钮渲染测 + hover/click event 测 |
 | `src/main.test.ts`（如有）/ 否则 e2e Playwright | focus mode 进出 + DOM hide 验证 |
 
+### 14.6.1 Stage 4 R1 PM checkpoint（2026-05-15 实施期补 · 紧密重排）
+
+PM 浏览器实测 Stage 4 R0 (commit bad234b) 后反馈：
+
+> "剩下的 obs 应该紧密排列，而不是在原位 / 主画布中 A 左上 B 中 C 右下 / AB 隔 20 条 / BC 隔 100 多条 / 按下按钮时 A/B/C 应该紧挨在一起 / 中间无空 / 像 CAD zoom→选择对象后的效果"
+
+| 编号 | 决策 | 实施 |
+|---|---|---|
+| DR-058 | **焦点模式紧密重排**：复用 `computePersonSectionPositions(focusPersonInputs)` 算紧凑斜向流坐标 / SVG section transform / obs transform / arc d 全部飞到新坐标 / 退出焦点时恢复原 datum 坐标 | `reflowFocusLayout` + `applyFocusLayout` + `restoreOriginalLayout` 函数 / `zoomFitToFocus` 改 `zoomFitToFocusCoords(obsCoordsMap)` 用新 bbox |
+
+**实测**：3 person 紧凑 X spread = 50px / 主画布原 spread = 2708px（54× 紧凑）。
+
 ### 14.7 风险
 
 | 风险 | 缓解 |

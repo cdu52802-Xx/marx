@@ -20,7 +20,8 @@
 | **Stage 3 R3 PM checkpoint** | 2 fix：yearMax 1950→2030 + timeline 瘦身 130→80px + popover bottom 100 (DR-049~050) | ✅ commit `fef4d67` | push origin |
 | **Stage 3 R4 PM checkpoint** | 资深 UIUX 重设布局：单行 + ▶ 28×28 图标 + floating cursor badge (DR-051) / timeline 57px | ✅ commit `58e11fa` | push origin |
 | **Stage 3 R5 PM checkpoint** | sidebar bottom 60 让出 timeline + ▶ 按钮（DR-052）| ✅ commit `13c3f9a` | push origin · Stage 3 收尾 |
-| **Stage 4** 焦点模式 | 查看关联按钮 + hover preview + 完全切换 + 面包屑 + zoom-fit (DR-053~057) | ✅ 实施完 / 等 PM | （pending commit）|
+| **Stage 4 R0** 焦点模式 | 查看关联按钮 + hover preview + 完全切换 + 面包屑 + zoom-fit (DR-053~057) | ✅ commit `bad234b` | push origin |
+| **Stage 4 R1 PM** | 紧密重排 (DR-058) / X spread 54× 紧凑 / 像 CAD zoom-selected | ✅ 实施完 / 等 PM R2 | （pending commit）|
 | **Stage 4** 弧线 + 双击中键 | T8 点弧线 / T9 双击中键 reset | ⏸ 待启动 | — |
 | **Final** E2E + 4 件套 + ship | T10 | ⏸ 待启动 | — |
 
@@ -84,7 +85,8 @@
 | **DR-054** | **Stage 4 Q2**：双段式 UX hover button 高亮淡显预览 + click button 完全切换（PM 主动澄清）| 同上 |
 | **DR-055** | **Stage 4 Q2 补**：切换后保留 person section（E+A+C 头像 + 名字 + 焦点 obs）/ 不是孤立 6 obs | 同上 |
 | **DR-056** | **Stage 4 Q3**：顶部面包屑「全部 → 焦点：观点 prefix」点全部返回 | 同上 |
-| **DR-057** | **Stage 4 Q4**：链式焦点第一版不允许 / 后续 polish 加 | 同上 |
+| **DR-057** | **Stage 4 Q4**：链式焦点第一版不允许 / 后续 polish 加 | `bad234b` |
+| **DR-058** | **Stage 4 R1 PM**：焦点模式紧密重排（复用 computePersonSectionPositions / 飞到紧凑坐标 / 退出恢复原 datum）/ X spread 2708→50 / 54× 紧凑 | （R1 commit）|
 
 ---
 

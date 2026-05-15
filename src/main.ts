@@ -582,6 +582,101 @@ function clearHoverPreviewFiltering(): void {
   applyTimelineFiltering(cy);
 }
 
+// PM Stage 4 R1 反馈 (DR-058)：focus mode 不能在原 layout 紧凑 / 要重排
+//   原 layout 焦点 obs 隔得远（A 左上 / B 中 / C 右下 / 中间几十条无关 obs）
+//   PM 要 "AB AC 紧挨在一起 / 中间无空" / 像 CAD zoom-selected 但内容也紧凑重排
+//   方案：focus 时调 computePersonSectionPositions(focusPersonInputs) 算紧凑斜向流坐标
+//        SVG g.person-section / g.obs / path.arc transform 飞到新坐标
+//        退 focus 时所有元素 transform 恢复原 datum 坐标
+function reflowFocusLayout(fs: FocusSet): {
+  obsCoordsMap: Map<string, { x: number; y: number }>;
+  sectionCoordsMap: Map<string, { x: number; y: number }>;
+} {
+  // 用焦点 person + 仅焦点 obs 作为 input
+  const focusPersonInputs = persons
+    .filter((p) => fs.personIds.has(p.id))
+    .map((p) => ({
+      id: p.id,
+      name_zh: p.name_zh,
+      name_orig: p.name_orig,
+      birth_year: p.birth_year,
+      death_year: p.death_year,
+      claims: (claimsByAuthor.get(p.id) ?? []).filter((c) => fs.obsIds.has(c.id)),
+    }));
+
+  // 复用主画布 layout 算法 / 3 person + 6 obs 自然比 27 person 紧凑得多
+  const focusSections = computePersonSectionPositions(focusPersonInputs);
+
+  const obsCoordsMap = new Map<string, { x: number; y: number }>();
+  const sectionCoordsMap = new Map<string, { x: number; y: number }>();
+  for (const s of focusSections) {
+    sectionCoordsMap.set(s.id, { x: s.x, y: s.y });
+    for (const c of s.claims) {
+      obsCoordsMap.set(c.id, { x: c.x, y: c.y });
+    }
+  }
+  return { obsCoordsMap, sectionCoordsMap };
+}
+
+function applyFocusLayout(fs: FocusSet): void {
+  const { obsCoordsMap, sectionCoordsMap } = reflowFocusLayout(fs);
+
+  // section transform 飞到紧凑新坐标
+  d3.selectAll<SVGGElement, PersonSection>('g.person-section').each(function (section) {
+    if (!fs.personIds.has(section.id)) return;
+    const newSec = sectionCoordsMap.get(section.id);
+    if (!newSec) return;
+    d3.select(this).attr('transform', `translate(${newSec.x},${newSec.y})`);
+
+    // 该 section 下焦点 obs transform 也飞到 new coords（相对 section 偏移）
+    d3.select(this)
+      .selectAll<SVGGElement, ClaimWithCoords>('g.obs')
+      .each(function (c) {
+        if (!fs.obsIds.has(c.id)) return;
+        const newObs = obsCoordsMap.get(c.id);
+        if (!newObs) return;
+        d3.select(this).attr(
+          'transform',
+          `translate(${newObs.x - newSec.x},${newObs.y - newSec.y})`,
+        );
+      });
+  });
+
+  // arc 用新坐标重画 d
+  d3.selectAll<SVGPathElement, ClaimRelation>('path.arc').each(function (r) {
+    if (!fs.obsIds.has(r.source) || !fs.obsIds.has(r.target)) return;
+    const s = obsCoordsMap.get(r.source);
+    const t = obsCoordsMap.get(r.target);
+    if (!s || !t) return;
+    d3.select(this).attr('d', generateArcPath(s.x, s.y - 3, t.x, t.y - 3, r.type));
+  });
+
+  // zoom-fit 用新 bbox（紧凑后 bbox 小很多 / zoom 更舒服）
+  zoomFitToFocusCoords(obsCoordsMap);
+}
+
+function restoreOriginalLayout(): void {
+  // section transform 恢复原 datum 坐标
+  d3.selectAll<SVGGElement, PersonSection>('g.person-section').each(function (section) {
+    d3.select(this).attr('transform', `translate(${section.x},${section.y})`);
+
+    // 该 section 下所有 obs transform 也恢复
+    d3.select(this)
+      .selectAll<SVGGElement, ClaimWithCoords>('g.obs')
+      .each(function (c) {
+        d3.select(this).attr('transform', `translate(${c.x - section.x},${c.y - section.y})`);
+      });
+  });
+
+  // arc 用原 datum 坐标重画 d
+  d3.selectAll<SVGPathElement, ClaimRelation>('path.arc').each(function (r) {
+    const s = claimIdToCoords.get(r.source);
+    const t = claimIdToCoords.get(r.target);
+    if (!s || !t) return;
+    d3.select(this).attr('d', generateArcPath(s.x, s.y - 3, t.x, t.y - 3, r.type));
+  });
+}
+
 function enterFocusMode(c0Id: string): void {
   const fs = computeFocusSet(c0Id);
   inFocusMode = true;
@@ -596,20 +691,13 @@ function enterFocusMode(c0Id: string): void {
   d3.selectAll<SVGGElement, PersonSection>('g.person-section').style('display', (s) =>
     fs.personIds.has(s.id) ? null : 'none',
   );
-  // 焦点内 obs / arc / person 仍受时间游标 filtering / 但 hover preview 已 set opacity 1
   // 强制 normal opacity 进焦点（避免 hover leave 后残留 0.15）
-  d3.selectAll<SVGGElement, ClaimWithCoords>('g.obs').attr('opacity', (c) =>
-    fs.obsIds.has(c.id) ? NORMAL_OPACITY : FADED_OPACITY,
-  );
-  d3.selectAll<SVGPathElement, ClaimRelation>('path.arc').attr('opacity', (r) =>
-    fs.obsIds.has(r.source) && fs.obsIds.has(r.target) ? NORMAL_OPACITY : FADED_OPACITY,
-  );
-  d3.selectAll<SVGGElement, PersonSection>('g.person-section').attr('opacity', (s) =>
-    fs.personIds.has(s.id) ? NORMAL_OPACITY : FADED_OPACITY,
-  );
+  d3.selectAll<SVGGElement, ClaimWithCoords>('g.obs').attr('opacity', NORMAL_OPACITY);
+  d3.selectAll<SVGPathElement, ClaimRelation>('path.arc').attr('opacity', NORMAL_OPACITY);
+  d3.selectAll<SVGGElement, PersonSection>('g.person-section').attr('opacity', NORMAL_OPACITY);
 
-  // zoom-fit 到焦点元素 bbox（让 6 个 obs 充满 viewport）
-  zoomFitToFocus(fs);
+  // DR-058 紧密重排 + zoom-fit
+  applyFocusLayout(fs);
 
   // 显示顶部面包屑
   const c0 = claimById.get(c0Id);
@@ -630,6 +718,9 @@ function exitFocusMode(): void {
   d3.selectAll<SVGPathElement, ClaimRelation>('path.arc').style('display', null);
   d3.selectAll<SVGGElement, PersonSection>('g.person-section').style('display', null);
 
+  // DR-058 · 焦点紧凑 layout 恢复原 datum 坐标（section + obs transform + arc d）
+  restoreOriginalLayout();
+
   // 恢复时间游标 filtering
   const cy = timelineApi?.getCurrentYear() ?? INITIAL_CURSOR_YEAR;
   applyTimelineFiltering(cy);
@@ -641,15 +732,14 @@ function exitFocusMode(): void {
   breadcrumbApi?.hideFocus();
 }
 
-function zoomFitToFocus(fs: FocusSet): void {
-  // 算焦点 obs 的 bbox（在 canvas 坐标系）
+// DR-058 · zoom-fit 接受紧凑后的新坐标 Map（不再用原 claimIdToCoords）
+function zoomFitToFocusCoords(obsCoordsMap: Map<string, { x: number; y: number }>): void {
+  // 算紧凑后 obs 的 bbox
   let minX = Infinity,
     minY = Infinity,
     maxX = -Infinity,
     maxY = -Infinity;
-  for (const id of fs.obsIds) {
-    const coords = claimIdToCoords.get(id);
-    if (!coords) continue;
+  for (const coords of obsCoordsMap.values()) {
     if (coords.x < minX) minX = coords.x;
     if (coords.y < minY) minY = coords.y;
     if (coords.x > maxX) maxX = coords.x;
