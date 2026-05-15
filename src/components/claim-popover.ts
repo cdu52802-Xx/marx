@@ -13,11 +13,24 @@
 
 import type { ClaimNode } from '../types/Claim.ts';
 
-// Stage 2 R3 Issue #1 修：删 outsideClickGuard 注入点
-// 原因：小手 pan mode 删除 / 不再需要 guard 区分 pan vs 默认 mode
-// d3.zoom drag = pan（mouse 移动）/ click = 不移动 / 天然分离
-// 单击空白 → click 触发 outsideHandler → 关详情卡
-// 拖动空白 → click 不触发（mouse 移动）→ 不关详情卡
+// Stage 2 R4 PM checkpoint 改造（4 issue 一起修）：
+//   Issue #1 · 工具栏点击不关详情卡 → outsideHandler 加白名单
+//   Issue #2 · 同 claim 不重复动画 → showClaim 加 same-claim guard
+//   Issue #3 · 多 popover 堆叠 → hideClaim 改 querySelectorAll + 防御 cleanup
+//   Issue #4 · 动画稍慢 → 滑入 450ms easeOutQuart / 滑出 200ms easeInQuart（出快入慢）
+//
+// 行为约束 (PM 拍板 Q2/Q4 + R4 修订):
+//   - 关闭 3 路: × 按钮 / Esc 键 / 点击 svg 画布空白 (工具栏点击不关)
+//   - 切换 claim 时：旧 popover 200ms 滑出 → 等结束 → 新 popover 450ms 滑入（sequence）
+//   - 同 claim 重点击：early return / 无动画
+
+const SHOW_DURATION_MS = 450;
+const HIDE_DURATION_MS = 200;
+const SHOW_TRANSITION = `transform ${SHOW_DURATION_MS}ms cubic-bezier(0.25, 0.46, 0.45, 0.94)`; // easeOutQuart
+const HIDE_TRANSITION = `transform ${HIDE_DURATION_MS}ms cubic-bezier(0.55, 0.06, 0.68, 0.19)`; // easeInQuart
+
+// Stage 2 R4 Issue #3 · pending show cancellation（防 rapid click race condition）
+let _pendingShowTimer: ReturnType<typeof setTimeout> | null = null;
 
 export interface ClaimPopoverContext {
   authorName: string;
@@ -41,10 +54,39 @@ const CATS_LABELS: Record<string, string> = {
 };
 
 export function showClaimPopover(claim: ClaimNode, ctx: ClaimPopoverContext) {
-  hideClaimPopover();
+  // Stage 2 R4 Issue #2 · same-claim guard: 同 claim 重点击 early return
+  const existing = document.querySelector<HTMLElement>('.claim-popover');
+  if (existing && existing.dataset.claimId === claim.id && existing.dataset.state !== 'closing') {
+    return; // 已显示同 claim / 跳过 hide+show
+  }
 
+  // Stage 2 R4 Issue #3 · cancel pending show（rapid click 防 race）
+  if (_pendingShowTimer) {
+    clearTimeout(_pendingShowTimer);
+    _pendingShowTimer = null;
+  }
+
+  // 不同 claim 已显示中 → 先 hide / 等 HIDE_DURATION_MS sequence
+  if (existing && existing.dataset.state !== 'closing') {
+    hideClaimPopover(); // 触发 200ms 滑出
+    _pendingShowTimer = setTimeout(() => {
+      _pendingShowTimer = null;
+      // 防御性 cleanup（rapid click 残留）
+      document.querySelectorAll('.claim-popover').forEach((el) => el.remove());
+      _doShowClaim(claim, ctx);
+    }, HIDE_DURATION_MS);
+    return;
+  }
+
+  // 无 existing 或 existing 已 closing → 立即 show + 防御性 cleanup
+  document.querySelectorAll('.claim-popover').forEach((el) => el.remove());
+  _doShowClaim(claim, ctx);
+}
+
+function _doShowClaim(claim: ClaimNode, ctx: ClaimPopoverContext) {
   const sidebar = document.createElement('aside');
   sidebar.className = 'claim-popover';
+  sidebar.dataset.claimId = claim.id; // Issue #2 · same-claim guard 用
   sidebar.style.cssText = `
     position:fixed;
     top:0;
@@ -57,7 +99,7 @@ export function showClaimPopover(claim: ClaimNode, ctx: ClaimPopoverContext) {
     padding:28px 32px 36px;
     overflow-y:auto;
     transform:translateX(100%);
-    transition:transform 0.35s cubic-bezier(0.2,0.8,0.2,1);
+    transition:${SHOW_TRANSITION};
     z-index:1000;
     font-family:'EB Garamond','Georgia',serif;
     color:#2a2a2a;
@@ -291,8 +333,20 @@ export function showClaimPopover(claim: ClaimNode, ctx: ClaimPopoverContext) {
   // 阻止 document 层 mousedown listener 触发 / outsideHandler 永不 fire
   // click 事件 d3.zoom 不监听 / 正常 bubble 到 document
   // setTimeout 0 trick 仍然必要（防"打开本次 click"立即被识别为外部关闭）
+  // Stage 2 R4 Issue #1 修：工具栏点击不关详情卡（人在看内容时点工具栏 / 不应关）
+  //   工具栏 = 左 sidebar 筛选 / 左下 zoom-control / 底部 timeline
+  //   只在点 svg 画布空白时关 / 点 popover 自己也不关
   const outsideHandler = (e: MouseEvent) => {
-    if (!sidebar.contains(e.target as Node)) hideClaimPopover();
+    if (sidebar.contains(e.target as Node)) return;
+    const target = e.target as Element;
+    if (
+      target.closest('.sidebar') || // 左侧筛选 sidebar
+      target.closest('.zoom-control') || // 左下缩放控件
+      target.closest('#timeline-fixed') // 底部时间轴
+    ) {
+      return; // 工具栏点击不关
+    }
+    hideClaimPopover();
   };
   const outsideTimer = setTimeout(() => document.addEventListener('click', outsideHandler), 0);
   const sidebarAny = sidebar as unknown as {
@@ -304,28 +358,31 @@ export function showClaimPopover(claim: ClaimNode, ctx: ClaimPopoverContext) {
 }
 
 export function hideClaimPopover() {
-  const existing = document.querySelector('.claim-popover') as HTMLElement | null;
-  if (!existing) return;
-  if (existing.dataset.state === 'closing') return; // 已在关闭流程, idempotent
+  // Stage 2 R4 Issue #3 修：querySelector → querySelectorAll
+  // 原因：之前只关 first .claim-popover / 多个堆叠时其他不动 / 多次 click 累积
+  // 现在遍历全部 / 每个独立 close
+  const existings = document.querySelectorAll<HTMLElement>('.claim-popover');
+  existings.forEach((el) => {
+    if (el.dataset.state === 'closing') return; // idempotent
 
-  existing.dataset.state = 'closing';
+    el.dataset.state = 'closing';
 
-  // 立即清掉 listeners (滑出 350ms 期间不再响应任何点击 / 键盘)
-  const meta = existing as unknown as {
-    _escHandler?: (e: KeyboardEvent) => void;
-    _outsideHandler?: (e: MouseEvent) => void;
-    _outsideTimer?: ReturnType<typeof setTimeout>;
-  };
-  if (meta._escHandler) document.removeEventListener('keydown', meta._escHandler);
-  // Stage 2 Issue 2.3 修：跟 register 一致用 click
-  if (meta._outsideHandler) document.removeEventListener('click', meta._outsideHandler);
-  if (meta._outsideTimer) clearTimeout(meta._outsideTimer);
+    // 立即清掉 listeners (滑出期间不再响应任何点击 / 键盘)
+    const meta = el as unknown as {
+      _escHandler?: (e: KeyboardEvent) => void;
+      _outsideHandler?: (e: MouseEvent) => void;
+      _outsideTimer?: ReturnType<typeof setTimeout>;
+    };
+    if (meta._escHandler) document.removeEventListener('keydown', meta._escHandler);
+    if (meta._outsideHandler) document.removeEventListener('click', meta._outsideHandler);
+    if (meta._outsideTimer) clearTimeout(meta._outsideTimer);
 
-  // 触发滑出动画 (transform translateX(0) → 100%, 沿用 show 时的 0.35s cubic-bezier transition)
-  existing.style.transform = 'translateX(100%)';
+    // Stage 2 R4 Issue #4 · 滑出用快 transition (200ms easeInQuart / 出快入慢)
+    el.style.transition = HIDE_TRANSITION;
+    el.style.transform = 'translateX(100%)';
 
-  // 350ms 后 remove DOM (匹配 transition duration)
-  setTimeout(() => existing.remove(), 350);
+    setTimeout(() => el.remove(), HIDE_DURATION_MS);
+  });
 }
 
 function escapeHtml(s: string): string {
