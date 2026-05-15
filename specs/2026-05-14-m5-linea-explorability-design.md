@@ -534,7 +534,113 @@ PM 决策依据 mockup 在 `public/m5-stage3-brainstorm.html`（保留作 archiv
 
 ---
 
-## 14. 跨窗口续接（M5 主线 A）
+## 14. Stage 4 焦点模式 / Focus Mode（2026-05-15 PM 新需求 brainstorm 落档）
+
+### 14.1 触发动机 + 价值
+
+PM Stage 3 收尾后提出新需求："**相关性过滤**"：
+
+> "比如人物 E 的第 3 条观点与 A 的 2/5/10 条、C 的 11/20 条观点有关联 / 他们之间是连线 / 距离可能在画布上一个在左上角一个在右下角 / 点击 E-3 切换画布只剩这几个观点 + 连线 / 按原来相对顺序斜着排列 / 还要返回按钮"
+
+资深产品视角分析：
+- 跟 Stage 3 vision 衔接：Stage 3 是**时间维度滤镜**（"X 年存在哪些观点"）/ 焦点模式是**关系维度滤镜**（"这观点跟谁有关"）/ 两个滤镜叠加 = 探索性 × 深思性双倍
+- PM 起名"相关性过滤"对用户不直观 / UI 文案改"查看关联" / 模式叫 **Focus Mode**
+
+### 14.2 brainstorm Q1-Q4 PM 拍板（2026-05-15 实施期）
+
+| 编号 | 决策 | 备选 | 理由 |
+|---|---|---|---|
+| DR-053 | **Q1 触发** = 详情卡里加「查看关联」按钮 | 双击 obs（破 DR-031）/ shift+click / obs 旁加图标 | 不破坏 DR-031 单击=详情卡 / 发现路径自然（详情卡里看到关联列表 → 按钮）|
+| DR-054 | **Q2 双段式 UX**：详情卡「查看关联」按钮 hover → **高亮淡显预览** / click → **完全切换** | 只切换（无 preview）/ 只高亮（无切换）| PM 主动澄清"高亮淡显是 preview 状态 / 完全切换是 commit 状态" / 资深 UX 经典 preview-before-commit 模式 |
+| DR-055 | **Q2 切换后保留 person section**：E + A + C 三个 person 头像 + 名字 + 焦点 obs 行 / **不是**孤立 6 obs | 只 6 obs / 重排带头像 | PM 主动澄清"每个观点的所有人也需要保留"/ 保留 person section 结构 / 沿用 claim-layout.ts 算法 |
+| DR-056 | **Q3 返回** = 顶部面包屑「全部 → 焦点：观点 prefix」/ 点「全部」返回 | 左下 ← 按钮 / Esc 键 | 跟文件管理器 / 网页 breadcrumb 一致 / 既显"现在在哪"又能返回 / 不占左下 zoom-control 区 |
+| DR-057 | **Q4 链式焦点**第一版不允许 / 后续 polish 加 | 允许（更深探索 / 复杂度+）| 第一版简单 / 想看 A-2 关联 = 先点「全部」回主图 → 再点 A-2 |
+
+### 14.3 我自审的 5 个 polish 默认（PM 不满意再调）
+
+| 项 | 默认 | 理由 |
+|---|---|---|
+| 关系范围 | 一度直接关系（source/target 中任一是当前 obs） | 二度信息过载 / Polish 可后续加 |
+| 关系类型 | 全显示 3 类（agreement/disagreement/extends）| M4 现有 / 颜色区分（绿/红/灰虚线）|
+| 空状态 | 进入但提示"该观点未跟其他观点关联" | 不阻挡用户 / 给反馈 |
+| 时间游标共存 | 焦点模式下时间游标仍 fade 焦点 obs（按 year vs cursor）| Stage 3 不破坏 / 滤镜叠加 |
+| sidebar 共存 | 焦点模式下 sidebar filter 仍生效于焦点 obs | Stage 3 不破坏 |
+| **焦点画布自动 zoom-fit** | 进焦点后自动计算焦点 obs bbox + zoom-fit 让 6 个 obs 充满 viewport | 充分利用屏幕 / 用户不必再 zoom |
+
+### 14.4 三状态 state machine
+
+```
+                     全画布默认
+                          │
+            单击 obs → 弹详情卡
+                          │
+              ┌───────────┴────────────┐
+              │                        │
+        Hover 关联按钮              Click 关联按钮
+              │                        │
+        Hover Preview 态          Focus Mode 态
+   (其他 obs opacity 0.15)   (其他 obs display:none + zoom-fit)
+              │                        │
+        Mouseleave 按钮          点面包屑「全部」
+              │                        │
+              └───────────┬────────────┘
+                          │
+                       恢复全画布
+```
+
+| 状态 | 实施细节 |
+|---|---|
+| **Default** | `g.obs / path.arc / g.person-section` opacity = 1（受时间游标 + sidebar filter 影响）|
+| **Hover Preview** | 非焦点 obs / arc / person section opacity = 0.15 / 焦点 obs / arc / person opacity = 1 |
+| **Focus Mode** | 非焦点 obs / arc / person section style.display = 'none' / 焦点元素 opacity = 1 / 自动 zoom-fit to focus bbox + 显示顶部 breadcrumb |
+
+### 14.5 焦点元素集合算法
+
+输入：触发 obs `c0` / 所有 relations。
+
+```ts
+function computeFocusSet(c0: ClaimNode, relations: ClaimRelation[]): {
+  obsIds: Set<string>;
+  personIds: Set<string>;
+  relationIds: Set<{source, target}>;
+} {
+  const obsIds = new Set([c0.id]);
+  const relevantRelations: ClaimRelation[] = [];
+  for (const r of relations) {
+    if (r.source === c0.id || r.target === c0.id) {
+      relevantRelations.push(r);
+      obsIds.add(r.source);
+      obsIds.add(r.target);
+    }
+  }
+  const personIds = new Set([...obsIds].map(id => claimById.get(id)?.author_id).filter(Boolean));
+  return { obsIds, personIds, relationIds: relevantRelations };
+}
+```
+
+### 14.6 技术实施
+
+| 文件 | 改动 |
+|---|---|
+| `src/components/claim-popover.ts` | 加「查看关联」按钮（仅当 `agreementClaims.length + disagreementClaims.length > 0` 显示）/ button hoverenter / hoverleave / click 3 event |
+| `src/components/breadcrumb.ts` | **新建** / fixed top:0 left:48px right:0 z-index:11 / 显示「全部」+ 焦点 obs prefix / 点「全部」触发 onExitFocus |
+| `src/main.ts` | 加 focusMode state + applyFocusFiltering(obsIds, personIds) + applyHoverPreviewFiltering(obsIds, personIds) + 进/退焦点 listener / 焦点 bbox 计算 + zoomCtrl.programmaticZoom-fit |
+| `src/components/claim-popover.test.ts` | 加按钮渲染测 + hover/click event 测 |
+| `src/main.test.ts`（如有）/ 否则 e2e Playwright | focus mode 进出 + DOM hide 验证 |
+
+### 14.7 风险
+
+| 风险 | 缓解 |
+|---|---|
+| **R1** Focus bbox zoom-fit 跟现有 d3.zoom translateExtent 冲突（pan boundary） | 临时关闭 translateExtent / focus 出后恢复 |
+| **R2** hover preview rapid in-out 抖动（用户鼠标在按钮上下出入快）| 50ms debounce / 或 mouseleave 不立即恢复（focus 状态下 leave 仍保持 preview）|
+| **R3** 孤立 obs（无 relation） | 「查看关联」按钮 disabled + tooltip "该观点未跟其他观点关联" |
+| **R4** 时间游标 + sidebar filter 跟 focus 叠加多层 opacity 计算冲突 | applyFocusFiltering 用 `display:none` 而非 opacity（cleanly 不冲突）|
+| **R5** 退出 focus 后 zoom 不回 fit-to-content 全景 | exitFocus 调 zoomCtrl.reset() |
+
+---
+
+## 15. 跨窗口续接（M5 主线 A）
 
 新窗口开场白模板：
 

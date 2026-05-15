@@ -28,6 +28,7 @@ import {
 } from './components/claim-layout.ts';
 import { mountTimeline } from './components/timeline.ts';
 import { mountSidebar } from './components/sidebar.ts';
+import { mountBreadcrumb, type BreadcrumbApi } from './components/breadcrumb.ts';
 import { createZoom } from './viz/zoom.ts';
 import { mountZoomControl, updateZoomDisplay } from './components/zoom-control.ts';
 import {
@@ -437,6 +438,10 @@ sectionG.each(function (section) {
       sourceWorkName: (sourceWork as { name_zh?: string } | null | undefined)?.name_zh,
       agreementClaims,
       disagreementClaims,
+      // Stage 4 焦点模式 (DR-053~057) · popover「查看关联」3 event 接到 main.ts
+      onHoverFocusPreview: (cid) => applyHoverPreviewFiltering(computeFocusSet(cid)),
+      onLeaveFocusPreview: () => clearHoverPreviewFiltering(),
+      onEnterFocus: (cid) => enterFocusMode(cid),
     });
   });
 
@@ -483,6 +488,11 @@ const INITIAL_CURSOR_YEAR = TIMELINE_YEAR_MAX;
 const FADED_OPACITY = 0.15;
 const NORMAL_OPACITY = 1;
 
+// Stage 4 焦点模式 state（先声明 / 函数闭包引用）
+let timelineApi: { getCurrentYear: () => number } | null = null;
+let breadcrumbApi: BreadcrumbApi | null = null;
+let inFocusMode = false;
+
 function applyTimelineFiltering(cursorYear: number): void {
   // 观点（紫圆点 + claim_text 行）淡显
   d3.selectAll<SVGGElement, ClaimWithCoords>('g.obs').attr('opacity', (c) =>
@@ -502,7 +512,7 @@ function applyTimelineFiltering(cursorYear: number): void {
   );
 }
 
-mountTimeline({
+timelineApi = mountTimeline({
   container: timelineContainer,
   yearMin: TIMELINE_YEAR_MIN,
   yearMax: TIMELINE_YEAR_MAX,
@@ -511,6 +521,171 @@ mountTimeline({
 });
 // 初始 fading apply 一次（1950 = 全显示 / 但保持模式一致性）
 applyTimelineFiltering(INITIAL_CURSOR_YEAR);
+
+// === Stage 4 · 顶部面包屑 mount（焦点模式时显示）===
+const breadcrumbContainer = document.createElement('div');
+breadcrumbContainer.id = 'breadcrumb-fixed';
+breadcrumbContainer.style.cssText =
+  'position:fixed;top:54px;left:48px;right:0;z-index:11;pointer-events:auto';
+document.body.appendChild(breadcrumbContainer);
+breadcrumbApi = mountBreadcrumb({ container: breadcrumbContainer, onExitFocus: exitFocusMode });
+
+// === Stage 4 焦点模式 / Focus Mode (DR-053 ~ DR-057 + spec § 14) ===
+//   触发：详情卡「查看关联」按钮 hover preview + click 切换
+//   两态 + 全画布默认 = 3 state machine
+//   保留 person section 头像 + 名字 (DR-055) / 沿用 claim-layout
+
+interface FocusSet {
+  obsIds: Set<string>;
+  personIds: Set<string>;
+}
+
+function computeFocusSet(c0Id: string): FocusSet {
+  const obsIds = new Set<string>([c0Id]);
+  for (const r of relations) {
+    if (r.source === c0Id || r.target === c0Id) {
+      obsIds.add(r.source);
+      obsIds.add(r.target);
+    }
+  }
+  const personIds = new Set<string>();
+  for (const id of obsIds) {
+    const c = claimById.get(id);
+    if (c) personIds.add(c.author_id);
+  }
+  return { obsIds, personIds };
+}
+
+// 进焦点 / 退焦点要保留时间游标 filtering 的相互作用：
+//   - hover preview: opacity 仅作用于"非焦点 + 时间游标内"的元素
+//   - focus mode: display:none 非焦点 / 焦点内 opacity 仍受时间游标控制
+//   - 退焦点: 重新调 applyTimelineFiltering(currentCursor) 恢复
+//   inFocusMode 在文件顶部已声明（state hoisting）
+
+function applyHoverPreviewFiltering(fs: FocusSet): void {
+  // hover 预览：非焦点 obs opacity 0.15 / 焦点 obs opacity 1
+  d3.selectAll<SVGGElement, ClaimWithCoords>('g.obs').attr('opacity', (c) =>
+    fs.obsIds.has(c.id) ? NORMAL_OPACITY : FADED_OPACITY,
+  );
+  d3.selectAll<SVGPathElement, ClaimRelation>('path.arc').attr('opacity', (r) =>
+    fs.obsIds.has(r.source) && fs.obsIds.has(r.target) ? NORMAL_OPACITY : FADED_OPACITY,
+  );
+  d3.selectAll<SVGGElement, PersonSection>('g.person-section').attr('opacity', (s) =>
+    fs.personIds.has(s.id) ? NORMAL_OPACITY : FADED_OPACITY,
+  );
+}
+
+function clearHoverPreviewFiltering(): void {
+  if (inFocusMode) return; // 焦点模式下 leave 不恢复（保持 focus）
+  // 否则恢复时间游标 filtering
+  const cy = timelineApi?.getCurrentYear() ?? INITIAL_CURSOR_YEAR;
+  applyTimelineFiltering(cy);
+}
+
+function enterFocusMode(c0Id: string): void {
+  const fs = computeFocusSet(c0Id);
+  inFocusMode = true;
+
+  // 非焦点元素 display:none
+  d3.selectAll<SVGGElement, ClaimWithCoords>('g.obs').style('display', (c) =>
+    fs.obsIds.has(c.id) ? null : 'none',
+  );
+  d3.selectAll<SVGPathElement, ClaimRelation>('path.arc').style('display', (r) =>
+    fs.obsIds.has(r.source) && fs.obsIds.has(r.target) ? null : 'none',
+  );
+  d3.selectAll<SVGGElement, PersonSection>('g.person-section').style('display', (s) =>
+    fs.personIds.has(s.id) ? null : 'none',
+  );
+  // 焦点内 obs / arc / person 仍受时间游标 filtering / 但 hover preview 已 set opacity 1
+  // 强制 normal opacity 进焦点（避免 hover leave 后残留 0.15）
+  d3.selectAll<SVGGElement, ClaimWithCoords>('g.obs').attr('opacity', (c) =>
+    fs.obsIds.has(c.id) ? NORMAL_OPACITY : FADED_OPACITY,
+  );
+  d3.selectAll<SVGPathElement, ClaimRelation>('path.arc').attr('opacity', (r) =>
+    fs.obsIds.has(r.source) && fs.obsIds.has(r.target) ? NORMAL_OPACITY : FADED_OPACITY,
+  );
+  d3.selectAll<SVGGElement, PersonSection>('g.person-section').attr('opacity', (s) =>
+    fs.personIds.has(s.id) ? NORMAL_OPACITY : FADED_OPACITY,
+  );
+
+  // zoom-fit 到焦点元素 bbox（让 6 个 obs 充满 viewport）
+  zoomFitToFocus(fs);
+
+  // 显示顶部面包屑
+  const c0 = claimById.get(c0Id);
+  const prefix = c0
+    ? c0.claim_text.length > 20
+      ? c0.claim_text.slice(0, 20) + '…'
+      : c0.claim_text
+    : c0Id;
+  breadcrumbApi?.showFocus(prefix);
+}
+
+function exitFocusMode(): void {
+  if (!inFocusMode) return;
+  inFocusMode = false;
+
+  // 恢复 display
+  d3.selectAll<SVGGElement, ClaimWithCoords>('g.obs').style('display', null);
+  d3.selectAll<SVGPathElement, ClaimRelation>('path.arc').style('display', null);
+  d3.selectAll<SVGGElement, PersonSection>('g.person-section').style('display', null);
+
+  // 恢复时间游标 filtering
+  const cy = timelineApi?.getCurrentYear() ?? INITIAL_CURSOR_YEAR;
+  applyTimelineFiltering(cy);
+
+  // zoom reset 全景
+  zoomCtrl.reset(800);
+
+  // 隐藏面包屑
+  breadcrumbApi?.hideFocus();
+}
+
+function zoomFitToFocus(fs: FocusSet): void {
+  // 算焦点 obs 的 bbox（在 canvas 坐标系）
+  let minX = Infinity,
+    minY = Infinity,
+    maxX = -Infinity,
+    maxY = -Infinity;
+  for (const id of fs.obsIds) {
+    const coords = claimIdToCoords.get(id);
+    if (!coords) continue;
+    if (coords.x < minX) minX = coords.x;
+    if (coords.y < minY) minY = coords.y;
+    if (coords.x > maxX) maxX = coords.x;
+    if (coords.y > maxY) maxY = coords.y;
+  }
+  if (!isFinite(minX)) return;
+
+  // 加 padding (canvas 单位) / 算 viewport 中心
+  const padX = 200;
+  const padY = 80;
+  const bboxW = maxX - minX + 2 * padX;
+  const bboxH = maxY - minY + 2 * padY;
+  const bboxCenterX = (minX + maxX) / 2;
+  const bboxCenterY = (minY + maxY) / 2;
+
+  // viewBox 是 0,0 canvasW canvasH / preserveAspectRatio meet
+  // 算 fit-to-bbox 需要的 k：viewBox 中 bbox 占的比例
+  // viewBox aspect ratio = canvasW/canvasH / viewport aspect = visPxW/visPxH
+  // d3.zoom transform applies after viewBox fit
+  // 简化：k = min(canvasW/bboxW, canvasH/bboxH) (让 bbox 填满 viewBox visible region)
+  const kFitX = canvasWidth / bboxW;
+  const kFitY = canvasHeight / bboxH;
+  const targetK = Math.min(kFitX, kFitY, 8); // clamp to scaleExtent max 8
+
+  // 算 transform.x/y 让 bboxCenter 居中到 viewBox center
+  // viewBox center = canvasWidth/2, canvasHeight/2
+  // 居中后 bbox 在 viewBox = bboxCenter * k + tx = canvasWidth/2 + (visPxW/2 - viewportCenter)...
+  // 简单方式：transform.x = canvasWidth/2 - bboxCenter * k (让 bbox center 在 viewBox center)
+  const tx = canvasWidth / 2 - bboxCenterX * targetK;
+  const ty = canvasHeight / 2 - bboxCenterY * targetK;
+
+  svg
+    .transition()
+    .duration(600)
+    .call(zoomCtrl.zoomBehavior.transform, d3.zoomIdentity.translate(tx, ty).scale(targetK));
+}
 
 // === 9. T8 · 左侧颗粒度过滤栏（spec § 7 / 独立栏）===
 // PM 视觉期待: sidebar 是 "独立栏" 始终可见，hover icon 触发主画布高亮预览语义需要 sidebar 在视口

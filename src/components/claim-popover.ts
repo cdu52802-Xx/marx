@@ -37,6 +37,13 @@ export interface ClaimPopoverContext {
   sourceWorkName?: string;
   agreementClaims: { id: string; author: string; text: string }[];
   disagreementClaims: { id: string; author: string; text: string }[];
+  // Stage 4 焦点模式 (DR-053 ~ DR-057) · 详情卡里加「查看关联」按钮
+  //   - onHoverFocusPreview/Leave: hover button → main.ts 主画布预览高亮淡显
+  //   - onEnterFocus: click button → main.ts 切换进焦点模式
+  //   - 仅当 agreement + disagreement + extends 关系 > 0 时显示按钮
+  onHoverFocusPreview?: (claimId: string) => void;
+  onLeaveFocusPreview?: () => void;
+  onEnterFocus?: (claimId: string) => void;
 }
 
 const CATS_LABELS: Record<string, string> = {
@@ -299,6 +306,29 @@ function _doShowClaim(claim: ClaimNode, ctx: ClaimPopoverContext) {
     }
 
     ${
+      ctx.agreementClaims.length + ctx.disagreementClaims.length > 0
+        ? `
+      <button class="popover-focus-btn" data-claim-id="${claim.id}" aria-label="查看与此观点相关联的所有观点" style="
+        display:block;
+        width:100%;
+        margin:24px 0 8px;
+        padding:10px 14px;
+        background:#fcfaf6;
+        border:1px solid #5b3a8c;
+        color:#5b3a8c;
+        font-family:'EB Garamond',Georgia,serif;
+        font-style:italic;
+        font-size:13px;
+        letter-spacing:0.04em;
+        cursor:pointer;
+        text-align:center;
+        transition:background 0.15s;
+      ">→ 查看关联 · 仅显示这 ${ctx.agreementClaims.length + ctx.disagreementClaims.length + 1} 条相关观点</button>
+    `
+        : ''
+    }
+
+    ${
       claim.reference
         ? `<div style="
             font-family:'EB Garamond',Georgia,serif;
@@ -325,6 +355,27 @@ function _doShowClaim(claim: ClaimNode, ctx: ClaimPopoverContext) {
     'click',
     hideClaimPopover,
   );
+
+  // Stage 4 焦点模式 (DR-053 ~ DR-057) · 「查看关联」按钮 3 事件
+  //   mouseenter → onHoverFocusPreview (主画布预览高亮淡显)
+  //   mouseleave → onLeaveFocusPreview (恢复全显)
+  //   click → onEnterFocus + 隐藏详情卡 (完全切换到焦点模式)
+  const focusBtn = sidebar.querySelector('.popover-focus-btn') as HTMLButtonElement | null;
+  if (focusBtn) {
+    focusBtn.addEventListener('mouseenter', () => {
+      focusBtn.style.background = 'rgba(91, 58, 140, 0.08)';
+      ctx.onHoverFocusPreview?.(claim.id);
+    });
+    focusBtn.addEventListener('mouseleave', () => {
+      focusBtn.style.background = '#fcfaf6';
+      ctx.onLeaveFocusPreview?.();
+    });
+    focusBtn.addEventListener('click', (e) => {
+      e.stopPropagation(); // 防 outsideHandler 触发
+      ctx.onEnterFocus?.(claim.id);
+      hideClaimPopover(); // 进焦点后关详情卡（用户视野聚焦画布）
+    });
+  }
 
   // Esc 键关闭
   const escHandler = (e: KeyboardEvent) => {

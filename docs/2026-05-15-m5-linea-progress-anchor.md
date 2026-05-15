@@ -19,7 +19,8 @@
 | **Stage 3 R2 PM checkpoint** | 3 fix：删紫框 + popover bottom 160 + click-to-seek (DR-046~048) | ✅ commit `f3e216d` | push origin |
 | **Stage 3 R3 PM checkpoint** | 2 fix：yearMax 1950→2030 + timeline 瘦身 130→80px + popover bottom 100 (DR-049~050) | ✅ commit `fef4d67` | push origin |
 | **Stage 3 R4 PM checkpoint** | 资深 UIUX 重设布局：单行 + ▶ 28×28 图标 + floating cursor badge (DR-051) / timeline 57px | ✅ commit `58e11fa` | push origin |
-| **Stage 3 R5 PM checkpoint** | sidebar bottom 60 让出 timeline + ▶ 按钮（DR-052）| ✅ 实施完 / 等 PM R6 | （pending commit）|
+| **Stage 3 R5 PM checkpoint** | sidebar bottom 60 让出 timeline + ▶ 按钮（DR-052）| ✅ commit `13c3f9a` | push origin · Stage 3 收尾 |
+| **Stage 4** 焦点模式 | 查看关联按钮 + hover preview + 完全切换 + 面包屑 + zoom-fit (DR-053~057) | ✅ 实施完 / 等 PM | （pending commit）|
 | **Stage 4** 弧线 + 双击中键 | T8 点弧线 / T9 双击中键 reset | ⏸ 待启动 | — |
 | **Final** E2E + 4 件套 + ship | T10 | ⏸ 待启动 | — |
 
@@ -78,7 +79,12 @@
 | **DR-049** | **Stage 3 R3 Fix 1**：yearMax 1950→2030（260 年 span / 含 21 世纪 Marx 学派 70 年 buffer）| （R3 commit）|
 | **DR-050** | **Stage 3 R3 Fix 2**：timeline 高 130→80px（删 label + svg 60→40 + padding 缩 + popover bottom 100）| 同上 |
 | **DR-051** | **Stage 3 R4 重设布局**：单行 + ▶ 28×28 图标在左 + floating cursor badge 跟随 cursor + popover bottom 60 + zoom-control bottom 70 / **timeline 57px (-56% from M5 init)** | `58e11fa` |
-| **DR-052** | **Stage 3 R5 Fix**：sidebar bottom 0 → 60px 让出 timeline（原 sidebar 后挂 DOM 同 z-index 10 覆盖 timeline 最左 48px 含 ▶ 按钮）| （R5 commit）|
+| **DR-052** | **Stage 3 R5 Fix**：sidebar bottom 0 → 60px 让出 timeline（原 sidebar 后挂 DOM 同 z-index 10 覆盖 timeline 最左 48px 含 ▶ 按钮）| `13c3f9a` |
+| **DR-053** | **Stage 4 Q1**：进焦点触发 = 详情卡里加「查看关联」按钮（不破坏 DR-031 单击=详情卡）| （Stage 4 commit）|
+| **DR-054** | **Stage 4 Q2**：双段式 UX hover button 高亮淡显预览 + click button 完全切换（PM 主动澄清）| 同上 |
+| **DR-055** | **Stage 4 Q2 补**：切换后保留 person section（E+A+C 头像 + 名字 + 焦点 obs）/ 不是孤立 6 obs | 同上 |
+| **DR-056** | **Stage 4 Q3**：顶部面包屑「全部 → 焦点：观点 prefix」点全部返回 | 同上 |
+| **DR-057** | **Stage 4 Q4**：链式焦点第一版不允许 / 后续 polish 加 | 同上 |
 
 ---
 
