@@ -13,7 +13,7 @@
 //    - 注: cats filter 让 obs 隐藏后弧线不联动 (一端隐藏一端可见时弧线仍画)
 //      → 见 [docs/m4-polish-backlog.md](../../docs/m4-polish-backlog.md) 'arc-cats 联动'
 
-import type * as d3 from 'd3';
+import type * as d3 from '../lib/d3.ts';
 import type { ClaimNode, ClaimRelation } from '../types/Claim.ts';
 import type { SidebarFilters } from './sidebar.ts';
 

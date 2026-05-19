@@ -16,7 +16,7 @@
 //   - 绿弧 agreement 左下 / 红弧 disagreement 右上 / 灰弧 extends 微弯右
 
 import './styles.css';
-import * as d3 from 'd3';
+import * as d3 from './lib/d3.ts';
 import claimsData from './data/claims.json';
 import nodesData from './data/nodes_skeleton.json';
 import {

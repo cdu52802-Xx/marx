@@ -1,4 +1,4 @@
-import * as d3 from 'd3';
+import * as d3 from '../lib/d3.ts';
 import type { Dataset, Node, Relation } from '../types/Node.ts';
 
 interface SimNode extends d3.SimulationNodeDatum {

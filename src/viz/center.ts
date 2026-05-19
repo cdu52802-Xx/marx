@@ -9,7 +9,7 @@
 //     · pixelToViewBox: SVG-aware helper · 把 pixel screen 坐标转 viewBox 坐标
 //     · main.ts 组合：用 pixelToViewBox 算 visCenter 的 viewBox 坐标 / 传给 computeCenterTransform
 
-import * as d3 from 'd3';
+import * as d3 from '../lib/d3.ts';
 import type { ZoomBehavior, ZoomTransform } from 'd3-zoom';
 import type { Selection } from 'd3-selection';
 

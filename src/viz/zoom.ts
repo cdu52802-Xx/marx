@@ -8,7 +8,7 @@
 //   - scaleExtent [1, 8] PRD V1 设定
 //   - T2 会加 contentBBox option → translateExtent pan clamp
 //   - T9 会加 reset() API
-import * as d3 from 'd3';
+import * as d3 from '../lib/d3.ts';
 import type { Selection } from 'd3-selection';
 import type { ZoomBehavior, ZoomTransform } from 'd3-zoom';
 
