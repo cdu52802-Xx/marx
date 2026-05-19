@@ -104,15 +104,16 @@ M5 加的 zoom-control / arc-popover / breadcrumb / timeline 重设 都沿用同
 
 ## 3. Backlog（不阻塞 ship · 后续 milestone 处理）
 
-### 3.1 ⚠ DR-069 弧线误选 bug（HIGH priority · Final ship 后专攻）
+### 3.1 ⚠ DR-069 弧线误选 bug（**4 轮专攻仍未解 · 升级 backlog 写专项 spec**）
 
 | 字段 | 内容 |
 |---|---|
-| 现象 | PM 实操：想点 A 弧实际选 B / 远近都有 |
-| 已尝试 | R1 hit overlay 16px / R3 几何最近 32 点采样 / R4 hover preview RAF —— 3 轮都没解 |
-| Root cause 假设 | 几何最近 ≠ 视觉认知最近 / 用户视觉锚定 endpoint / hit zone 应偏 endpoint 而非 apex |
-| 后续攻法 hypothesis（memory `feedback_m5_stage5_implementation_lessons`） | (1) stroke 16→8/10 / (2) console.log debug PM 抓错例 / (3) endpoint-priority 命中 / (4) quadtree 索引 / (5) preview 视觉强化加 endpoint 锚定 |
-| 推荐 | (5) + (2) preview 视觉强化 + debug log |
+| 现象 | PM 实操：想点 A 弧实际选 B / 远近都有 / **同色 type 弧重叠场景重灾区** |
+| 已尝试（4 轮） | R1 hit overlay 16px / R3 几何最近 32 点采样 / R4 hover preview RAF / **R5 endpoint-aware 两阶段 picker + (5) hover label + endpoint 黄边高亮**（commit 0fd1869）— 全没解 |
+| **新 RC11 假设** | 同 type 弧 visible stroke 视觉重叠时 / 几何最近 vs 视觉判定边界差异 / PM 视觉锚 cursor 所在 stroke / 几何选 endpoint-local 或 path-min 其他 |
+| PM 4 轮典型错例 | 截图反馈："hover 路德维希 反对 卡尔·马克思 / floating label 显示 黑格尔 反对 卡尔·马克思"（同色 disagreement 重叠 / 两 source 不同 target 同） |
+| 已沉淀价值（commit 0fd1869 ship） | (5) hover preview label + endpoint 黄边高亮 / PM hover 看 label 显示错可移开避免误 click（实战 UX fallback / 减少 commit 错的概率） |
+| 后续路径 | 写专项 spec / B 阶段单独攻 / 候选攻法 (RC11 新方向): (a) visible stroke 中心距 (非 path)（同色弧排除）/ (b) 同色弧 cluster 内部 disambig 二级 UI 弹候选列表 / (c) hover sticky 一旦选中不漂移 / (d) ?debug=1 仍可启用 console log + `__arcPick` debug 工具 |
 
 ### 3.2 实施期累积其他 polish backlog
 
