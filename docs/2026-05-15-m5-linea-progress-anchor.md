@@ -1,6 +1,6 @@
 # M5 主线 A 实施期 progress anchor
 
-> **状态**：Stage 1+2+3+4+5 R0+R1+R2+R3 完成 / R3 修弧线命中歧义 + Issue 1 折叠交互保持不改 / Stage 5 R4 等 PM checkpoint / Final ship 待启动
+> **状态**：Stage 1+2+3+4+5 R0+R1+R2+R3+R4 完成 / R4 hover preview 根治"误选" / Stage 5 R5 等 PM checkpoint / Final ship 待启动
 > **日期**：2026-05-18
 > **关联**：[M5 spec](../specs/2026-05-14-m5-linea-explorability-design.md) · [M5 plan](../plans/2026-05-14-marx-m5-linea-explorability.md) · [M4 takeaway](./2026-05-13-m4-takeaway.md)
 > **跨窗口续接**：本文件是 SSOT / 新窗口 AI 读这一份立即知当前进度 / 完整 prompt 模板见 § 10
@@ -27,6 +27,7 @@
 | **Stage 5 R1 PM** | 3 修：hit overlay 16px (DR-061) + endpoint fit CAD (DR-062) + 删 tooltip (DR-063) + focus mode hit 同步 | ✅ done | `10d2070` push origin |
 | **Stage 5 R2 PM** | mockup brainstorm 3 Q 拍板 → arc-popover 上下分栏 (DR-065) + root cause fix (DR-064) + handleArcClick 重写 (DR-066) / 13 单测新增 | ✅ done | `211e60e` push origin |
 | **Stage 5 R3 PM** | Issue 1 折叠交互"空白折叠"评审拒绝（保持 toggle）+ Issue 2 命中歧义修 pickNearestArc 几何最近择优 (DR-067) | ✅ done | `270ebd7` push origin |
+| **Stage 5 R4 PM** | R3 修不够 / PM 仍误选 → hover preview 根治 (DR-068) preview-then-commit / cursor 移动实时高亮"将命中弧" / click 前确认 | ✅ done | `7adc43a` push origin |
 | **T9 双击中键 reset** | ⌂ 已 cover reset 路径 / T9 拍废 (spec § 11.1 acceptance 11→10) | ❌ 拍废 | — |
 | **Final** E2E + 4 件套 + ship | T10 | ⏸ 待启动 | — |
 
@@ -101,6 +102,7 @@
 | **DR-065** | **Stage 5 R2 arc-popover**：新组件 src/components/arc-popover.ts / 上下分栏 source/target / 默认两侧折叠（PM Q2）/ 顶部 [📍 fit | → 焦点 | ×] / 折叠态 kicker+claim_text+meta 展开态 +blockquote+reference / click slot toggle expanded / 焦点按钮默认 disabled / 一侧展开后 enable + hover preview + click commit (X')/ 关闭 3 路 (× Esc 外点) / 切换 出快入慢 200/450ms / 13 单元测试 | 同上 |
 | **DR-066** | **Stage 5 R2 handleArcClick 重写**：算 fit targetK + visCenterVB(POPOVER_PX=380) + isFitNow=currentK<=targetK+0.01 / 装得下→单击 flyTo + popover (Q1 B) / 装不下→仅 popover + popover 内 fit 按钮 / 总是弹 arc-popover (替代 R0/R1 tooltip) / 选中视觉 Q4 1：选中弧 stroke 2.5 obs 圆点 r=5 紫描边 / 展开侧仅亮该 obs 折叠所有亮两端 / 焦点 hook applyHoverPreviewFiltering(computeFocusSet) + commit enterFocusMode | 同上 |
 | **DR-067** | **Stage 5 R3 命中歧义修**：hit click handler 改 pickNearestArc(clientX, clientY) / elementsFromPoint 拿所有候选 path.arc-hit → 每条 32 点采样算 cursor SVG 坐标到 path 最短距离² / 选最近 candidate / 不依赖 DOM stacking 顺序 / 解 PM "想选 A 实际命中 B"（hit stroke 16px non-scaling 多弧 zone 重叠 root cause）| `270ebd7` |
+| **DR-068** | **Stage 5 R4 hover preview 根治误选**：R3 几何最近修后 PM 仍报误选（root cause = "几何最近 ≠ 视觉认知最近" / 长弧 apex 离 endpoint 远 / cursor 落在 apex 但 PM 按 endpoint 想）/ fundamental 修 = preview-then-commit 模式：arc-hit-layer mousemove 用 RAF 节流 + pickNearestArc 实时找最近弧 + visible path 高亮 stroke 2.5/op 1.0 (transition namespace 'hover' 不跟 selected 冲突) / mouseleave 复原（除非 popover selected）/ isPathSelectedInPopover 用 popover dataset.relKey 判断 / PM click 前看到将命中哪条 / 消除 surprise | `7adc43a` |
 
 ---
 
@@ -203,7 +205,7 @@ PM 复制这段到新窗口对话开头：
 3. specs/2026-05-14-m5-linea-explorability-design.md（M5 spec / DR-001~060）
 4. plans/2026-05-14-marx-m5-linea-explorability.md（M5 plan / T6~T10 TDD steps）
 
-当前状态（HEAD 270ebd7 / push origin）:
+当前状态（HEAD 7adc43a / push origin）:
 - Stage 1+2 完成（点 obs 居中 / DR-025~037 共 13 决策）
 - Stage 3 完成（时间轴改造 / 经 5 轮 PM checkpoint R0~R5 / DR-038~052 共 15 决策 / 其中
   DR-038/039/041 已作废 / 取代为 DR-042 vision pivot：时间轴 = 时间游标 / 不联动画布）
@@ -226,6 +228,10 @@ PM 复制这段到新窗口对话开头：
 - Stage 5 R3 完成（DR-067）：
   · 命中歧义修 pickNearestArc 几何最近择优 / 不依赖 DOM stacking
   · Issue 1 折叠交互"空白折叠"评审拒绝（toggle 标准模式 / 保持现行）
+- Stage 5 R4 完成（DR-068）：
+  · R3 仍误选 / root cause = "几何最近 ≠ 视觉认知最近"
+  · 加 hover preview · cursor 移动实时高亮"将命中弧" / preview-then-commit 心智
+  · mousemove RAF 节流 + isPathSelectedInPopover 保护 selected arc 不被抢
 - 测试 166/169 (+13 arc-popover) / lint clean / tsc clean
 - 3 fail 仍是 M3 pre-existing successor_notes 不变
 
@@ -234,14 +240,13 @@ PM 复制这段到新窗口对话开头：
   修法: hook hideClaimPopover() / focus 模式下监听 popover close / 触发 zoomFitToFocusCoords 重算
   PM 用过实测看是否真痛 / 不痛就留着
 
-Stage 5 R4 PM checkpoint（浏览器实测 R3 命中修后）:
-  - 故意点近距离多弧叠加位置 → 验证选中是 cursor 几何最近的弧（不是 DOM 后的弧）
-  - 全景 k=1 点弧线 → 自动飞 fit 居中 + arc-popover 上下分栏弹出
-  - 放大 k=6 点同一弧线 → 不飞 / popover 顶部「📍 fit 居中」按钮 → 点按钮才飞
-  - popover 默认两侧 obs 折叠 / click 一侧展开 / 画布该 obs 高亮 + 弧线常亮 / 再点同 slot 折叠
-  - hover「→ 焦点」按钮 (展开侧后 enabled) → 画布预览淡显非焦点 / click → 跳 Stage 4
-  - × / Esc / 点空白 → 关 popover + 复原 arc + obs 高亮
-  - 回归 Stage 1~4 + R0~R2 不退化
+Stage 5 R5 PM checkpoint（浏览器实测 R4 hover preview 后）:
+  - 鼠标移动到弧线密集区 → 实时看哪条弧被高亮 / preview = 将命中弧
+  - PM click 前看到 preview / 不再"误选" surprise
+  - click 前移到想要的 A 弧位置 → A 高亮 → click 选中 A
+  - 选中 A 后 popover 弹出 + selected 高亮持续
+  - mouseleave hit zone → preview 复原（selected 弧仍保持 popover 高亮）
+  - 回归 R0~R3 (arc-popover 上下分栏 / fit 按钮 / 焦点跳 Stage 4 / 几何最近择优)
 
 ship 路径 (Stage 5 R 轮收尾后启动):
   C Final ship · T10 E2E + gstack 4 件套 baseline + GH Pages deploy (4-6h)
