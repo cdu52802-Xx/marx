@@ -1,9 +1,10 @@
 # M5 主线 A 实施期 progress anchor
 
-> **状态**：Stage 1+2+3+4+5 R0~R4 完成 / **⚠ DR-069 弧线误选 bug 未解（已入 backlog · 不阻塞 ship）** / Stage 5 收口 / Final ship (C / T10) 待启动 / **PM 已切窗口**
-> **日期**：2026-05-18
-> **关联**：[M5 spec](../specs/2026-05-14-m5-linea-explorability-design.md) · [M5 plan](../plans/2026-05-14-marx-m5-linea-explorability.md) · [M4 takeaway](./2026-05-13-m4-takeaway.md)
-> **跨窗口续接**：本文件是 SSOT / 新窗口 AI 读这一份立即知当前进度 / 完整 prompt 模板见 § 10
+> **状态**：**✅ M5 主线 A ship 完成 2026-05-19**（tag `m5-linea-final` / HEAD `198bfa2`）/ 完整 takeaway 见 [`docs/2026-05-19-m5-linea-takeaway.md`](./2026-05-19-m5-linea-takeaway.md) ⭐
+> **本文件归档**：实施期 SSOT（Stage 1~5 R0~R4 / 26 轮 PM checkpoint / DR-025~069 实施期补）/ 继续访问用于追溯 / 但 ship 后续接读 takeaway 而非本文件
+> **日期**：2026-05-18 (实施期最后更新) → 2026-05-19 ship
+> **关联**：[M5 takeaway ⭐](./2026-05-19-m5-linea-takeaway.md) · [M5 spec](../specs/2026-05-14-m5-linea-explorability-design.md) · [M5 plan](../plans/2026-05-14-marx-m5-linea-explorability.md) · [M4 takeaway](./2026-05-13-m4-takeaway.md)
+> **跨窗口续接**（ship 后）：新窗口先读 [M5 takeaway](./2026-05-19-m5-linea-takeaway.md) § 6 下一步决策点 + memory `m5_linea_completion`
 
 ---
 
