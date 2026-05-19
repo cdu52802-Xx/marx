@@ -252,12 +252,79 @@ zoomLayer
   .on('click', function (event: MouseEvent) {
     event.stopPropagation();
     // R3 Fix · DR-067 · 命中歧义修：用 cursor pixel 找几何最近弧 (不依赖 DOM stacking)
-    //   bug: hit stroke 16 屏幕 px / 多弧 stroke zone 重叠 (即使视觉远) / elementFromPoint 取 DOM 顶 / 错命中
-    //   修：elementsFromPoint 拿所有 candidate / 每条采样 32 点 / 算 cursor 到 path 最短距离 / 选最近
     const picked = pickNearestArc(event.clientX, event.clientY);
     if (!picked) return;
     handleArcClick(picked.visiblePath, picked.relation);
+  })
+  // R4 Fix · DR-068 · hover preview：cursor 在 hit zone 移动时实时高亮"会命中哪条弧"
+  //   消除 PM "误选" surprise / preview-then-commit 模式跟 Stage 4 + R2 焦点按钮一致
+  //   RAF 节流 / mousemove 高频但每帧最多算一次 / 不卡
+  .on('mousemove', function (event: MouseEvent) {
+    if (hoverPreviewScheduled) return;
+    hoverPreviewScheduled = true;
+    const ev = event;
+    requestAnimationFrame(() => {
+      hoverPreviewScheduled = false;
+      updateArcHoverPreview(ev.clientX, ev.clientY);
+    });
+  })
+  .on('mouseleave', () => {
+    clearArcHoverPreview();
   });
+
+// R4 Fix DR-068 · hover preview state + helpers
+let hoverPreviewedPath: SVGPathElement | null = null;
+let hoverPreviewScheduled = false;
+
+function updateArcHoverPreview(clientX: number, clientY: number): void {
+  const picked = pickNearestArc(clientX, clientY);
+  const newPath = picked?.visiblePath ?? null;
+  if (newPath === hoverPreviewedPath) return;
+  // 复原上一个 preview（如非 popover selected）
+  if (hoverPreviewedPath && !isPathSelectedInPopover(hoverPreviewedPath)) {
+    const datum = (hoverPreviewedPath as unknown as { __data__: ClaimRelation }).__data__;
+    const style = getArcStyle(datum.type);
+    d3.select(hoverPreviewedPath)
+      .interrupt('hover')
+      .attr('stroke-width', style.strokeWidth)
+      .attr('opacity', style.opacity);
+  }
+  hoverPreviewedPath = newPath;
+  if (!newPath) return;
+  // 高亮新 preview
+  d3.select(newPath)
+    .raise()
+    .interrupt('hover')
+    .transition('hover')
+    .duration(150)
+    .attr('stroke-width', 2.5)
+    .attr('opacity', 1.0);
+}
+
+function clearArcHoverPreview(): void {
+  if (!hoverPreviewedPath) return;
+  if (!isPathSelectedInPopover(hoverPreviewedPath)) {
+    const datum = (hoverPreviewedPath as unknown as { __data__: ClaimRelation }).__data__;
+    const style = getArcStyle(datum.type);
+    d3.select(hoverPreviewedPath)
+      .interrupt('hover')
+      .transition('hover')
+      .duration(150)
+      .attr('stroke-width', style.strokeWidth)
+      .attr('opacity', style.opacity);
+  }
+  hoverPreviewedPath = null;
+}
+
+// arc-popover 打开时不复原 selected arc 的高亮（hover preview vs selected 视觉一致 / 但状态优先级 selected > hover）
+function isPathSelectedInPopover(pathEl: SVGPathElement): boolean {
+  const popover = document.querySelector<HTMLElement>('.arc-popover');
+  if (!popover || popover.dataset.state === 'closing') return false;
+  const datum = (pathEl as unknown as { __data__: ClaimRelation }).__data__;
+  if (!datum) return false;
+  const relKey = `${datum.source}|${datum.target}|${datum.type}`;
+  return popover.dataset.relKey === relKey;
+}
 
 // R3 Fix DR-067 · 几何最近弧择优
 //   多 hit path 在 cursor 位置 stroke zone 重叠时 / 不靠 DOM stacking 决定 / 按几何距离择优
