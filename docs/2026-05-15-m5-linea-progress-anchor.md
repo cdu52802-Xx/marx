@@ -1,6 +1,6 @@
 # M5 主线 A 实施期 progress anchor
 
-> **状态**：Stage 1+2+3+4+5 R0+R1+R2+R3+R4 完成 / R4 hover preview 根治"误选" / Stage 5 R5 等 PM checkpoint / Final ship 待启动
+> **状态**：Stage 1+2+3+4+5 R0~R4 完成 / **⚠ DR-069 弧线误选 bug 未解（已入 backlog · 不阻塞 ship）** / Stage 5 收口 / Final ship (C / T10) 待启动 / **PM 已切窗口**
 > **日期**：2026-05-18
 > **关联**：[M5 spec](../specs/2026-05-14-m5-linea-explorability-design.md) · [M5 plan](../plans/2026-05-14-marx-m5-linea-explorability.md) · [M4 takeaway](./2026-05-13-m4-takeaway.md)
 > **跨窗口续接**：本文件是 SSOT / 新窗口 AI 读这一份立即知当前进度 / 完整 prompt 模板见 § 10
@@ -28,6 +28,7 @@
 | **Stage 5 R2 PM** | mockup brainstorm 3 Q 拍板 → arc-popover 上下分栏 (DR-065) + root cause fix (DR-064) + handleArcClick 重写 (DR-066) / 13 单测新增 | ✅ done | `211e60e` push origin |
 | **Stage 5 R3 PM** | Issue 1 折叠交互"空白折叠"评审拒绝（保持 toggle）+ Issue 2 命中歧义修 pickNearestArc 几何最近择优 (DR-067) | ✅ done | `270ebd7` push origin |
 | **Stage 5 R4 PM** | R3 修不够 / PM 仍误选 → hover preview 根治 (DR-068) preview-then-commit / cursor 移动实时高亮"将命中弧" / click 前确认 | ✅ done | `7adc43a` push origin |
+| **⚠ Bug DR-069 弧线误选未解** | PM R4 反馈 hover preview 仍误选 / **PM 决定入 backlog 不阻塞 / Final ship 后再修** | ⏸ backlog | — |
 | **T9 双击中键 reset** | ⌂ 已 cover reset 路径 / T9 拍废 (spec § 11.1 acceptance 11→10) | ❌ 拍废 | — |
 | **Final** E2E + 4 件套 + ship | T10 | ⏸ 待启动 | — |
 
@@ -103,6 +104,7 @@
 | **DR-066** | **Stage 5 R2 handleArcClick 重写**：算 fit targetK + visCenterVB(POPOVER_PX=380) + isFitNow=currentK<=targetK+0.01 / 装得下→单击 flyTo + popover (Q1 B) / 装不下→仅 popover + popover 内 fit 按钮 / 总是弹 arc-popover (替代 R0/R1 tooltip) / 选中视觉 Q4 1：选中弧 stroke 2.5 obs 圆点 r=5 紫描边 / 展开侧仅亮该 obs 折叠所有亮两端 / 焦点 hook applyHoverPreviewFiltering(computeFocusSet) + commit enterFocusMode | 同上 |
 | **DR-067** | **Stage 5 R3 命中歧义修**：hit click handler 改 pickNearestArc(clientX, clientY) / elementsFromPoint 拿所有候选 path.arc-hit → 每条 32 点采样算 cursor SVG 坐标到 path 最短距离² / 选最近 candidate / 不依赖 DOM stacking 顺序 / 解 PM "想选 A 实际命中 B"（hit stroke 16px non-scaling 多弧 zone 重叠 root cause）| `270ebd7` |
 | **DR-068** | **Stage 5 R4 hover preview 根治误选**：R3 几何最近修后 PM 仍报误选（root cause = "几何最近 ≠ 视觉认知最近" / 长弧 apex 离 endpoint 远 / cursor 落在 apex 但 PM 按 endpoint 想）/ fundamental 修 = preview-then-commit 模式：arc-hit-layer mousemove 用 RAF 节流 + pickNearestArc 实时找最近弧 + visible path 高亮 stroke 2.5/op 1.0 (transition namespace 'hover' 不跟 selected 冲突) / mouseleave 复原（除非 popover selected）/ isPathSelectedInPopover 用 popover dataset.relKey 判断 / PM click 前看到将命中哪条 / 消除 surprise | `7adc43a` |
+| **DR-069** | **⚠ Bug 未解 · 弧线误选远近都有 · 入 backlog**：R4 hover preview 仍未解 / PM R4 后实测仍误选 / 我作为 AI 已试 3 轮（R1 hit overlay 16px / R3 几何最近 pickNearestArc 32 点采样 / R4 hover preview RAF 节流） / 仍未根治 / **PM 拍板暂入 backlog · Final ship 后专门攻**。后续攻法 hypothesis：(1) hit overlay stroke 16 → 8/10 减重叠 (2) 加 console.log 让 PM 抓具体错例 (3) 二分搜最近 path 距离 (4) 改用 quadtree 索引 endpoint 区域 / endpoint-priority 命中 (5) 用户视觉认知 = endpoint-anchored / 真正修法可能要重设计 hit zone（hit zone 偏向 endpoint 而非 apex）。**状态：bug 复现稳定 / PM 实操频踩 / 但不阻塞产品主流 click + popover 基础 work** | — |
 
 ---
 
@@ -197,15 +199,16 @@ PM 在 Stage 1 R1 反馈："**时间轴本身就是单游标**" / 不是"时间�
 PM 复制这段到新窗口对话开头：
 
 ```
-续接 Marx · M5 主线 A · Stage 5 R0 完成 / 待 PM 浏览器实测 / 然后 Final ship
+续接 Marx · M5 主线 A · Stage 5 R0~R4 完成 / Bug DR-069 入 backlog / Final ship 待启动
 
 读：
 1. AGENTS.md（项目级 agent context）
 2. docs/2026-05-15-m5-linea-progress-anchor.md ⭐ 本文件 / 最新 SSOT
-3. specs/2026-05-14-m5-linea-explorability-design.md（M5 spec / DR-001~060）
+3. specs/2026-05-14-m5-linea-explorability-design.md（M5 spec / DR-001~069）
 4. plans/2026-05-14-marx-m5-linea-explorability.md（M5 plan / T6~T10 TDD steps）
+5. memory/feedback_m5_stage5_implementation_lessons.md ⭐⭐ Stage 5 R0~R4 lessons
 
-当前状态（HEAD 7adc43a / push origin）:
+当前状态（HEAD 97caf32 / push origin）:
 - Stage 1+2 完成（点 obs 居中 / DR-025~037 共 13 决策）
 - Stage 3 完成（时间轴改造 / 经 5 轮 PM checkpoint R0~R5 / DR-038~052 共 15 决策 / 其中
   DR-038/039/041 已作废 / 取代为 DR-042 vision pivot：时间轴 = 时间游标 / 不联动画布）
@@ -240,13 +243,25 @@ PM 复制这段到新窗口对话开头：
   修法: hook hideClaimPopover() / focus 模式下监听 popover close / 触发 zoomFitToFocusCoords 重算
   PM 用过实测看是否真痛 / 不痛就留着
 
-Stage 5 R5 PM checkpoint（浏览器实测 R4 hover preview 后）:
-  - 鼠标移动到弧线密集区 → 实时看哪条弧被高亮 / preview = 将命中弧
-  - PM click 前看到 preview / 不再"误选" surprise
-  - click 前移到想要的 A 弧位置 → A 高亮 → click 选中 A
-  - 选中 A 后 popover 弹出 + selected 高亮持续
-  - mouseleave hit zone → preview 复原（selected 弧仍保持 popover 高亮）
-  - 回归 R0~R3 (arc-popover 上下分栏 / fit 按钮 / 焦点跳 Stage 4 / 几何最近择优)
+⚠ 已知 Bug DR-069 弧线误选（未解 / 入 backlog · 不阻塞 Final ship）:
+  R4 hover preview 仍未根治 / PM 实操仍频踩 / 远近都有
+  3 轮修都失败：R1 hit overlay 16px / R3 几何最近 / R4 hover preview RAF 节流
+  后续攻法 hypothesis（Final ship 后专攻）:
+  (1) hit stroke 16 → 8/10 减少重叠
+  (2) 加 console.log debug 让 PM 抓具体错例 reproduce
+  (3) 二分搜替代 32 点采样 / 精度提升
+  (4) endpoint-priority 命中（hit zone 偏向 endpoint 而非 apex / 符合用户视觉认知）
+  (5) quadtree 索引 + 端点区域优先
+
+下一步方向 (PM 已表态"先往下推进"):
+  推荐 C Final ship · T10 E2E + gstack 4 件套 + GH Pages deploy (4-6h)
+  - Playwright E2E 6 用户旅程
+  - health + benchmark + qa-only + design-review 4 件套对比 m4-closure baseline
+  - prod build + push + tag m5-linea-final + GH Pages deploy
+  - 落 takeaway + memory update
+
+不推荐 B M5 主线 B (页面框架 + 地理图) 先于 Final ship：
+  主线 A 没 ship 就跳 B 违反 spec § 2.2.2 顺序 / 累积技术债 / Final ship 是 milestone closure 节奏
 
 ship 路径 (Stage 5 R 轮收尾后启动):
   C Final ship · T10 E2E + gstack 4 件套 baseline + GH Pages deploy (4-6h)
@@ -273,15 +288,16 @@ dev server 状态：本窗口跑 5178 / 新窗口 npm run dev 重起 / preview_s
 
 ---
 
-## 11. PM 切窗口前 AI 必须做的事 ✓
+## 11. PM 切窗口前 AI 必须做的事 ✓（2026-05-18）
 
-- ✅ commit + push 所有代码（HEAD `438b590`）
-- ✅ 本 anchor 更新（Stage 5 R0 done + DR-059/060 + T9 拍废 + 跨窗口 prompt）
-- ⏳ spec § 11.1 acceptance T9 移除 + § 13 加 DR-059/060（next commit）
-- ⏳ memory `feedback_m5_stage5_implementation_lessons.md` 落档（Stage 5 R0 lessons / 等 PM checkpoint 后写）
-- ⏳ MEMORY.md index 更新 Stage 5 lessons（等 lessons 写完）
+- ✅ commit + push 所有代码（HEAD `97caf32` / Stage 5 R4 hover preview + 文档 R4）
+- ✅ Bug DR-069 入 backlog · anchor + spec 落档
+- ✅ memory `feedback_m5_stage5_implementation_lessons.md` 落档 Stage 5 R0~R4 5 轮 lessons
+- ✅ MEMORY.md index 加 Stage 5 lessons + DR-069 bug reference
+- ✅ anchor § 10 跨窗口续接 prompt 重写 / HEAD + 下一阶段方向
+- ✅ commit + push 所有 docs/memory
 
-新窗口 first action：`git pull origin main` 拉本窗口最后 push 的 anchor + memory。
+新窗口 first action：`git pull origin main` 拉本窗口最后 push。然后读 § 10 续接 prompt。
 
 ---
 
