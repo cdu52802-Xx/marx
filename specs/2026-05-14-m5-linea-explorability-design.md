@@ -258,12 +258,25 @@
 ### 7.4 单击弧线（半圆弧 SVG path）
 
 - 点击命中：g.arc-hit-layer 透明 16 屏幕 px stroke overlay（DR-061 / 解 PM "太细难选中"）
-- 单击半圆弧 → 触发：
-  1. 弧线两端 obs 圆点 + 弧 apex 同时进入 viewport（fit 可见区 55% padding 留 45% 边距 · DR-062 CAD zoom-selected 效果）
-     · 用 pathEl.getPointAtLength(0/mid/end) 取 endpoints + apex / 不用 getBBox 含弧 apex extension 主导
-  2. 弧线高亮 stroke-width 2.5 + opacity 1.0
-  3. ~~tooltip 关系类型~~ **DR-063 拍废**：颜色（绿/红/灰虚）+ 方向（左下/右上/右弯）已分关系 / tooltip 多余
-- **不**自动弹详情卡（弧线代表的是关系不是单条主张 / 详情卡留给单击 obs）
+- 单击半圆弧 → 触发（**R2 重写 DR-066**）：
+  1. 算 fit targetK（endpoint+apex bbox / fit 55% / DR-062 复用）
+  2. **isFitNow = currentK <= targetK + 0.01**（装得下判断）
+     · 装得下（全景 / 中 zoom）→ 单击 flyTo + 弹 arc-popover
+     · 装不下（用户已 zoom 较深）→ 仅弹 arc-popover 不飞 / popover 顶部「📍 fit 居中」按钮主动飞
+  3. **总是弹 arc-popover 上下分栏**（替代 R0/R1 tooltip · DR-065）：
+     · source 上 / target 下 / 默认两侧折叠
+     · click slot 切换展开 / 画布该 obs 高亮联动
+     · 顶部按钮 [📍 fit (装不下时) | → 焦点 (展开后 enable) | ×]
+  4. 选中视觉（DR-066 Q4 1）：选中弧 stroke 2.5 + opacity 1.0 / obs 圆点 r=5 + 紫描边
+  5. ~~tooltip 关系类型~~ **DR-063 拍废**：颜色（绿/红/灰虚）+ 方向（左下/右上/右弯）+ 上下分栏 popover 已分关系
+- **不**自动弹 claim-popover（弧线 popover 是关系级 / 详情卡级留给单击 obs）
+
+### 7.4.1 焦点衔接（DR-065 X' / Stage 4 一致）
+
+arc-popover 顶部「→ 焦点」按钮（默认 disabled / 用户展开一侧后 enable）：
+- **hover** → 画布预览淡显非焦点 obs（applyHoverPreviewFiltering / 跟 Stage 4 obs 详情卡「查看关联」按钮 hover 行为完全一致）
+- **click** → commit / 跳 Stage 4 焦点模式 / 以展开侧 obs 为根（1 对 N 关联探索）
+- 心智模型：arc click 看"1 条关系两端" → 升级到"该 obs 所有关联"
 
 ### 7.5 双击鼠标中键 = 重置全景
 
@@ -440,7 +453,7 @@ ship 前重跑 gstack 4 件套 / 任一警戒线破 = 修了再 ship。
 | DR-023 | 2026-05-14 | 详情卡宽度 350px → 400px | 保持 350px / 增到 450px | bio 事件式 + 关联列表需要更多横向空间 / 400px 是 4 件套 design-review 推荐 |
 | DR-024 | 2026-05-14 | 右上区域 M5 主线 A 不放任何 widget | 缩放控件放右上（前 mockup v2）/ 搜索栏 placeholder 立刻加 | 预留主线 B（避免主线 A 临时占位主线 B 又要拆）/ 主线 A 范围聚焦 zoom 不蔓延 |
 
-> **DR-025 ~ DR-060 实施期补**（详见 [progress anchor](../docs/2026-05-15-m5-linea-progress-anchor.md) § 3 / 实施期累积 30+ 决策）
+> **DR-025 ~ DR-066 实施期补**（详见 [progress anchor](../docs/2026-05-15-m5-linea-progress-anchor.md) § 3 / 实施期累积 40+ 决策）
 
 ### 13.1 Stage 3 brainstorm 决策（2026-05-15 实施期补）
 
