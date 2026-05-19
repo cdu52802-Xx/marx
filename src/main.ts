@@ -249,14 +249,70 @@ zoomLayer
   .attr('vector-effect', 'non-scaling-stroke') // hit 区固定 16 屏幕 px / 不跟 zoom 缩放
   .style('pointer-events', 'stroke')
   .style('cursor', 'pointer')
-  .on('click', function (event: MouseEvent, r) {
+  .on('click', function (event: MouseEvent) {
     event.stopPropagation();
-    // hit path 跟 visible path 同 index 对应（同 data + 同 join 顺序）
-    const hitParent = (this as Element).parentElement!;
-    const idx = Array.prototype.indexOf.call(hitParent.children, this);
-    const visiblePath = document.querySelectorAll<SVGPathElement>('g.arc-layer > path.arc')[idx];
-    if (visiblePath) handleArcClick(visiblePath, r as ClaimRelation);
+    // R3 Fix · DR-067 · 命中歧义修：用 cursor pixel 找几何最近弧 (不依赖 DOM stacking)
+    //   bug: hit stroke 16 屏幕 px / 多弧 stroke zone 重叠 (即使视觉远) / elementFromPoint 取 DOM 顶 / 错命中
+    //   修：elementsFromPoint 拿所有 candidate / 每条采样 32 点 / 算 cursor 到 path 最短距离 / 选最近
+    const picked = pickNearestArc(event.clientX, event.clientY);
+    if (!picked) return;
+    handleArcClick(picked.visiblePath, picked.relation);
   });
+
+// R3 Fix DR-067 · 几何最近弧择优
+//   多 hit path 在 cursor 位置 stroke zone 重叠时 / 不靠 DOM stacking 决定 / 按几何距离择优
+function pickNearestArc(
+  clientX: number,
+  clientY: number,
+): { visiblePath: SVGPathElement; relation: ClaimRelation } | null {
+  const candidates = document
+    .elementsFromPoint(clientX, clientY)
+    .filter((el): el is SVGPathElement => el.matches('path.arc-hit'));
+  if (candidates.length === 0) return null;
+
+  const svgNode = svg.node();
+  if (!svgNode) return null;
+  const ctm = svgNode.getScreenCTM();
+  if (!ctm) return null;
+
+  // cursor pixel → SVG viewBox 坐标
+  const pt = svgNode.createSVGPoint();
+  pt.x = clientX;
+  pt.y = clientY;
+  const cursorVB = pt.matrixTransform(ctm.inverse());
+
+  // 找几何最近 hit path (采样 32 点)
+  let bestHit: SVGPathElement | null = null;
+  let bestDist = Infinity;
+  for (const hitPath of candidates) {
+    const totalLen = hitPath.getTotalLength();
+    if (totalLen === 0) continue;
+    let localBest = Infinity;
+    const samples = 32;
+    for (let i = 0; i <= samples; i++) {
+      const p = hitPath.getPointAtLength((totalLen * i) / samples);
+      const dx = p.x - cursorVB.x;
+      const dy = p.y - cursorVB.y;
+      const d2 = dx * dx + dy * dy;
+      if (d2 < localBest) localBest = d2;
+    }
+    if (localBest < bestDist) {
+      bestDist = localBest;
+      bestHit = hitPath;
+    }
+  }
+  if (!bestHit) return null;
+
+  // hit path index → 对应 visible path
+  const hitParent = bestHit.parentElement;
+  if (!hitParent) return null;
+  const idx = Array.prototype.indexOf.call(hitParent.children, bestHit);
+  const visiblePath = document.querySelectorAll<SVGPathElement>('g.arc-layer > path.arc')[idx];
+  if (!visiblePath) return null;
+
+  const relation = (bestHit as unknown as { __data__: ClaimRelation }).__data__;
+  return { visiblePath, relation };
+}
 
 // === 7. Person section 标题 + obs 行 ===
 
