@@ -38,6 +38,7 @@ import {
   pixelToViewBox,
 } from './viz/center.ts';
 import { showClaimPopover } from './components/claim-popover.ts';
+import { showArcPopover, hideArcPopover } from './components/arc-popover.ts';
 import { applyClaimFilters } from './components/apply-claim-filters.ts';
 import type { ClaimNode, ClaimRelation } from './types/Claim.ts';
 import type { PersonNode } from './types/Node.ts';
@@ -423,7 +424,8 @@ sectionG.each(function (section) {
   obsG.on('click', (event, c) => {
     event.stopPropagation(); // 防止 bubble 到 document outsideHandler
 
-    // Stage 5 T8 · 点 obs → 复原上次点过的高亮弧线
+    // Stage 5 R2 · 点 obs → 关 arc-popover + 复原弧线选中（清 selectedArcRelation）
+    hideArcPopover();
     restoreArcOpacity();
 
     const currentK = zoomCtrl.getCurrentTransform().k;
@@ -497,10 +499,11 @@ sectionG.each(function (section) {
 // Stage 2 R3 · disable d3 默认 dblclick zoom（默认是 k*2 / 跟我们 chooseTargetK 策略冲突）
 svg.on('dblclick.zoom', null);
 
-// Stage 5 T8 · 点画布空白 → 复原弧线高亮
+// Stage 5 R2 · 点画布空白 → 关 arc-popover + 复原弧线高亮
 //   d3.zoom 监听 mousedown / mousewheel / dblclick / 不监听 click → 不冲突
 //   obs 和 arc hit overlay 自身 .on('click') 都 stopPropagation / 仅空白区域 click bubble 到 svg
 svg.on('click', () => {
+  hideArcPopover();
   restoreArcOpacity();
 });
 
@@ -775,18 +778,15 @@ function exitFocusMode(): void {
   breadcrumbApi?.hideFocus();
 }
 
-// Stage 5 T8 · 弧线 click handler 主逻辑
-//   1. 取弧 endpoint(s,t) + apex 中点 (getPointAtLength 0 / mid / end)
-//      · 用 path geometry 自动 cover focus 模式 compact 坐标 (path.d 已经被 applyFocusLayout 重写)
-//      · CAD zoom-selected 等价：union bbox of 2 obs endpoints + 弧 apex
-//   2. fit factor 0.55 留 45% 边距 / 保证 endpoint 即使被 translateExtent clamp 也不出 viewport
-//   3. flyTo visCenterVB (POPOVER_PX=0 弧不弹 popover)
-//   4. 高亮 visible path stroke-width 2.5 + opacity 1.0 / 复原其他
-//   5. R1 PM 反馈：删 tooltip / 颜色+方向已分关系类型
-function handleArcClick(pathEl: SVGPathElement, _r: ClaimRelation): void {
-  // R1 Fix 2 · 用 path.getPointAtLength 取真实 endpoints + apex（替代 getBBox 含弧顶主导）
-  //   getBBox 给的 bbox 被弧 apex extension 主导 / 端点在 bbox 边缘 / 飞行后可能溢出
-  //   改取 endpoint + apex 三个点 / bbox 紧贴对象 / 端点恰在 bbox 中可见
+// Stage 5 R2 · 弧线 click handler 主逻辑（PM brainstorm 重写 Q1=B / Q3=X' / Q4=1）
+//   1. 取弧 endpoints + apex (getPointAtLength) / 算 fit targetK (fit factor 0.55)
+//   2. 装得下 = currentK <= targetK / 单击自动飞 fit (PM Q1 B)
+//   3. 装不下 = currentK > targetK / 仅弹 popover 不飞 / popover 内 fit 按钮主动飞
+//   4. 总是弹 arc-popover（source/target 上下分栏 / 默认两侧折叠 / Q2）
+//   5. 选中弧 + 两端 obs 高亮（Q4 1）/ 用户展开一侧 → 仅该 obs 亮
+//   6. ROOT CAUSE FIX: 不再用 computeCenterTransform / 该函数 currentK > targetK 时锁定 currentK
+//      直接构造 { k: targetK, x: tx, y: ty } / 弧 click 总是允许降 k 到 fit 值
+function handleArcClick(pathEl: SVGPathElement, r: ClaimRelation): void {
   const totalLen = pathEl.getTotalLength();
   if (totalLen === 0) return;
   const sPt = pathEl.getPointAtLength(0);
@@ -797,13 +797,13 @@ function handleArcClick(pathEl: SVGPathElement, _r: ClaimRelation): void {
   const bboxMaxX = Math.max(sPt.x, tPt.x, midPt.x);
   const bboxMinY = Math.min(sPt.y, tPt.y, midPt.y);
   const bboxMaxY = Math.max(sPt.y, tPt.y, midPt.y);
-  const bboxW = Math.max(bboxMaxX - bboxMinX, 50); // min 50 防止极短弧 zoom 爆表
+  const bboxW = Math.max(bboxMaxX - bboxMinX, 50);
   const bboxH = Math.max(bboxMaxY - bboxMinY, 50);
   const bboxCenterX = (bboxMinX + bboxMaxX) / 2;
   const bboxCenterY = (bboxMinY + bboxMaxY) / 2;
 
   const SIDEBAR_PX = 48;
-  const POPOVER_PX = 0; // 弧不弹 popover
+  const POPOVER_PX = 380; // R2 · arc-popover 占右 380px / 飞行 visCenter 要 offset
   const HEADER_PX = 70;
   const TIMELINE_PX = 60;
   const visPxW = window.innerWidth - SIDEBAR_PX - POPOVER_PX;
@@ -814,47 +814,122 @@ function handleArcClick(pathEl: SVGPathElement, _r: ClaimRelation): void {
   if (!svgNode) return;
   const visCenterVB = pixelToViewBox(svgNode, visPxX, visPxY);
 
-  // R1 Fix 2 · fit 直接按 pixel 算 (避免 meetScale 在 letterbox 维度 over-estimate)
-  //   bbox W (viewBox 单位) × k × meetScale = 渲染 pixel 宽 / 应 <= visPxW × padFactor
-  //   k <= visPxW × padFactor / (bboxW × meetScale)
   const rect = svgNode.getBoundingClientRect();
   const vb = svgNode.viewBox.baseVal;
   if (vb.width === 0 || vb.height === 0) return;
   const meetScale = Math.min(rect.width / vb.width, rect.height / vb.height);
 
-  const padFactor = 0.55; // R1: 比 0.7 更松 / 给端点留更多 margin / translateExtent clamp 不溢出
+  const padFactor = 0.55;
   const kFitX = (visPxW * padFactor) / (bboxW * meetScale);
   const kFitY = (visPxH * padFactor) / (bboxH * meetScale);
   const targetK = Math.max(1, Math.min(kFitX, kFitY, 8));
 
+  // Q1 B · 装得下判断（currentK <= fit targetK → 飞 / 否则不飞）
   const currentK = zoomCtrl.getCurrentTransform().k;
-  const ct = computeCenterTransform({
-    target: { x: bboxCenterX, y: bboxCenterY },
-    targetK,
-    currentK,
-    visibleCenter: visCenterVB,
-  });
-  flyToTarget(svg, zoomCtrl.zoomBehavior, ct, 600);
+  const isFitNow = currentK <= targetK + 0.01;
 
-  // 弧线高亮 + 复原其他（visible path 在 g.arc-layer / hit overlay 不变样式）
-  restoreArcOpacity();
+  // 直接构造 transform / bypass computeCenterTransform 的 currentK 锁
+  const tx = visCenterVB.x - bboxCenterX * targetK;
+  const ty = visCenterVB.y - bboxCenterY * targetK;
+  const ct = { k: targetK, x: tx, y: ty };
+
+  // 选中高亮（Q4 1：两端 obs + 弧都亮 / 默认无展开 / 状态在 popover DOM）
+  applyArcSelection(pathEl, r, null);
+
+  // 装得下 → 单击自动飞 / 装不下 → 不飞（用户自己导航或点 popover fit 按钮）
+  if (isFitNow) {
+    flyToTarget(svg, zoomCtrl.zoomBehavior, ct, 600);
+  }
+
+  // 总是弹 arc-popover
+  const sourceClaim = claimById.get(r.source);
+  const targetClaim = claimById.get(r.target);
+  if (!sourceClaim || !targetClaim) return;
+  const sourceAuthor = persons.find((p) => p.id === sourceClaim.author_id)?.name_zh ?? '?';
+  const targetAuthor = persons.find((p) => p.id === targetClaim.author_id)?.name_zh ?? '?';
+
+  showArcPopover({
+    relation: r,
+    source: sourceClaim,
+    target: targetClaim,
+    sourceAuthor,
+    targetAuthor,
+    isFitNow,
+    onFitClick: () => {
+      // 强制飞行（装不下情况用户主动触发）
+      flyToTarget(svg, zoomCtrl.zoomBehavior, ct, 600);
+    },
+    onObsExpand: (obsId) => {
+      applyArcSelection(pathEl, r, obsId);
+    },
+    onObsCollapse: () => {
+      applyArcSelection(pathEl, r, null);
+    },
+    onFocusPreview: (obsId) => {
+      applyHoverPreviewFiltering(computeFocusSet(obsId));
+    },
+    onFocusLeavePreview: () => {
+      clearHoverPreviewFiltering();
+    },
+    onEnterFocus: (obsId) => {
+      // 退出 arc 选中 + 进 Stage 4 焦点模式（以展开侧 obs 为根）
+      restoreArcOpacity();
+      hideArcPopover();
+      enterFocusMode(obsId);
+    },
+    onClose: () => {
+      restoreArcOpacity();
+    },
+  });
+}
+
+// R2 · arc 选中视觉应用（Q4 1：选中弧 stroke-width 2.5 / 选中 obs 圆点 r=6 +紫描边）
+//   展开侧规则：obsId=null → source + target 都亮 / obsId='xxx' → 仅该 obs 亮
+function applyArcSelection(
+  pathEl: SVGPathElement,
+  r: ClaimRelation,
+  expandedObsId: string | null,
+): void {
+  // 1. 复原其他弧
+  d3.selectAll<SVGPathElement, ClaimRelation>('path.arc').each(function (rel) {
+    if (this === pathEl) return;
+    const style = getArcStyle(rel.type);
+    d3.select(this)
+      .interrupt()
+      .attr('stroke-width', style.strokeWidth)
+      .attr('opacity', style.opacity);
+  });
+  // 2. 高亮选中弧
   d3.select(pathEl)
     .raise()
+    .interrupt()
     .transition()
     .duration(300)
     .attr('stroke-width', 2.5)
     .attr('opacity', 1.0);
+  // 3. obs 圆点高亮
+  d3.selectAll<SVGCircleElement, unknown>('circle.obs-dot').attr('r', 2.3).attr('stroke', null);
+  const obsIdsToHighlight = expandedObsId !== null ? [expandedObsId] : [r.source, r.target];
+  obsIdsToHighlight.forEach((id) => {
+    document
+      .querySelectorAll<SVGGElement>(`g.obs[data-claim-id="${id}"] circle.obs-dot`)
+      .forEach((el) => {
+        d3.select(el).attr('r', 5).attr('stroke', '#fcfaf6').attr('stroke-width', 2);
+      });
+  });
 }
 
-// Stage 5 T8 · 复原所有弧线到原始 stroke-width + opacity（点其他弧线 / 点 obs / 点空白时调）
+// Stage 5 R2 · 复原所有弧线 + obs 圆点 + 清 selectedArc state（点其他弧线 / 点 obs / 点空白时调）
 function restoreArcOpacity(): void {
   d3.selectAll<SVGPathElement, ClaimRelation>('path.arc').each(function (r) {
     const style = getArcStyle(r.type);
     d3.select(this)
-      .interrupt() // 取消进行中的 transition
+      .interrupt()
       .attr('stroke-width', style.strokeWidth)
       .attr('opacity', style.opacity);
   });
+  // R2 · obs 圆点恢复 r=2.3 + 无 stroke
+  d3.selectAll<SVGCircleElement, unknown>('circle.obs-dot').attr('r', 2.3).attr('stroke', null);
 }
 
 // DR-058 · zoom-fit 接受紧凑后的新坐标 Map（不再用原 claimIdToCoords）
