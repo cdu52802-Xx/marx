@@ -273,12 +273,88 @@ zoomLayer
   });
 
 // R4 Fix DR-068 · hover preview state + helpers
+// R5 增强 (PM hypothesis 5) · floating label "即将选: X 关系 Y" + endpoint dot 黄边高亮
+//   PM 视觉直接看到算法将选谁 / 不依赖 console / 错例可截图反馈
 let hoverPreviewedPath: SVGPathElement | null = null;
 let hoverPreviewScheduled = false;
+
+// floating label dom (one-time mount)
+const previewLabel = document.createElement('div');
+previewLabel.className = 'arc-preview-label';
+previewLabel.style.cssText = `
+  position: fixed;
+  background: rgba(91, 58, 140, 0.95);
+  color: #fcfaf6;
+  padding: 6px 10px;
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 13px;
+  font-style: italic;
+  pointer-events: none;
+  z-index: 100;
+  display: none;
+  max-width: 320px;
+  line-height: 1.4;
+  box-shadow: 2px 2px 8px rgba(0,0,0,0.2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+document.body.appendChild(previewLabel);
+
+const REL_TYPE_LABEL_CN: Record<ClaimRelation['type'], string> = {
+  agreement_with: '同意',
+  disagreement_with: '反对',
+  extends: '延伸',
+};
+
+function setPreviewEndpointHighlight(sourceId: string | null, targetId: string | null): void {
+  // 清旧 preview-endpoint highlight (selected dot r=5 不动 / 仅清 hover preview)
+  d3.selectAll<SVGCircleElement, unknown>('circle.obs-dot[data-preview="1"]')
+    .attr('data-preview', null)
+    .attr('r', 2.3)
+    .attr('stroke', null)
+    .attr('stroke-width', null);
+
+  if (sourceId === null && targetId === null) return;
+
+  [sourceId, targetId].forEach((id) => {
+    if (!id) return;
+    document
+      .querySelectorAll<SVGCircleElement>(`g.obs[data-claim-id="${id}"] circle.obs-dot`)
+      .forEach((el) => {
+        // 不覆盖 selected dot (selected stroke #fcfaf6)
+        if (el.getAttribute('stroke') === '#fcfaf6') return;
+        d3.select(el)
+          .attr('data-preview', '1')
+          .attr('r', 4)
+          .attr('stroke', '#e6c200')
+          .attr('stroke-width', 2);
+      });
+  });
+}
 
 function updateArcHoverPreview(clientX: number, clientY: number): void {
   const picked = pickNearestArc(clientX, clientY);
   const newPath = picked?.visiblePath ?? null;
+  const newRel = picked?.relation ?? null;
+
+  // floating label 始终更新位置 (即使路径没变 / 跟 cursor 走)
+  if (newRel) {
+    const sourceClaim = claimById.get(newRel.source);
+    const targetClaim = claimById.get(newRel.target);
+    if (sourceClaim && targetClaim) {
+      const sourceAuthor = persons.find((p) => p.id === sourceClaim.author_id)?.name_zh ?? '?';
+      const targetAuthor = persons.find((p) => p.id === targetClaim.author_id)?.name_zh ?? '?';
+      const typeLabel = REL_TYPE_LABEL_CN[newRel.type] ?? newRel.type;
+      previewLabel.textContent = `${sourceAuthor} ${typeLabel} ${targetAuthor}`;
+      previewLabel.style.left = `${clientX + 16}px`;
+      previewLabel.style.top = `${clientY + 16}px`;
+      previewLabel.style.display = 'block';
+    }
+  } else {
+    previewLabel.style.display = 'none';
+  }
+
   if (newPath === hoverPreviewedPath) return;
   // 复原上一个 preview（如非 popover selected）
   if (hoverPreviewedPath && !isPathSelectedInPopover(hoverPreviewedPath)) {
@@ -290,8 +366,11 @@ function updateArcHoverPreview(clientX: number, clientY: number): void {
       .attr('opacity', style.opacity);
   }
   hoverPreviewedPath = newPath;
-  if (!newPath) return;
-  // 高亮新 preview
+  if (!newPath || !newRel) {
+    setPreviewEndpointHighlight(null, null);
+    return;
+  }
+  // 高亮新 preview path
   d3.select(newPath)
     .raise()
     .interrupt('hover')
@@ -299,9 +378,13 @@ function updateArcHoverPreview(clientX: number, clientY: number): void {
     .duration(150)
     .attr('stroke-width', 2.5)
     .attr('opacity', 1.0);
+  // 高亮两端 obs dot (黄边 / 视觉锚定 endpoint pair)
+  setPreviewEndpointHighlight(newRel.source, newRel.target);
 }
 
 function clearArcHoverPreview(): void {
+  previewLabel.style.display = 'none';
+  setPreviewEndpointHighlight(null, null);
   if (!hoverPreviewedPath) return;
   if (!isPathSelectedInPopover(hoverPreviewedPath)) {
     const datum = (hoverPreviewedPath as unknown as { __data__: ClaimRelation }).__data__;
@@ -326,17 +409,21 @@ function isPathSelectedInPopover(pathEl: SVGPathElement): boolean {
   return popover.dataset.relKey === relKey;
 }
 
-// R3 Fix DR-067 · 几何最近弧择优
-//   多 hit path 在 cursor 位置 stroke zone 重叠时 / 不靠 DOM stacking 决定 / 按几何距离择优
+// R5 Fix · DR-069 endpoint-aware 两阶段 picker
+//   Root cause (RC2 only · RC1 推翻 — click event 入口就是 stroke / elementsFromPoint 不会漏 event target)：
+//     用户视觉认知锚定 endpoint pair (语义 = "X 关系 Y") / 几何均布 path 各点 / apex 近的赢
+//     31 arcs 实测 386 confusion pair (preview_eval) / 多 arc 共享 endpoint dot 极普遍 / RC2 触发频繁
+//   Fix：全 arc 扫描 + 两阶段
+//     阶段 A · cursor 距任 arc endpoint ≤ ENDPOINT_DETECT_PX (14px 屏幕) → endpoint-mode
+//              选 endpoint 出发 ENDPOINT_LOCAL_LEN VB 长度子段内距 cursor 最近的弧
+//     阶段 B · 否则 / fallback path-mode → 全 path 32 点采样最近 + hit radius cutoff
+//   debug · URL ?debug 启用 console log / 显示算法决策路径
+const DR069_DEBUG = new URLSearchParams(window.location.search).has('debug');
+
 function pickNearestArc(
   clientX: number,
   clientY: number,
 ): { visiblePath: SVGPathElement; relation: ClaimRelation } | null {
-  const candidates = document
-    .elementsFromPoint(clientX, clientY)
-    .filter((el): el is SVGPathElement => el.matches('path.arc-hit'));
-  if (candidates.length === 0) return null;
-
   const svgNode = svg.node();
   if (!svgNode) return null;
   const ctm = svgNode.getScreenCTM();
@@ -348,37 +435,136 @@ function pickNearestArc(
   pt.y = clientY;
   const cursorVB = pt.matrixTransform(ctm.inverse());
 
-  // 找几何最近 hit path (采样 32 点)
-  let bestHit: SVGPathElement | null = null;
-  let bestDist = Infinity;
-  for (const hitPath of candidates) {
+  // 全 arc 扫描 (不限 elementsFromPoint / 处理 focus mode 切换边界 + 极端 stroke 覆盖)
+  // focus mode display:none 的 hit path 排除 (跟 visible 同步)
+  const allHitPaths = Array.from(
+    document.querySelectorAll<SVGPathElement>('g.arc-hit-layer > path.arc-hit'),
+  ).filter((el) => getComputedStyle(el).display !== 'none');
+  if (allHitPaths.length === 0) return null;
+
+  // 屏幕 px → VB 单位 (考虑 viewBox meet scale + d3.zoom k / 命中半径感知一致)
+  const rect = svgNode.getBoundingClientRect();
+  const vb = svgNode.viewBox.baseVal;
+  if (vb.width === 0 || vb.height === 0) return null;
+  const meetScale = Math.min(rect.width / vb.width, rect.height / vb.height);
+  const k = zoomCtrl.getCurrentTransform().k;
+  const ENDPOINT_DETECT_PX = 14; // endpoint 视觉锚定半径 (略大于 stroke 半宽 8)
+  const HIT_RADIUS_PX = 16; // path-mode 整 path 命中半径 (跟 stroke 16 看齐)
+  const ENDPOINT_LOCAL_LENGTH_VB = 30; // endpoint 出发子段长度 (VB 单位)
+  const endpointDetectVB = ENDPOINT_DETECT_PX / meetScale / k;
+  const hitRadiusVB = HIT_RADIUS_PX / meetScale / k;
+
+  interface ArcCandidate {
+    el: SVGPathElement;
+    relKey: string;
+    startDist: number;
+    endDist: number;
+    pathMinDist: number;
+    endpointLocalMinDist: number;
+  }
+
+  const candidates: ArcCandidate[] = [];
+  for (const hitPath of allHitPaths) {
     const totalLen = hitPath.getTotalLength();
     if (totalLen === 0) continue;
-    let localBest = Infinity;
+    const startPt = hitPath.getPointAtLength(0);
+    const endPt = hitPath.getPointAtLength(totalLen);
+    const startD2 = (startPt.x - cursorVB.x) ** 2 + (startPt.y - cursorVB.y) ** 2;
+    const endD2 = (endPt.x - cursorVB.x) ** 2 + (endPt.y - cursorVB.y) ** 2;
+
+    // path 整段 32 点采样最近
+    let pathMinD2 = Math.min(startD2, endD2);
     const samples = 32;
-    for (let i = 0; i <= samples; i++) {
+    for (let i = 1; i < samples; i++) {
       const p = hitPath.getPointAtLength((totalLen * i) / samples);
-      const dx = p.x - cursorVB.x;
-      const dy = p.y - cursorVB.y;
-      const d2 = dx * dx + dy * dy;
-      if (d2 < localBest) localBest = d2;
+      const d2 = (p.x - cursorVB.x) ** 2 + (p.y - cursorVB.y) ** 2;
+      if (d2 < pathMinD2) pathMinD2 = d2;
     }
-    if (localBest < bestDist) {
-      bestDist = localBest;
-      bestHit = hitPath;
+
+    // endpoint-local 子段 (start 端 + end 端各 16 点采样 / 短弧自动减半)
+    let endpointLocalMinD2 = Math.min(startD2, endD2);
+    const localLen = Math.min(ENDPOINT_LOCAL_LENGTH_VB, totalLen / 2);
+    const localSamples = 16;
+    for (let i = 1; i <= localSamples; i++) {
+      const offsetFromStart = (localLen * i) / localSamples;
+      const p1 = hitPath.getPointAtLength(offsetFromStart);
+      const d1 = (p1.x - cursorVB.x) ** 2 + (p1.y - cursorVB.y) ** 2;
+      if (d1 < endpointLocalMinD2) endpointLocalMinD2 = d1;
+      const p2 = hitPath.getPointAtLength(totalLen - offsetFromStart);
+      const d2 = (p2.x - cursorVB.x) ** 2 + (p2.y - cursorVB.y) ** 2;
+      if (d2 < endpointLocalMinD2) endpointLocalMinD2 = d2;
+    }
+
+    const datum = (hitPath as unknown as { __data__: ClaimRelation }).__data__;
+    candidates.push({
+      el: hitPath,
+      relKey: `${datum.source}|${datum.target}|${datum.type}`,
+      startDist: Math.sqrt(startD2),
+      endDist: Math.sqrt(endD2),
+      pathMinDist: Math.sqrt(pathMinD2),
+      endpointLocalMinDist: Math.sqrt(endpointLocalMinD2),
+    });
+  }
+
+  // 阶段 A · endpoint-mode
+  const endpointCands = candidates.filter(
+    (c) => Math.min(c.startDist, c.endDist) <= endpointDetectVB,
+  );
+  let chosen: ArcCandidate | null = null;
+  let mode: 'endpoint' | 'path' | 'none' = 'none';
+  if (endpointCands.length > 0) {
+    endpointCands.sort((a, b) => a.endpointLocalMinDist - b.endpointLocalMinDist);
+    chosen = endpointCands[0];
+    mode = 'endpoint';
+  } else {
+    // 阶段 B · path-mode (hit radius cutoff)
+    const pathCands = candidates.filter((c) => c.pathMinDist <= hitRadiusVB);
+    if (pathCands.length > 0) {
+      pathCands.sort((a, b) => a.pathMinDist - b.pathMinDist);
+      chosen = pathCands[0];
+      mode = 'path';
     }
   }
-  if (!bestHit) return null;
+
+  if (DR069_DEBUG) {
+    console.group(
+      `[arc-debug] click pixel (${clientX}, ${clientY}) · VB (${cursorVB.x.toFixed(1)}, ${cursorVB.y.toFixed(1)}) · k=${k.toFixed(2)}`,
+    );
+    console.log(
+      `radii VB: endpoint-detect=${endpointDetectVB.toFixed(1)} · hit=${hitRadiusVB.toFixed(1)}`,
+    );
+    console.log(`MODE: ${mode.toUpperCase()} · chosen: ${chosen?.relKey ?? 'NONE'}`);
+    const sortKey: keyof ArcCandidate =
+      mode === 'endpoint' ? 'endpointLocalMinDist' : 'pathMinDist';
+    candidates
+      .slice()
+      .sort((a, b) => (a[sortKey] as number) - (b[sortKey] as number))
+      .slice(0, 5)
+      .forEach((c, i) => {
+        const marker = i === 0 ? '🎯' : '  ';
+        console.log(
+          `${marker} #${i + 1} ${c.relKey} · ep-local=${c.endpointLocalMinDist.toFixed(1)} · path-min=${c.pathMinDist.toFixed(1)} · start=${c.startDist.toFixed(1)} · end=${c.endDist.toFixed(1)}`,
+        );
+      });
+    console.groupEnd();
+  }
+
+  if (!chosen) return null;
 
   // hit path index → 对应 visible path
-  const hitParent = bestHit.parentElement;
+  const hitParent = chosen.el.parentElement;
   if (!hitParent) return null;
-  const idx = Array.prototype.indexOf.call(hitParent.children, bestHit);
+  const idx = Array.prototype.indexOf.call(hitParent.children, chosen.el);
   const visiblePath = document.querySelectorAll<SVGPathElement>('g.arc-layer > path.arc')[idx];
   if (!visiblePath) return null;
 
-  const relation = (bestHit as unknown as { __data__: ClaimRelation }).__data__;
+  const relation = (chosen.el as unknown as { __data__: ClaimRelation }).__data__;
   return { visiblePath, relation };
+}
+
+// DR-069 dev · ?debug 启用时 expose 到 window 便于 preview_eval 批量测试
+if (DR069_DEBUG) {
+  (window as unknown as { __arcPick: typeof pickNearestArc }).__arcPick = pickNearestArc;
 }
 
 // === 7. Person section 标题 + obs 行 ===
