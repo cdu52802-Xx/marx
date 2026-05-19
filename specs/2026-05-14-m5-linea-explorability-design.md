@@ -258,6 +258,7 @@
 ### 7.4 单击弧线（半圆弧 SVG path）
 
 - 点击命中：g.arc-hit-layer 透明 16 屏幕 px stroke overlay（DR-061 / 解 PM "太细难选中"）
+  · **R3 修 DR-067 命中歧义**：hit click 用 pickNearestArc(clientX, clientY) 几何最近择优 / elementsFromPoint 拿所有 candidates + 32 点采样最短距离² / 不靠 DOM stacking 顺序 / 解 PM "想选 A 实际命中 B"（多弧 stroke zone 重叠 root cause）
 - 单击半圆弧 → 触发（**R2 重写 DR-066**）：
   1. 算 fit targetK（endpoint+apex bbox / fit 55% / DR-062 复用）
   2. **isFitNow = currentK <= targetK + 0.01**（装得下判断）
@@ -453,7 +454,7 @@ ship 前重跑 gstack 4 件套 / 任一警戒线破 = 修了再 ship。
 | DR-023 | 2026-05-14 | 详情卡宽度 350px → 400px | 保持 350px / 增到 450px | bio 事件式 + 关联列表需要更多横向空间 / 400px 是 4 件套 design-review 推荐 |
 | DR-024 | 2026-05-14 | 右上区域 M5 主线 A 不放任何 widget | 缩放控件放右上（前 mockup v2）/ 搜索栏 placeholder 立刻加 | 预留主线 B（避免主线 A 临时占位主线 B 又要拆）/ 主线 A 范围聚焦 zoom 不蔓延 |
 
-> **DR-025 ~ DR-066 实施期补**（详见 [progress anchor](../docs/2026-05-15-m5-linea-progress-anchor.md) § 3 / 实施期累积 40+ 决策）
+> **DR-025 ~ DR-067 实施期补**（详见 [progress anchor](../docs/2026-05-15-m5-linea-progress-anchor.md) § 3 / 实施期累积 40+ 决策）
 
 ### 13.1 Stage 3 brainstorm 决策（2026-05-15 实施期补）
 
