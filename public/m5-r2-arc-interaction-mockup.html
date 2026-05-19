@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>M5 Stage 5 R2 · arc click 新交互对比 mockup</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'EB Garamond', Georgia, 'Noto Serif SC', serif;
+      background: #fcfaf6;
+      color: #1a1a1a;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top toolbar - mode toggles */
+    header {
+      padding: 12px 24px;
+      background: #f4ede0;
+      border-bottom: 1px solid #d8cab0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      align-items: center;
+      font-size: 13px;
+    }
+    .toggle-group {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      padding-right: 16px;
+      border-right: 1px solid #d8cab0;
+    }
+    .toggle-group:last-child { border-right: none; }
+    .toggle-group strong {
+      color: #5b3a8c;
+      font-style: italic;
+      margin-right: 8px;
+      letter-spacing: 0.04em;
+    }
+    .toggle-group button {
+      padding: 5px 10px;
+      border: 1px solid #888;
+      background: #fcfaf6;
+      color: #1a1a1a;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 12px;
+      transition: all 0.15s;
+    }
+    .toggle-group button.active {
+      background: #5b3a8c;
+      color: #fcfaf6;
+      border-color: #5b3a8c;
+    }
+    .toggle-group button:hover:not(.active) {
+      background: rgba(91, 58, 140, 0.08);
+    }
+
+    /* Main area */
+    main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 0;
+      overflow: hidden;
+    }
+    #canvas-container {
+      position: relative;
+      background: #fcfaf6;
+      overflow: hidden;
+    }
+    svg.canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+    .obs-dot {
+      fill: #5b3a8c;
+      cursor: pointer;
+    }
+    .obs-dot.highlighted {
+      fill: #5b3a8c;
+      stroke: #fcfaf6;
+      stroke-width: 3;
+      r: 6;
+    }
+    .obs-dot.preview-faded { opacity: 0.15; }
+    .obs-label {
+      font-family: 'EB Garamond', Georgia, serif;
+      font-size: 11px;
+      font-style: italic;
+      fill: #2a2a2a;
+      pointer-events: none;
+    }
+    .obs-label.preview-faded { opacity: 0.15; }
+    .arc {
+      fill: none;
+      stroke-linecap: round;
+      pointer-events: none;
+    }
+    .arc.agreement { stroke: #7a9a5a; stroke-width: 1.2; opacity: 0.65; }
+    .arc.disagreement { stroke: #b8654a; stroke-width: 1.3; opacity: 0.7; }
+    .arc.extends { stroke: #aaa; stroke-width: 0.9; opacity: 0.4; stroke-dasharray: 2,2; }
+    .arc.highlighted { stroke-width: 2.8; opacity: 1; }
+    .arc.preview-faded { opacity: 0.15; }
+    .arc-hit {
+      fill: none;
+      stroke: transparent;
+      stroke-width: 16;
+      cursor: pointer;
+    }
+
+    /* Status overlay */
+    #status {
+      position: absolute;
+      bottom: 12px;
+      left: 12px;
+      right: 12px;
+      padding: 8px 12px;
+      background: rgba(252, 250, 246, 0.95);
+      border: 1px solid #5b3a8c;
+      color: #1a1a1a;
+      font-size: 12px;
+      font-style: italic;
+      pointer-events: none;
+      line-height: 1.6;
+    }
+    #status strong { color: #5b3a8c; font-style: normal; }
+
+    /* Zoom slider */
+    .zoom-control {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      padding: 8px 12px;
+      background: rgba(252, 250, 246, 0.95);
+      border: 1px solid #d8cab0;
+      font-size: 12px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .zoom-control button {
+      padding: 3px 8px;
+      border: 1px solid #888;
+      background: #fcfaf6;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 11px;
+    }
+    .zoom-control button.active {
+      background: #5b3a8c;
+      color: #fcfaf6;
+      border-color: #5b3a8c;
+    }
+
+    /* Popover - arc detail (split 2 row) */
+    aside.popover {
+      background: #fcfaf6;
+      border-left: 1px solid #d8cab0;
+      box-shadow: -4px 0 18px rgba(58, 35, 96, 0.10);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+    .popover-empty {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #888;
+      font-style: italic;
+      padding: 32px;
+      text-align: center;
+      font-size: 14px;
+    }
+    .popover-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid #d8cab0;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .popover-header .kicker {
+      font-style: italic;
+      color: #5b3a8c;
+      font-size: 13px;
+      letter-spacing: 0.06em;
+      flex: 1;
+    }
+    .popover-header button {
+      padding: 6px 10px;
+      border: 1px solid #5b3a8c;
+      background: #fcfaf6;
+      color: #5b3a8c;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 11px;
+      font-style: italic;
+      transition: background 0.15s;
+    }
+    .popover-header button:hover {
+      background: rgba(91, 58, 140, 0.08);
+    }
+    .popover-header .close-btn {
+      border: none;
+      background: none;
+      color: #888;
+      font-size: 22px;
+      padding: 0 4px;
+      cursor: pointer;
+    }
+
+    /* Obs slot - 上下分栏 */
+    .obs-slot {
+      border-bottom: 1px solid #d8cab0;
+      padding: 14px 20px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .obs-slot:last-child { border-bottom: none; }
+    .obs-slot:hover {
+      background: rgba(91, 58, 140, 0.04);
+    }
+    .obs-slot.expanded {
+      background: rgba(91, 58, 140, 0.06);
+      cursor: default;
+    }
+    .obs-slot.expanded:hover { background: rgba(91, 58, 140, 0.06); }
+    .obs-slot .slot-kicker {
+      font-size: 11px;
+      color: #5b3a8c;
+      font-style: italic;
+      letter-spacing: 0.06em;
+      margin-bottom: 4px;
+    }
+    .obs-slot h3 {
+      font-family: 'EB Garamond', Georgia, serif;
+      font-size: 16px;
+      font-weight: 600;
+      margin: 4px 0;
+      color: #2a2a2a;
+      line-height: 1.4;
+    }
+    .obs-slot .meta {
+      font-size: 11px;
+      color: #888;
+      font-variant: small-caps;
+      letter-spacing: 0.08em;
+      margin-top: 4px;
+    }
+    .obs-slot .detail-body {
+      display: none;
+      margin-top: 12px;
+      font-size: 13px;
+      line-height: 1.7;
+      color: #4a4a4a;
+    }
+    .obs-slot.expanded .detail-body {
+      display: block;
+    }
+    .obs-slot .detail-body blockquote {
+      border-left: 3px solid #5b3a8c;
+      padding-left: 12px;
+      margin: 8px 0;
+      font-style: italic;
+      color: #2a2a2a;
+    }
+    .obs-slot .detail-body .extra {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px dotted #d8cab0;
+      color: #888;
+      font-style: italic;
+      font-size: 12px;
+    }
+    .obs-slot .collapse-hint {
+      font-size: 10px;
+      color: #888;
+      font-style: italic;
+      margin-top: 4px;
+    }
+    .obs-slot:not(.expanded) .collapse-hint::before { content: '↓ '; }
+    .obs-slot.expanded .collapse-hint { display: none; }
+
+    /* Footer hints */
+    footer {
+      padding: 8px 24px;
+      background: #f4ede0;
+      border-top: 1px solid #d8cab0;
+      font-size: 11px;
+      color: #555;
+      font-style: italic;
+    }
+
+    /* fade-faded class for canvas */
+    .canvas-container.preview-mode .obs-dot:not(.preview-source):not(.preview-target),
+    .canvas-container.preview-mode .obs-label:not(.preview-source):not(.preview-target),
+    .canvas-container.preview-mode .arc:not(.preview-relation) {
+      opacity: 0.15;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="toggle-group">
+      <strong>Q1 flyto 触发：</strong>
+      <button class="mode-btn active" data-group="flyto" data-mode="B">B 单击装得下→飞 / 按钮</button>
+      <button class="mode-btn" data-group="flyto" data-mode="A">A 双击装不下→飞</button>
+      <button class="mode-btn" data-group="flyto" data-mode="C">C 永远按钮</button>
+    </div>
+    <div class="toggle-group">
+      <strong>Q3 焦点衔接：</strong>
+      <button class="mode-btn active" data-group="focus" data-mode="X">X popover → 焦点按钮</button>
+      <button class="mode-btn" data-group="focus" data-mode="Y">Y 独立 不衔接</button>
+      <button class="mode-btn" data-group="focus" data-mode="Z">Z hover 预览</button>
+    </div>
+    <div class="toggle-group">
+      <strong>Q4 选中亮显：</strong>
+      <button class="mode-btn active" data-group="highlight" data-mode="1">1 选中 obs + 弧</button>
+      <button class="mode-btn" data-group="highlight" data-mode="2">2 三者全亮</button>
+      <button class="mode-btn" data-group="highlight" data-mode="3">3 仅选中 obs</button>
+    </div>
+  </header>
+
+  <main>
+    <div id="canvas-container">
+      <div class="zoom-control">
+        <strong>模拟 zoom：</strong>
+        <button class="zoom-btn active" data-zoom="1">1× 全景</button>
+        <button class="zoom-btn" data-zoom="3">3× 中</button>
+        <button class="zoom-btn" data-zoom="6">6× 放大</button>
+      </div>
+      <svg class="canvas" viewBox="0 0 800 600" preserveAspectRatio="xMidYMid meet">
+        <g id="arc-layer"></g>
+        <g id="arc-hit-layer"></g>
+        <g id="obs-layer"></g>
+        <g id="label-layer"></g>
+      </svg>
+      <div id="status">点击任意弧线试试（已选 mode 看下方说明）</div>
+    </div>
+
+    <aside class="popover" id="popover">
+      <div class="popover-empty" id="popover-empty">
+        点击任意弧线 ↑<br>右侧将显示连接的两个观点
+      </div>
+    </aside>
+  </main>
+
+  <footer>
+    <span id="hint"></span>
+  </footer>
+
+  <script>
+    // ===== 模拟数据 8 obs + 5 arcs =====
+    const obsData = [
+      { id: 'a', x: 120, y: 130, author: '黑格尔', text: '历史是绝对精神的自我实现', year: 1820, cats: '形而上', work: '历史哲学讲演录', detail: '黑格尔认为历史的本质是绝对精神在时间中的展开，每一阶段都是更高阶段的必要环节。' },
+      { id: 'b', x: 420, y: 180, author: '马克思', text: '物质生产决定社会意识', year: 1859, cats: '政治 · 形而上', work: '政治经济学批判序言', detail: '马克思颠倒黑格尔的"精神决定论"，提出社会存在决定社会意识；经济基础决定上层建筑。' },
+      { id: 'c', x: 680, y: 350, author: '恩格斯', text: '辩证唯物主义阐释自然规律', year: 1878, cats: '科学 · 形而上', work: '反杜林论', detail: '恩格斯将辩证法应用到自然科学，论证唯物辩证法是普适规律。' },
+      { id: 'd', x: 160, y: 380, author: '费尔巴哈', text: '宗教是人异化的产物', year: 1841, cats: '宗教', work: '基督教的本质', detail: '费尔巴哈认为神是人将自身本质投射到外部的产物，神学的秘密是人本学。' },
+      { id: 'e', x: 380, y: 480, author: '马克思', text: '宗教是人民的鸦片', year: 1844, cats: '宗教 · 政治', work: '《黑格尔法哲学批判》导言', detail: '马克思继承费尔巴哈的宗教批判，更进一步指出宗教批判要转向社会现实批判。' },
+      { id: 'f', x: 580, y: 110, author: '黑格尔', text: '矛盾是事物发展的动力', year: 1812, cats: '逻辑', work: '逻辑学', detail: '黑格尔提出对立统一规律：事物内部包含矛盾，矛盾的展开推动事物发展。' },
+      { id: 'g', x: 720, y: 220, author: '马克思', text: '阶级斗争推动社会变革', year: 1848, cats: '政治', work: '共产党宣言', detail: '马克思将黑格尔的矛盾辩证法应用到社会领域：阶级矛盾是历史变革的动力。' },
+      { id: 'h', x: 280, y: 270, author: '康德', text: '物自体不可认识', year: 1781, cats: '认识论', work: '纯粹理性批判', detail: '康德区分现象与物自体，认为人只能认识现象。' },
+    ];
+    const arcs = [
+      { source: 'a', target: 'b', type: 'disagreement', label: '反对' },
+      { source: 'd', target: 'e', type: 'agreement', label: '同意' },
+      { source: 'f', target: 'g', type: 'extends', label: '延伸' },
+      { source: 'b', target: 'g', type: 'extends', label: '延伸' },
+      { source: 'a', target: 'h', type: 'disagreement', label: '反对' },
+      { source: 'b', target: 'c', type: 'agreement', label: '同意' },
+      { source: 'e', target: 'b', type: 'extends', label: '延伸' },
+    ];
+    const obsMap = Object.fromEntries(obsData.map(o => [o.id, o]));
+
+    // ===== State =====
+    let currentMode = { flyto: 'B', focus: 'X', highlight: '1' };
+    let currentZoom = 1; // simulated zoom: 1, 3, 6
+    let selectedArc = null; // arc obj
+    let expandedSide = null; // 'source' | 'target' | null
+    let previewActive = null; // arc obj (hover preview state)
+
+    // ===== Render arcs + obs =====
+    const arcLayer = document.getElementById('arc-layer');
+    const hitLayer = document.getElementById('arc-hit-layer');
+    const obsLayer = document.getElementById('obs-layer');
+    const labelLayer = document.getElementById('label-layer');
+
+    function generateArcPath(s, t, type) {
+      const dx = t.x - s.x, dy = t.y - s.y;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      if (type === 'extends') {
+        const midY = (s.y + t.y) / 2;
+        const ctrlX = Math.max(s.x, t.x) + dist * 0.15;
+        return `M ${s.x} ${s.y} Q ${ctrlX} ${midY} ${t.x} ${t.y}`;
+      }
+      const r = dist / 2;
+      const sweep = type === 'agreement'
+        ? (dy + dx >= 0 ? 1 : 0)
+        : (dy + dx >= 0 ? 0 : 1);
+      return `M ${s.x} ${s.y} A ${r} ${r} 0 0 ${sweep} ${t.x} ${t.y}`;
+    }
+
+    arcs.forEach((a, idx) => {
+      const s = obsMap[a.source], t = obsMap[a.target];
+      const d = generateArcPath(s, t, a.type);
+      // visible
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('class', `arc ${a.type}`);
+      path.setAttribute('d', d);
+      path.dataset.arcIdx = idx;
+      arcLayer.appendChild(path);
+      // hit overlay
+      const hit = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      hit.setAttribute('class', 'arc-hit');
+      hit.setAttribute('d', d);
+      hit.dataset.arcIdx = idx;
+      hit.addEventListener('click', (e) => { e.stopPropagation(); handleArcClick(a, idx, e); });
+      hit.addEventListener('dblclick', (e) => { e.stopPropagation(); handleArcDblClick(a, idx); });
+      hitLayer.appendChild(hit);
+    });
+    obsData.forEach(o => {
+      const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      c.setAttribute('class', 'obs-dot');
+      c.setAttribute('cx', o.x); c.setAttribute('cy', o.y); c.setAttribute('r', 4);
+      c.dataset.id = o.id;
+      obsLayer.appendChild(c);
+      const tx = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      tx.setAttribute('class', 'obs-label');
+      tx.setAttribute('x', o.x + 8); tx.setAttribute('y', o.y + 4);
+      tx.textContent = `${o.author}·${o.text.slice(0,10)}`;
+      tx.dataset.id = o.id;
+      labelLayer.appendChild(tx);
+    });
+
+    // ===== Mode toggles =====
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const g = btn.dataset.group;
+        document.querySelectorAll(`.mode-btn[data-group="${g}"]`).forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentMode[g] = btn.dataset.mode;
+        applyHighlight();
+        updateStatus();
+      });
+    });
+    document.querySelectorAll('.zoom-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.zoom-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentZoom = parseInt(btn.dataset.zoom, 10);
+        updateStatus();
+      });
+    });
+
+    // ===== Arc click / dblclick =====
+    function handleArcClick(arc, idx) {
+      const mode = currentMode.flyto;
+      const fitsNow = canFitNow(arc); // 装得下: zoom<=1.5 时 true / zoom>1.5 false (mockup 简化)
+      let flyTriggered = false;
+      if (mode === 'B') {
+        if (fitsNow) flyTriggered = true;
+        // else: 仅开 popover
+      } else if (mode === 'A') {
+        if (fitsNow) flyTriggered = true;
+        // 装不下需双击
+      } else if (mode === 'C') {
+        // 永远按钮 / 不飞
+      }
+      selectedArc = arc;
+      expandedSide = null;
+      renderPopover();
+      applyHighlight();
+      flashFly(flyTriggered);
+      updateStatus();
+    }
+    function handleArcDblClick(arc, idx) {
+      // 双击始终 fit / 仅 mode A 在装不下时有意义 / 其他 mode 双击 = 单击
+      selectedArc = arc;
+      expandedSide = null;
+      renderPopover();
+      applyHighlight();
+      flashFly(true);
+      updateStatus(true);
+    }
+    function canFitNow(arc) {
+      return currentZoom <= 1.5;
+    }
+    function flashFly(triggered) {
+      const status = document.getElementById('status');
+      if (triggered) {
+        status.innerHTML += ' <strong style="color:#7a9a5a;">→ 触发 fit 飞行</strong>';
+        // mockup: brief border flash on canvas
+        const canvas = document.querySelector('svg.canvas');
+        canvas.style.outline = '3px solid #7a9a5a';
+        setTimeout(() => canvas.style.outline = 'none', 600);
+      }
+    }
+
+    // ===== Popover render =====
+    const popover = document.getElementById('popover');
+    function renderPopover() {
+      if (!selectedArc) {
+        popover.innerHTML = `<div class="popover-empty">点击任意弧线 ↑<br>右侧将显示连接的两个观点</div>`;
+        return;
+      }
+      const s = obsMap[selectedArc.source];
+      const t = obsMap[selectedArc.target];
+      const fitsNow = canFitNow(selectedArc);
+      const showFitBtn = (currentMode.flyto === 'B' && !fitsNow) || currentMode.flyto === 'C';
+      const showFocusBtn = currentMode.focus === 'X';
+
+      popover.innerHTML = `
+        <div class="popover-header">
+          <span class="kicker">§ ${selectedArc.label} · 关系</span>
+          ${showFitBtn ? `<button id="fit-btn" title="飞行 fit 居中">📍 fit 居中</button>` : ''}
+          ${showFocusBtn ? `<button id="focus-btn" title="进入 Stage 4 焦点模式">→ 焦点</button>` : ''}
+          <button class="close-btn" id="close-btn">×</button>
+        </div>
+        <div class="obs-slot" data-side="source" data-id="${s.id}">
+          <div class="slot-kicker">SOURCE · ${s.author}</div>
+          <h3>${s.text}</h3>
+          <div class="meta">${s.year} · ${s.cats}</div>
+          <div class="detail-body">
+            <blockquote>${s.text}</blockquote>
+            <p>${s.detail}</p>
+            <div class="extra">出处：${s.work}</div>
+          </div>
+          <div class="collapse-hint">点击展开</div>
+        </div>
+        <div class="obs-slot" data-side="target" data-id="${t.id}">
+          <div class="slot-kicker">TARGET · ${t.author}</div>
+          <h3>${t.text}</h3>
+          <div class="meta">${t.year} · ${t.cats}</div>
+          <div class="detail-body">
+            <blockquote>${t.text}</blockquote>
+            <p>${t.detail}</p>
+            <div class="extra">出处：${t.work}</div>
+          </div>
+          <div class="collapse-hint">点击展开</div>
+        </div>
+      `;
+      popover.querySelectorAll('.obs-slot').forEach(slot => {
+        slot.addEventListener('click', () => {
+          const side = slot.dataset.side;
+          expandedSide = expandedSide === side ? null : side;
+          renderPopover();
+          applyHighlight();
+        });
+        // Q3 mode Z: hover preview 焦点
+        if (currentMode.focus === 'Z') {
+          slot.addEventListener('mouseenter', () => {
+            previewActive = { id: slot.dataset.id };
+            applyHighlight();
+          });
+          slot.addEventListener('mouseleave', () => {
+            previewActive = null;
+            applyHighlight();
+          });
+        }
+      });
+      // re-apply expanded
+      if (expandedSide) {
+        popover.querySelector(`.obs-slot[data-side="${expandedSide}"]`)?.classList.add('expanded');
+      }
+      popover.querySelector('#close-btn')?.addEventListener('click', closePopover);
+      popover.querySelector('#fit-btn')?.addEventListener('click', () => {
+        flashFly(true);
+        updateStatus(true, true);
+      });
+      popover.querySelector('#focus-btn')?.addEventListener('click', () => {
+        alert(`mockup: 跳进 Stage 4 焦点模式 / 以 ${expandedSide === 'target' ? obsMap[selectedArc.target].author : obsMap[selectedArc.source].author} 的观点为根 / 显示所有关联 obs (1 对 N)`);
+      });
+    }
+    function closePopover() {
+      selectedArc = null;
+      expandedSide = null;
+      previewActive = null;
+      renderPopover();
+      applyHighlight();
+      updateStatus();
+    }
+    document.querySelector('svg.canvas').addEventListener('click', closePopover);
+
+    // ===== Highlight 应用 =====
+    function applyHighlight() {
+      const allDots = document.querySelectorAll('.obs-dot');
+      const allLabels = document.querySelectorAll('.obs-label');
+      const allArcs = document.querySelectorAll('.arc');
+      allDots.forEach(d => d.classList.remove('highlighted', 'preview-faded'));
+      allLabels.forEach(d => d.classList.remove('preview-faded'));
+      allArcs.forEach(a => a.classList.remove('highlighted', 'preview-faded'));
+
+      if (!selectedArc) return;
+      const sId = selectedArc.source, tId = selectedArc.target;
+      const mode = currentMode.highlight;
+      const sDot = document.querySelector(`.obs-dot[data-id="${sId}"]`);
+      const tDot = document.querySelector(`.obs-dot[data-id="${tId}"]`);
+      const arcIdx = arcs.indexOf(selectedArc);
+      const arcEl = document.querySelectorAll('.arc')[arcIdx];
+
+      if (mode === '1') {
+        // 选中 obs + 弧 都亮
+        if (expandedSide === 'source' || expandedSide === null) sDot?.classList.add('highlighted');
+        if (expandedSide === 'target' || expandedSide === null) tDot?.classList.add('highlighted');
+        arcEl?.classList.add('highlighted');
+      } else if (mode === '2') {
+        // 三者全亮 / 不区分选中
+        sDot?.classList.add('highlighted');
+        tDot?.classList.add('highlighted');
+        arcEl?.classList.add('highlighted');
+      } else if (mode === '3') {
+        // 仅选中 obs 亮 / 弧不亮
+        if (expandedSide === 'source') sDot?.classList.add('highlighted');
+        if (expandedSide === 'target') tDot?.classList.add('highlighted');
+        if (!expandedSide) {
+          sDot?.classList.add('highlighted');
+          tDot?.classList.add('highlighted');
+        }
+      }
+      // Q3 mode Z hover preview: 淡显其他
+      if (currentMode.focus === 'Z' && previewActive) {
+        allDots.forEach(d => {
+          if (d.dataset.id !== sId && d.dataset.id !== tId) d.classList.add('preview-faded');
+        });
+        allLabels.forEach(d => {
+          if (d.dataset.id !== sId && d.dataset.id !== tId) d.classList.add('preview-faded');
+        });
+        allArcs.forEach((a, i) => {
+          if (i !== arcIdx) a.classList.add('preview-faded');
+        });
+      }
+    }
+
+    // ===== Status =====
+    function updateStatus(isDbl = false, fitBtnClick = false) {
+      const s = document.getElementById('status');
+      const fitsNow = selectedArc ? canFitNow(selectedArc) : true;
+      const m = currentMode;
+      let msg = `<strong>当前 mode：</strong>flyto=${m.flyto} · 焦点=${m.focus} · 亮显=${m.highlight} | zoom=${currentZoom}× ${fitsNow ? '<span style="color:#7a9a5a">[装得下]</span>' : '<span style="color:#b8654a">[装不下]</span>'}`;
+      if (!selectedArc) msg += ' | 点击任意弧线试试';
+      else {
+        msg += ` | 选中：${obsMap[selectedArc.source].author} ↔ ${obsMap[selectedArc.target].author} (${selectedArc.label})`;
+        if (isDbl) msg += ' <strong style="color:#7a9a5a;">[双击 → 强制 fit]</strong>';
+        else if (fitBtnClick) msg += ' <strong style="color:#7a9a5a;">[按钮 → fit]</strong>';
+      }
+      document.getElementById('status').innerHTML = msg;
+      // footer hint
+      const hint = document.getElementById('hint');
+      let hintText = `Q1=${m.flyto}：`;
+      if (m.flyto === 'B') hintText += '装得下→单击自动飞 / 装不下→按钮飞';
+      else if (m.flyto === 'A') hintText += '装得下→单击飞 / 装不下→双击飞';
+      else if (m.flyto === 'C') hintText += '永远单击仅开 popover / 按钮才飞';
+      hintText += ` | Q3=${m.focus}：`;
+      if (m.focus === 'X') hintText += 'popover 内"→ 焦点"按钮可跳 Stage 4';
+      else if (m.focus === 'Y') hintText += '不衔接 / 弧 popover 与 obs「查看关联」独立';
+      else if (m.focus === 'Z') hintText += 'hover obs-slot → 主画布淡显非焦点（预览 Stage 4 体验）';
+      hint.innerHTML = hintText;
+    }
+
+    updateStatus();
+  </script>
+</body>
+</html>
