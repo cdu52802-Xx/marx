@@ -47,34 +47,9 @@
       </p>
     </header>
     <div id="app"></div>
-    <footer
-      id="credits-footer"
-      style="
-        position: fixed;
-        top: 14px;
-        right: 14px;
-        z-index: 9;
-        font-family: 'EB Garamond', Georgia, serif;
-        font-size: 11px;
-        color: #aaa;
-        letter-spacing: 0.02em;
-        font-style: italic;
-        pointer-events: auto;
-      "
-    >
-      视觉灵感 ·
-      <a
-        href="https://www.denizcemonduygu.com/philo/"
-        target="_blank"
-        rel="noopener"
-        style="
-          color: #888;
-          text-decoration: none;
-          border-bottom: 1px dotted #aaa;
-        "
-        >denizcemonduygu.com/philo</a
-      >
-    </footer>
+    <!-- M4 footer 致谢迁到 src/components/header.ts · B1 T1.2 link 重组（PM 2026-05-20 选 B 沿用 M4 米白透明）
+         JS 动态 mount header-controls：互换按钮 + 关于 + 视觉灵感 denizcemonduygu link -->
+
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

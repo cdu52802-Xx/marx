@@ -103,18 +103,19 @@
 - 关于 / 致谢 link（M4 footer 右上已有 / 重组到 header 右上）
 - "↔ 主副互换"按钮（位置预留 / B2 时启用）
 
-### 3.2 视觉规范
+### 3.2 视觉规范（PM 2026-05-20 选 B · 沿用 M4 米白透明 / 不墨黑 bg）
 
 | 元素 | 规范 |
 |---|---|
-| header bg | `#1a1a1a` (墨黑) |
-| brand 字体 | Playfair Display italic 15px |
-| brand 颜色 | `#fcfaf6` (米白) |
-| 搜索框 bg | `#fcfaf6` + 1px 沙石灰金 border |
-| 搜索框 font | EB Garamond 13px |
-| link 字体 | EB Garamond italic 12px |
-| link 颜色 | `#fcfaf6` opacity 0.7 |
-| layout | brand 左 / 搜索中 / link 右 / 0 border-radius |
+| header bg | **透明**（沿用 M4 现状 / 不加 background-color / 跟主图融合） |
+| brand h1 | EB Garamond 18px / `#2a2a2a` 墨黑 / "Marx · 思想史可视化"（沿用 M4 现状 / 不改 Playfair）|
+| brand 副标题 | EB Garamond italic 11px `#888` "1818–1883 · 92 条主张 · 31 条思想关系"（沿用 M4 / B2 数据规模含地理图节点需更新） |
+| 搜索框 bg | `#fcfaf6` + 1px 沙石灰金 `#d8cab0` border / paper 风格 |
+| 搜索框 font | EB Garamond 13px / placeholder italic `#888` |
+| link / 互换按钮 | EB Garamond italic 12px `#888` letter-spacing 0.02em（沿用 M4 footer 致谢风格）/ hover → `#5b3a8c` 紫 |
+| layout | brand h1 + 副标题 fixed top:14 left:62 right:250（M4 不动）/ 搜索框 fixed top:14 居中 / 互换 + 关于 + 视觉灵感 link fixed top:14 right:14 inline 分隔 · 含 dotted underline |
+| pointer-events | brand 区 `none`（M4 现状 / 不挡主图 click）/ 搜索 + link + 互换 区 `auto` |
+| z-index | 9（沿用 M4 现状） |
 
 ### 3.3 搜索功能（核心）
 

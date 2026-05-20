@@ -29,6 +29,7 @@ import {
 } from './components/claim-layout.ts';
 import { mountTimeline } from './components/timeline.ts';
 import { mountSidebar } from './components/sidebar.ts';
+import { mountHeader } from './components/header.ts';
 import { mountBreadcrumb, type BreadcrumbApi } from './components/breadcrumb.ts';
 import { createZoom } from './viz/zoom.ts';
 import { mountZoomControl, updateZoomDisplay } from './components/zoom-control.ts';
@@ -1355,6 +1356,11 @@ mountSidebar({
   },
 });
 
-console.log(
-  '[Marx M4] render complete · timeline + sidebar mounted (position:fixed bottom:0 / left:0)',
-);
+// === 10. B1 T1.1-T1.3 · header controls（互换 + 关于 + 视觉灵感 + Stage 2 search slot）===
+// PM 2026-05-20 选 B · 沿用 M4 米白透明 / brand h1 + 副标题 保留 index.html
+const headerContainer = document.createElement('div');
+headerContainer.id = 'header-controls-fixed';
+document.body.appendChild(headerContainer);
+mountHeader({ container: headerContainer });
+
+console.log('[Marx M-B1] render complete · timeline + sidebar + header-controls mounted');
