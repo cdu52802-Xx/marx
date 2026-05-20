@@ -91,6 +91,21 @@ svg#relations-svg {
   fill: var(--ink);
 }
 
+/* ============= B1 Stage 1 PM 反馈 #1 · header 跟画布分界线（2026-05-20）============= */
+/* PM 反馈"header 跟画布之间没有分界线，让人看着有些别扭" → 加 fixed divider 0.5px 沙石灰金 */
+/* z-index 8 < header-controls 9 < sidebar/timeline 10 / 不挡 controls / 不挡 sidebar */
+body::before {
+  content: '';
+  position: fixed;
+  top: 50px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #d8cab0;
+  pointer-events: none;
+  z-index: 8;
+}
+
 /* ============= B1 · Header Controls（PM 2026-05-20 选 B 沿用 M4 米白透明）============= */
 /* brand h1 + 副标题 保留 index.html `<header id="app-header">` 不动 / 这里只挂 controls
    位置：fixed top:14 right:14 / 跟 M4 footer 致谢同位置
