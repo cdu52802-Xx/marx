@@ -1,10 +1,11 @@
 # Marx M-B 主线进展 · 新窗口续接锚点（2026-05-20）
 
-> **状态**：B brainstorm 完成 / Phase 0-1 完成 / **B1 Stage 1-2 完成** / Stage 3 待启动（PM checkpoint 前）
+> **状态**：B brainstorm 完成 / Phase 0-1 完成 / **B1 Stage 1-2 完成** + **mockup PM 拍板** / Stage 3 v2 待启动
 > **用途**：新窗口续接 SSOT / 30 秒重建上下文
-> **当前 HEAD**：`9d38dbc`（Stage 1 + divider 修 + anchor 落档 · Stage 2 commit pending）
+> **当前 HEAD**：`bffcae4`（Stage 2 ship `fa1c2ef` + mockup ship `bffcae4` + spec v2 升级 pending）
 > **Git**：clean / origin/main 同步
 > **Prod**：https://cdu52802-xx.github.io/marx/
+> **Mockup**：https://cdu52802-xx.github.io/marx/m-b1-search-ux-mockup.html
 
 ---
 
@@ -38,7 +39,9 @@
 
 ---
 
-## 2. PM Stage 1 checkpoint 反馈（2026-05-20）
+## 2. PM checkpoint 反馈累积
+
+### 2.1 PM Stage 1 checkpoint 反馈（2026-05-20）
 
 | # | 反馈 | 处理 |
 |---|---|---|
@@ -52,41 +55,88 @@
 - 调 skill + 找素材学习 / 设计更好方案
 - gstack 等 skill 自行判断调用
 
+### 2.2 PM Stage 2 checkpoint + mockup 拍板（2026-05-20）
+
+PM 反馈 4 点 → AI 提 mockup 方案 A 双形态 → PM 拍板：
+
+| # | PM 原话 | 方案 / 处理 |
+|---|---|---|
+| 1 | "需要探索形式的搜索"（不知道"异化"前永远搜不出） | ✅ 方案 A 形态 1 探索 / DR-078 |
+| 2 | "搜出具体观点时应将提出者也显示" / 一级人物 二级 claim | ✅ 方案 A 形态 2 分组 / DR-078 |
+| 3 | stub search 解释 | ✅ 白话答（"草稿版" / T3.1 替换真 fuzzy） |
+| 4 | denizcemonduygu menu 整合搜索栏参考 | ⚠ AI challenge: 不照搬 sidebar form / 但采用 mental model 在 popover 实现 |
+
+PM mockup 拍板细节：
+- **形式认可** · 双形态思路 OK
+- **美观度差点 / 设计感没有很高级 / 字体细节后续微调** → DR-079 polish 留 Stage 3 实施期 + ship 前
+- **3 待决项全按建议默认**：
+  - 概念命中 = 精确匹配 8 chip（DR-080）
+  - max 4 组人物 + "查看全部"折叠（实施期 PM checkpoint 验证）
+  - 关键词高亮 V1 仅字面 / 中英映射 V2
+- **stub 保留不动** · T3.1 一次性替换（不做 throwaway 半成品）
+
+落档：
+- specs/2026-05-20-m-b-mainline-design.md § 3.3 升级 v2 + § 3.4 视觉 polish placeholder + DR-078~081
+- plans/2026-05-20-marx-m-b1-header-search.md Stage 3 + T3.3 + T3.4
+- 本 anchor § 3 Stage 3 v2 plan
+
 ---
 
-## 3. 下一步 · Stage 3 · 搜索逻辑（1 天 / T3.1-T3.2）
+## 3. 下一步 · Stage 3 v2 · 搜索逻辑（1.5 天 / T3.1-T3.4 / PM mockup 拍板）
 
-> Stage 2 PM checkpoint 待 PM 实测确认（见 § 2.2）后启动 Stage 3。
+> PM 2026-05-20 Stage 2 checkpoint + mockup（`public/m-b1-search-ux-mockup.html` 部署 prod）拍板：
+> - 方案 A · 双形态 popover（探索 + 已知分组）
+> - 美观度 polish 留 Stage 3 实施期 + B1 ship 前（PM 反馈"真正用用之后才能找到方案"）
+> - 3 待决项全按建议默认（spec § 3.3.4 概念精确匹配 / max 4 组折叠 / V1 仅字面高亮）
+> - 落 DR-078~081 · spec § 3.3 升级 v2 + § 3.4 视觉 polish placeholder
 
-按 plan T3.1-T3.2：
+按 plan T3.1-T3.4：
 
 ### T3.1 · `lib/search-index.ts` fuzzy match（3-4h）
-- exact + Levenshtein 简化版 + 多目标 indexing（claim text / 节点名 / 事件名 / 地点名）
-- 返回 SearchResult { type / id / label / matched / score }
-- score 排序 / exact match 优先
-- **替换 main.ts 里的 stubSearch / 同时移除 stub function**
-- label 处理优化：去掉 JS slice(0, 32) / 让 CSS ellipsis 自动截断（避免双重截断丑）
+- exact + prefix + substring + Levenshtein 简化版
+- 多目标 indexing（claim.claim_text / name_zh / name_orig / keywords / person.name_zh）
+- SearchResult { type / id / label / matched? / score / author_id? / year? }
+- score 排序：exact > prefix > substring > Levenshtein
+- **替换 main.ts 里的 stubSearch / 删 stub function**
 
-### T3.2 · debounce 200ms（1-2h）
-- search.ts onInput → debounce wrapper → 调 search-index
-- 250ms 不卡 / 中英文打字流畅
+### T3.2 · `search.ts` debounce 200ms（1-2h）
+- debounce wrapper · trailing edge
+- 测 rapid type 只触发最后一次（fake timers）
 
-### Stage 3 PM checkpoint
-- 打字流畅（200ms debounce 不卡）
-- 候选 list 显示对的（中文 / 英文 / 高亮匹配区间 — 高亮 backlog T2.2 留位）
-- 排序合理（exact match 优先 / fuzzy score 排）
+### T3.3 · popover 升级双形态 + 分组（3-4h）⭐ v2 新增
+- **AGENTS.md 三件套硬约束**：实施前调 `frontend-design` + `ui-ux-pro-max` skill
+- API 扩展 · showExplore + showGrouped
+- 空 query → 探索形态（3 段 chip · 主要人物/核心概念/关键时段）
+- 非空 query → 分组形态（按 author_id / § 概念命中段 / claim 紫高亮）
+- 键盘导航跨 section wrap
+
+### T3.4 · `lib/search-curate.ts` curate lists（1h）⭐ v2 新增
+- MAIN_PERSONS 7（按数据库真实 person.id 映射 · 普鲁东繁体 / 施蒂纳取代圣西门）
+- CORE_CONCEPTS 8（含元信息：提出者 / 年份 / 出处）
+- KEY_PERIODS 4（含 year range）
+- isExactConceptHit helper（DR-080）
+
+### Stage 3 PM checkpoint（v2 · PM 实测 5 点）
+- 空搜索 → popover 探索形态 OK（3 段 chip）
+- 打字"马克思" → 分组形态 OK（一级人物 / 二级 claim）
+- 打字"异化" → § 概念段命中 + Marx 4 + 费尔巴哈 2
+- 键盘导航跨 section wrap
+- **PM 美观度反馈**（字体 / 间距 / 配色 / 微动效 / DR-079 处理）
 
 ### Stage 2 阶段产出（落档）
 
-**新增文件**：
+**新增文件**（Stage 2）：
 - `src/components/search.ts` (NEW · 35 行)
 - `src/components/search-result-popover.ts` (NEW · 168 行 / 含 T2.3 键盘)
 - `tests/unit/search.test.ts` (NEW · 7 test)
 - `tests/unit/search-result-popover.test.ts` (NEW · 21 test)
 
-**修改文件**：
-- `src/main.ts` (MOD · import + mountSearchInput + mountResultPopover + stubSearch 函数)
+**修改文件**（Stage 2）：
+- `src/main.ts` (MOD · import + mountSearchInput + mountResultPopover + stubSearch 函数 · T3.1 替换 stub)
 - `src/styles.css` (MOD · .search-input + .search-result-popover/-item/-kicker/-label 视觉)
+
+**mockup 产出**（PM checkpoint 用）：
+- `public/m-b1-search-ux-mockup.html` (NEW · 693 行 / 3 panel 对比 / paper 风格高保真 / prod URL https://cdu52802-xx.github.io/marx/m-b1-search-ux-mockup.html)
 
 ---
 

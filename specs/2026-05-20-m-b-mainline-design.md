@@ -117,47 +117,137 @@
 | pointer-events | brand 区 `none`（M4 现状 / 不挡主图 click）/ 搜索 + link + 互换 区 `auto` |
 | z-index | 9（沿用 M4 现状） |
 
-### 3.3 搜索功能（核心）
+### 3.3 搜索功能（核心 · v2 · 2026-05-20 PM mockup 拍板）
 
-- **实时搜索**（debounce 200ms · 不卡）
-- **搜索目标**：节点名（中+原文）/ claim text / 事件名 / 地点名
-- **结果浮窗**：下拉候选 list（max 8 个 / paper 风格 / 详情卡同视觉系）
-- **高亮联动**：选中候选 → 主图 highlight + 副图 highlight（B2 时启用 hook）
-- **筛选 chip**：搜索框右侧 dropdown / 限定节点类型（人/事件/地点/概念/著作）+ 关系类型（8 类）
-- **键盘导航**：↑↓ 选 / Enter 确认 / Esc 关
+**v1 → v2 关键升级**：PM 2026-05-20 Stage 2 checkpoint 反馈双形态 + 分组（参考 mockup `public/m-b1-search-ux-mockup.html`）。
+落 DR-078 · 工程量 1d → 1.5d。
 
-### 3.4 Stage 划分（5 stage）
+#### 3.3.0 双形态 popover · 切换规则
+
+| 状态 | popover 形态 | 触发 |
+|---|---|---|
+| 搜索框 focus + 输入框空 | **探索形态**（§ 3.3.1） | 用户 click 搜索框 / 清空输入框 |
+| 搜索框 focus + 已打字 | **结果形态**（§ 3.3.2） | 用户输入任意字符 |
+
+切换自动 / 不用按钮 / 用户输入清空即切回探索 / 减少决策成本。
+
+- 实时搜索（debounce 200ms · T3.2）
+- 搜索目标：claim.claim_text / claim.name_zh / claim.name_orig / claim.keywords / person.name_zh / 概念精确匹配（§ 3.3.4）
+- 键盘导航：↑↓ 跨 section wrap / Enter 选当前 / Esc 关
+- 关闭：Esc / 点空白（沿用 claim-popover outside click pattern）
+
+#### 3.3.1 探索形态 · 空搜索默认（"§ 探索 · 不知道搜什么？从这里开始"）
+
+3 段 entry · 每段 chip list / chip click → 填搜索框 + 自动切结果形态：
+
+**§ 主要人物（7 位 · curate）**：
+马克思 · 恩格斯 · 黑格尔 · 费尔巴哈 · 普鲁东 · 巴枯宁 · 施蒂纳
+
+> 注：「普鲁东」数据库实存「皮埃爾-約瑟夫·普魯東」（繁体）/ 「圣西门」数据库缺 → 替换为「施蒂纳」（麥克斯·施蒂納 · 3 条 claim）。
+
+**§ 核心概念（8 个 · curate）**：
+异化 · 阶级 · 革命 · 商品 · 资本 · 历史唯物 · 辩证法 · 剩余价值
+
+每个概念含元信息（提出者 / 年份 / 出处 · 数据落 `src/lib/search-curate.ts`）。
+
+**§ 关键时段（4 段 · curate）**：
+1840s 青年 · 1848 革命 · 1864 第一国际 · 1871 巴黎公社
+
+#### 3.3.2 结果形态 · 已打字时分组（按 author_id）
+
+popover 结构（自顶向下）：
+
+```
+§ 概念（若 query 命中 curate 8 概念之一 / 否则跳过）
+  {概念名} · {提出者} 核心 / {年份} {出处} →
+
+§ {人物 A} · N 条主张
+  · {claim text 含 query 紫高亮} ({year})
+  · ...
+
+§ {人物 B} · N 条主张
+  · ...
+```
+
+约束：
+- 一级 group 按 `claim.author_id` 聚合 / persons map 取 `name_zh`
+- 二级 claim item 缩进 28px / · bullet / 关键词紫色高亮（em `.search-result-highlight` · 紫 `#5b3a8c` 600 weight + bg `rgba(91,58,140,0.10)`）
+- 年份小字 italic 灰 右对齐 / editorial 风格
+- max 4 组人物 + "查看全部 N 位" 折叠链接 / 折叠详情留 backlog（Stage 3 实施期 PM checkpoint 验证）
+
+#### 3.3.3 副图高亮联动（B2 hook 预留）
+
+选中候选 → 主图 obs 紫圈高亮 + fade 其他 + dispatch event `marx:search-highlight` { type, id } / B2 listener 接收。
+
+#### 3.3.4 概念命中识别（PM 选「精确匹配」）
+
+- query 跟 `CORE_CONCEPTS` 8 chip 字符串精确匹配 → 显示 "§ 概念" 段
+- 否则 → "§ 概念" 段跳过 / 只显示人物分组（即模糊不算概念命中）
+- 例：query "异化" → 命中 / query "异" → 不命中 / query "商品" → 命中 / query "商" → 不命中
+
+#### 3.3.5 关键词高亮（V1 仅字面 / 翻译映射 V2）
+
+- 紫色高亮 `<em class="search-result-highlight">` 包裹 query 字面 substring
+- 中英文映射 V2（如英文搜 "Marx" 不高亮中文"马克思"）/ V1 不做
+
+### 3.4 视觉设计 · 美观度 polish placeholder（Stage 3 PM checkpoint 决）
+
+PM 2026-05-20 mockup 反馈："形式认可 / 美观度差点 / 设计感没有很高级 / 字体等细节后续微调优化 / 真正用用之后才能找到更合理的方案"。
+
+留 placeholder · Stage 3 实施期 + B1 ship 前 polish 阶段处理：
+
+- 字体 hierarchy：popover 标题 / section head / chip / claim text / 年份 5 层 font-size + weight 调优
+- 间距 rhythm：section 之间 spacing / chip 之间 gap / claim item padding 调优
+- 配色微调：紫高亮饱和度 / dotted underline 灰度 / 米白 paper 色温
+- 微动效：popover 出入 transition / chip hover 反馈 / section 展开动画
+- 高级感方向（AGENTS.md 三件套 frontend-design + ui-ux-pro-max skill 实施期主动召唤）：
+  - editorial / academic journal feel（沿用 M4/M5 主线 A）
+  - 而非 AI Slop（紫渐变 / 3-column 卡片 / system-ui display font）
+
+约束（不变）：
+- 视觉系统沿用 M4/M5 主线 A（米白 + 沙石灰金 + EB Garamond + paper-shadow + 0 border-radius）
+- 0 AI Slop（PRD 视觉系统硬约束）
+
+### 3.5 Stage 划分（5 stage · v2 工程量更新）
 
 | Stage | 内容 | 估时 | PM checkpoint |
 |---|---|---|---|
-| 1 | header layout 重组（brand 字号 / link 位置 / 互换按钮预留位） | 1 天 | ✓ |
-| 2 | 搜索 UI（输入框 + 下拉浮窗 + paper 风格） | 1.5 天 | ✓ |
-| 3 | 搜索逻辑（debounce + 多目标 match + 候选 list） | 1 天 | ✓ |
-| 4 | 主图高亮 logic（主图 obs 高亮 / fade 其他）+ filter chip | 1 天 | ✓ |
+| 1 | header layout 重组（brand 字号 / link 位置 / 互换按钮预留位） | 1 天 | ✓ done 2026-05-20 |
+| 2 | 搜索 UI（输入框 + 下拉浮窗 + 键盘 / Stage 2 ship `fa1c2ef`） | 1.5 天 | ✓ done 2026-05-20 |
+| 3 | **搜索逻辑 v2**（T3.1 fuzzy + T3.2 debounce + **T3.3 popover 双形态升级** + **T3.4 curate lists**） | **1.5 天**（v1 1d → v2 +0.5d） | ✓ |
+| 4 | 主图高亮 logic（主图 obs 高亮 / fade 其他）+ filter chip（探索形态已内嵌 chip / 可能简化） | 0.5-1 天 | ✓ |
 | 5 | E2E + 4 件套 baseline + ship | 0.5 天 | ✓ ship |
 
 **B2 hook 预留**：副图高亮 logic 接 B2 实施期实现（B1 期间 dom event 触发 / B2 时 listener 接收）。
 
-### 3.5 文件结构
+### 3.6 文件结构（v2 · 新增 search-curate.ts）
 
 | 文件 | 类型 | 内容 |
 |---|---|---|
-| `src/components/header.ts` | NEW | header layout + 主副互换按钮占位 |
-| `src/components/search.ts` | NEW | 搜索输入 + 下拉浮窗 + debounce |
-| `src/components/search-result-popover.ts` | NEW | 候选 list paper 风格 |
-| `src/lib/search-index.ts` | NEW | 多目标 fuzzy match logic |
-| `src/main.ts` | MOD | 挂载 header + search · 接 主图 highlight hook |
-| `src/styles.css` | MOD | header + search 视觉 |
+| `src/components/header.ts` | ✅ done | header layout + 主副互换按钮占位 |
+| `src/components/search.ts` | ✅ done · T3.2 加 debounce | 搜索输入框 paper 风格 |
+| `src/components/search-result-popover.ts` | ✅ done · T3.3 升级双形态 | 候选 list / 升级 renderExplore + renderGrouped |
+| `src/lib/search-index.ts` | NEW · T3.1 | 多目标 fuzzy match + score 排序 |
+| `src/lib/search-curate.ts` | **NEW · T3.4** | curate lists 静态 const（MAIN_PERSONS 7 / CORE_CONCEPTS 8 / KEY_PERIODS 4） |
+| `src/main.ts` | MOD · T3.x | 挂载 + 接 highlight hook + 删 stubSearch |
+| `src/styles.css` | MOD · T3.3 | 加 .search-result-section / .search-result-group / .search-result-highlight 视觉 |
 
-### 3.6 Acceptance（B1 ship 验收）
+### 3.7 Acceptance（B1 ship 验收 · v2 · 双形态升级后）
 
 - [ ] header 视觉跟 M5 主线 A 沿用一致（米白 + 墨黑 + 紫 / 0 border-radius / 0 AI slop）
+- [ ] **空搜索 → popover 显示探索形态**（§ 主要人物 7 / 核心概念 8 / 关键时段 4）
+- [ ] **chip click → 自动填搜索框 + 切结果形态**
+- [ ] **已打字 → popover 显示结果形态 + 按 author_id 分组**
+- [ ] **概念精确命中 → "§ 概念"段显示元信息**
+- [ ] **关键词紫色高亮在 claim text 内**
 - [ ] 搜索框打字实时显示候选 list（< 200ms debounce）
 - [ ] 选中候选 → 主图 obs 紫圈高亮 + fade 其他
-- [ ] 搜索框 + 候选 list 跟 zoom 解耦（屏幕 fixed 大小）
+- [ ] 搜索框 + popover 跟 zoom 解耦（屏幕 fixed 大小）
+- [ ] 键盘导航跨 section wrap（最后人物 → 第一人物）
 - [ ] 4 件套 baseline 不退化（Health ≥ 9 / Design ≥ A- / QA ≥ 96 / AI Slop A）
-- [ ] Bundle gzip 不超 35 KB（Phase 0 baseline 30.83 + B1 ≤ 5 KB 预算）
-- [ ] E2E 新加 3 spec（搜索打字 / 候选选择 / Esc 关）pass
+- [ ] Bundle gzip 不超 35 KB（Phase 0 baseline 30.83 / Stage 2 已用 32.08 / Stage 3 预算 +1.5 KB → ≤ 33.5 KB）
+- [ ] E2E 新加 5 spec（探索 chip click / 已搜分组 / 概念命中 / 关键词高亮 / 键盘跨 section）pass
+- [ ] **PM 美观度 polish 反馈处理**（§ 3.4 · Stage 3 实施期 + ship 前 polish）
 
 ---
 
@@ -379,6 +469,9 @@ Stage 1 prototype checkpoint：
 
 | 点 | 决在哪个 Stage |
 |---|---|
+| **B1 搜索 popover 美观度 polish**（字体 hierarchy / 间距 rhythm / 配色微调 / 微动效 · § 3.4） | **B1 Stage 3 实施期 + B1 ship 前 polish 阶段** |
+| **B1 max 4 组人物 + "查看全部" 折叠**（实际数据 5 人物 / 可能不超 / 实施期 PM checkpoint 验证） | B1 Stage 3 PM checkpoint |
+| **B1 中英文映射高亮**（"Marx"映射"马克思"）/ V1 仅字面 / V2 加映射 | B1 V2 backlog |
 | 节点 size 具体 px（5 类各自）+ 名字标签策略（直接附 / hover / 混合） | B2 Stage 2 |
 | 关系连线粗细 / 方向箭头 / 6 候选 → 3-5 类 | B2 Stage 2 |
 | 86 节点聚合 / 重叠处理（同地多 marker / cluster 策略） | B2 Stage 2 |
@@ -449,6 +542,10 @@ Stage 1 prototype checkpoint：
 | DR-075 | 2026-05-20 | B2 动态国界 V1 全连续过渡 | 切片版 4-5 时点 | PM Q4 选 B / 学术严谨 / 视觉丝滑 |
 | DR-076 | 2026-05-20 | B2 Stage 1 prototype 先攻技术风险 | 常规 Stage 顺序 | 球面/平面切换 + great circle 跑不通可能影响整 B2 设计 |
 | DR-077 | 2026-05-20 | 主/副窗 = 概念角色 / 可互换 | 主图固定 = 观点列表 | PM 关键澄清 / 探索者可把地理图当主 / 1st-class 主图设计 |
+| DR-078 | 2026-05-20 | B1 搜索 popover 双形态（探索 + 已知）+ 按 author_id 分组 | flat list 现状 / 独立 /browse 页面 / 现状 + chip filter | PM Stage 2 checkpoint mockup 拍板 / 解探索者"不知道'异化'就搜不到"问题 / Stage 3 工程量 1d → 1.5d / 不破 B1 节奏 |
+| DR-079 | 2026-05-20 | B1 搜索美观度 polish 留 Stage 3 实施期 + ship 前 | 现在 brainstorm 设计方向 / 高保真 mockup v2 | PM 反馈"真正用用之后才能找到更合理的方案" / 不凭空想象 / 实施期 frontend-design + ui-ux-pro-max skill 主动调用（AGENTS.md 三件套硬约束） |
+| DR-080 | 2026-05-20 | B1 概念命中识别 = 精确匹配 8 chip / 模糊只走 claim 文本 | 部分匹配 / Levenshtein 也算 | PM 接受建议 / 模糊匹配交给 claim text fuzzy / 概念是 curate 名词不应模糊 |
+| DR-081 | 2026-05-20 | B1 普鲁东 数据库实存繁体「皮埃爾-約瑟夫·普魯東」/「圣西门」缺 → 替换为「施蒂纳」（麥克斯·施蒂納 / 3 条 claim）| 自建圣西门数据 / 中繁体 normalize | 数据真实优先 / 不为 curate list 自建数据 / 中繁体差异留 V2 normalize backlog |
 
 ---
 

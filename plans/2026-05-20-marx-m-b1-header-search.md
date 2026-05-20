@@ -23,15 +23,17 @@
 | 2 | T2.1 | `search.ts` 新建：输入框 + paper 风格视觉 | 2-3h | T1.1 |
 | 2 | T2.2 | `search-result-popover.ts` 新建：下拉浮窗 + 候选 list 视觉 | 3-4h | T2.1 |
 | 2 | T2.3 | 键盘导航（↑↓ / Enter / Esc） | 1-2h | T2.2 |
-| 3 | T3.1 | `lib/search-index.ts` 新建：fuzzy match 多目标 | 3-4h | — |
-| 3 | T3.2 | debounce 200ms + 候选 list 渲染 | 1-2h | T2.2, T3.1 |
+| 3 | T3.1 | `lib/search-index.ts` 新建：fuzzy match 多目标 + score | 3-4h | — |
+| 3 | T3.2 | `search.ts` debounce 200ms | 1-2h | T2.2, T3.1 |
+| 3 | T3.3 ⭐ | `search-result-popover.ts` 升级双形态 + 分组（DR-078 / PM mockup 拍板） | 3-4h | T3.1, T3.2 |
+| 3 | T3.4 ⭐ | `lib/search-curate.ts` 新建：人物 7 / 概念 8 / 时段 4 静态 const | 1h | — |
 | 4 | T4.1 | 主图 highlight API：紫圈 obs + fade 其他 | 2-3h | T3.1 |
 | 4 | T4.2 | filter chip dropdown（节点类型 + 关系类型 + 人名） | 2-3h | T4.1 |
 | 4 | T4.3 | 副图 highlight hook 预留（dom event） | 1h | T4.1 |
 | 5 | T5.1 | E2E 新加 4 spec（搜索打字 / 候选选择 / Esc 关 / filter chip） | 2-3h | 全部 |
 | 5 | T5.2 | 4 件套 baseline + ship | 1-2h | T5.1 |
 
-**Total**：~22-32h / 1 周 / 5 stage PM checkpoint
+**Total**：v1 ~22-32h / v2 +4-5h（T3.3 + T3.4 mockup 拍板后加）= **~26-37h / 1.1-1.5 周 / 5 stage PM checkpoint**
 
 ---
 
@@ -42,8 +44,9 @@
 | `src/components/header.ts` | **新建** | header layout + brand + link + 互换按钮 placeholder |
 | `src/components/search.ts` | **新建** | 搜索输入框 + 触发 fetch + debounce |
 | `src/components/search-result-popover.ts` | **新建** | 下拉浮窗 + 候选 list + 键盘导航 |
-| `src/lib/search-index.ts` | **新建** | fuzzy match 多目标（claim text / 节点名 / 事件名 / 地点名） |
-| `src/main.ts` | **修改** | 挂载 header + search · 接 主图 highlight hook · 删 M4 footer |
+| `src/lib/search-index.ts` | **新建** | fuzzy match 多目标 + score（claim text / name_zh / name_orig / keywords / person.name_zh） |
+| `src/lib/search-curate.ts` | **新建 v2** | MAIN_PERSONS 7 / CORE_CONCEPTS 8 / KEY_PERIODS 4 静态 const + isExactConceptHit helper |
+| `src/main.ts` | **修改** | 挂载 header + search · 接 主图 highlight hook · 删 stubSearch · 删 M4 footer |
 | `src/styles.css` | **修改** | header + search + 候选 list 视觉 |
 | `tests/unit/search-index.test.ts` | **新建** | 单元测 fuzzy match |
 | `tests/unit/search.test.ts` | **新建** | 单元测 debounce + 输入响应 |
@@ -233,7 +236,10 @@ grep -n "footer\|致谢" src/main.ts
 
 ---
 
-## Stage 3 · 搜索逻辑（1 天）
+## Stage 3 · 搜索逻辑 v2（1.5 天 · PM 2026-05-20 mockup 拍板双形态 + 分组）
+
+v2 调整原因：PM Stage 2 checkpoint mockup 反馈 / 落 DR-078 / 工程量 1d → 1.5d。
+参考 `public/m-b1-search-ux-mockup.html` 3 panel 对比 + spec § 3.3 v2。
 
 ### Task 3.1: `lib/search-index.ts` fuzzy match
 
@@ -241,36 +247,113 @@ grep -n "footer\|致谢" src/main.ts
 - Create: `src/lib/search-index.ts`
 - Create: `tests/unit/search-index.test.ts`
 
-- [ ] **Step 1: fuzzy match algorithm（exact + Levenshtein 简化版）**
+- [ ] **Step 1: fuzzy match algorithm（exact + prefix + substring + Levenshtein 简化版）**
 
-- [ ] **Step 2: 多目标 indexing（claim text / 节点名 / 事件名 / 地点名）**
+- [ ] **Step 2: 多目标 indexing（claim.claim_text / claim.name_zh / claim.name_orig / claim.keywords / person.name_zh）**
 
-- [ ] **Step 3: 返回候选 list（含 type + matched substring + relevance score）**
+- [ ] **Step 3: 返回候选 list（含 type + matched substring + score + author_id + year）**
 
 ```ts
 interface SearchResult {
-  type: 'claim' | 'person' | 'event' | 'location';
+  type: 'claim' | 'person' | 'event' | 'location' | 'concept';
   id: string;
-  label: string; // 高亮匹配区间用
-  matched: string; // 匹配片段
-  score: number; // 排序用
+  label: string; // 显示文字
+  matched?: string; // 匹配片段（高亮区间用）
+  score: number; // 排序用：exact > prefix > substring > Levenshtein
+  author_id?: string; // T3.3 popover 分组用
+  year?: number; // claim 年份显示用
 }
 ```
 
-### Task 3.2: debounce 200ms + 候选 list 渲染
+- [ ] **Step 4: 替换 main.ts stubSearch / 同时删 stubSearch function**
+
+### Task 3.2: `search.ts` debounce 200ms
 
 **Files:**
 - Modify: `src/components/search.ts`
+- Modify: `tests/unit/search.test.ts`（加 debounce test · fake timers）
 
-- [ ] **Step 1: debounce wrapper**
+- [ ] **Step 1: debounce wrapper（200ms · trailing edge）**
 
-- [ ] **Step 2: input → debounced search → popover update**
+- [ ] **Step 2: input → debounced onInput callback**
 
-### Stage 3 PM checkpoint
+- [ ] **Step 3: 测 rapid type 只触发最后一次 fake timers**
 
-- 打字流畅（200ms debounce 不卡）
-- 候选 list 显示对的（中文 / 英文 / 高亮匹配区间）
-- 排序合理（exact match 优先）
+### Task 3.3: popover 升级双形态 + 分组渲染 ⭐（v2 新增）
+
+**Files:**
+- Modify: `src/components/search-result-popover.ts`
+- Modify: `tests/unit/search-result-popover.test.ts`
+- Modify: `src/styles.css`（加 .search-result-section / .search-result-group / .search-result-highlight）
+
+**AGENTS.md 三件套硬约束**：实施前调 `frontend-design` + `ui-ux-pro-max` skill / 不能跳过。
+
+- [ ] **Step 1: API 扩展 · renderExplore(curateLists) + renderGrouped(searchResults)**
+
+```ts
+export interface SearchResultPopoverApi {
+  showExplore: (lists: { persons; concepts; periods }) => void; // 探索形态
+  showGrouped: (results: SearchResult[], conceptHit?: ConceptMeta) => void; // 已知形态
+  hide: () => void;
+  isOpen: () => boolean;
+}
+```
+
+- [ ] **Step 2: renderExplore 实现 · § 主要人物 + § 核心概念 + § 关键时段 · chip click → onSelect 填搜索框**
+
+- [ ] **Step 3: renderGrouped 实现 · 按 author_id group / 一级 § 人物名 N 条 / 二级 claim item · 关键词紫高亮**
+
+- [ ] **Step 4: § 概念命中段（精确匹配 8 chip · DR-080）**
+
+- [ ] **Step 5: 键盘导航跨 section wrap（最后人物 → 第一人物）**
+
+- [ ] **Step 6: max 4 组人物 + "查看全部" 折叠（实施期 PM checkpoint 验证 / 数据 5 人物可能不超）**
+
+### Task 3.4: `lib/search-curate.ts` curate lists ⭐（v2 新增）
+
+**Files:**
+- Create: `src/lib/search-curate.ts`
+- Create: `tests/unit/search-curate.test.ts`
+
+- [ ] **Step 1: MAIN_PERSONS = 7 个**（按数据库真实 person.id 映射）
+
+```ts
+export const MAIN_PERSONS = [
+  { id: 'wd-q9061', name: '马克思' },
+  { id: '<恩格斯 id>', name: '恩格斯' },
+  // ... 5 more
+];
+```
+
+- [ ] **Step 2: CORE_CONCEPTS = 8 个（含元信息：提出者 / 年份 / 出处）**
+
+```ts
+export const CORE_CONCEPTS = [
+  { label: '异化', proposedBy: 'wd-q9061', year: 1844, source: '1844 经济学哲学手稿' },
+  // ... 7 more
+];
+```
+
+- [ ] **Step 3: KEY_PERIODS = 4 段（含 year range）**
+
+```ts
+export const KEY_PERIODS = [
+  { label: '1840s 青年', range: [1840, 1849] },
+  { label: '1848 革命', range: [1848, 1848] },
+  { label: '1864 第一国际', range: [1864, 1864] },
+  { label: '1871 巴黎公社', range: [1871, 1871] },
+];
+```
+
+- [ ] **Step 4: helper · isExactConceptHit(query): ConceptMeta | null（DR-080 精确匹配）**
+
+### Stage 3 PM checkpoint（v2 · PM 实测 5 点）
+
+- 空搜索 → popover 探索形态 OK（3 段 chip）
+- 打字 "马克思" → popover 分组形态 OK（一级人物 / 二级 claim）
+- 打字 "异化" → § 概念段命中 + Marx 4 条 + 费尔巴哈 2 条
+- 键盘导航跨 section wrap
+- **PM 美观度反馈**（字体 / 间距 / 配色 / 微动效 / DR-079 处理）
 
 ---
 
