@@ -33,10 +33,15 @@ import { mountHeader } from './components/header.ts';
 import { mountSearchInput } from './components/search.ts';
 import {
   mountResultPopover,
-  type SearchResultItem,
   type SearchResultPopoverApi,
 } from './components/search-result-popover.ts';
 import { search as runSearchIndex } from './lib/search-index.ts';
+import {
+  MAIN_PERSONS,
+  CORE_CONCEPTS,
+  KEY_PERIODS,
+  isExactConceptHit,
+} from './lib/search-curate.ts';
 import { mountBreadcrumb, type BreadcrumbApi } from './components/breadcrumb.ts';
 import { createZoom } from './viz/zoom.ts';
 import { mountZoomControl, updateZoomDisplay } from './components/zoom-control.ts';
@@ -1371,38 +1376,61 @@ document.body.appendChild(headerContainer);
 const headerApi = mountHeader({ container: headerContainer });
 
 // === 10.1 B1 T2.1 · search input mount 到 header search slot ===
-// === 10.2 B1 T3.1 · 真 search-index fuzzy match（替换 Stage 2 stubSearch · DR-078）===
-//   score 分层：exact 100 > prefix 80 > substring 60
-//   多目标：claim.claim_text / name_zh / name_orig / keywords + person.name_zh / name_orig
-//   T3.2 加 debounce 200ms · T3.3 升级 popover 双形态 + 分组 · T3.4 加 curate lists
+// === 10.2 B1 T3.1 + T3.3 + T3.4 · 双形态 popover wire up（DR-078 PM mockup 拍板）===
+//   空 query → showExplore（3 段 chip · 主要人物/核心概念/关键时段）
+//   非空 query → showGrouped（按 author_id 分组 + § 概念命中段）
+//   chip click → 填搜索框 + 切结果形态
+//   T3.2 后加 debounce 200ms · T4.1 接真主图 highlight
 let popoverApi: SearchResultPopoverApi | null = null;
+
+// persons Map for showGrouped 人物名 lookup
+const personsMap = new Map(persons.map((p) => [p.id, p]));
+
+const exploreLists = {
+  persons: MAIN_PERSONS,
+  concepts: CORE_CONCEPTS,
+  periods: KEY_PERIODS,
+};
+
+function handleSearch(q: string): void {
+  if (!q.trim()) {
+    popoverApi?.showExplore(exploreLists, handleChipClick);
+    return;
+  }
+  const results = runSearchIndex({ claims, persons }, q, 50);
+  const conceptHit = isExactConceptHit(q);
+  if (results.length === 0 && !conceptHit) {
+    popoverApi?.hide();
+    return;
+  }
+  popoverApi?.showGrouped(results, personsMap, q, conceptHit);
+}
+
+function handleChipClick(text: string): void {
+  searchApi.input.value = text;
+  searchApi.input.focus();
+  handleSearch(text);
+}
 
 const searchApi = mountSearchInput({
   container: headerApi.searchSlot,
-  onInput: (q) => {
-    const results = runSearchIndex({ claims, persons }, q, 8);
-    if (results.length === 0) {
-      popoverApi?.hide();
-      return;
-    }
-    // T3.3 前 popover 仍 flat list / 用 SearchResult 当 SearchResultItem 传（字段兼容）
-    const items: SearchResultItem[] = results.map((r) => ({
-      type: r.type,
-      id: r.id,
-      label: r.label,
-      matched: r.matched,
-    }));
-    popoverApi?.show(items);
-  },
+  onInput: handleSearch,
+  debounceMs: 200,
 });
 
 popoverApi = mountResultPopover({
   anchor: searchApi.input,
   onSelect: (item) => {
-    // T4.1 接真主图 highlight · 现 placeholder console.log + 关浮窗
-    console.log('[Marx M-B1 T3.1] selected:', item.type, item.id, '·', item.label);
-    popoverApi?.hide();
+    // T4.1 接真主图 highlight · 现 placeholder console.log（关浮窗已由 popover 内部处理）
+    console.log('[Marx M-B1 T3.3] selected:', item.type, item.id, '·', item.label);
   },
+});
+
+// 搜索框 focus + empty → 自动显示探索形态（PM mockup 流程）
+searchApi.input.addEventListener('focus', () => {
+  if (!searchApi.input.value.trim()) {
+    popoverApi?.showExplore(exploreLists, handleChipClick);
+  }
 });
 
 console.log(

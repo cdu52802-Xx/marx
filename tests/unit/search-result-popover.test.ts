@@ -1,4 +1,4 @@
-// B1 T2.2 · 搜索下拉浮窗 unit test
+// B1 T2.2 + T2.3 + T3.3 · 搜索下拉浮窗 unit test
 // API 期望：mountResultPopover({ anchor, onSelect }): { show, hide, isOpen }
 //   - show(items) → .search-result-popover 挂到 document.body / paper 风格视觉走 CSS
 //   - hide() → 移除 popover
@@ -258,5 +258,282 @@ describe('mountResultPopover · 键盘导航', () => {
     api.show([]); // popover 不打开 / handler 未 attach
     pressKey('Enter');
     expect(onSelect).not.toHaveBeenCalled();
+  });
+});
+
+// ============================================================
+// B1 T3.3 · 升级双形态 + 分组渲染（DR-078 PM mockup 拍板）
+// ============================================================
+
+import type { SearchResult } from '../../src/lib/search-index.ts';
+import type { PersonNode } from '../../src/types/Node.ts';
+
+const mkResult = (overrides: Partial<SearchResult>): SearchResult => ({
+  type: 'claim',
+  id: 'c1',
+  label: '',
+  score: 100,
+  matched: '异化',
+  ...overrides,
+});
+
+const mkPerson = (overrides: Partial<PersonNode>): PersonNode => ({
+  id: 'p1',
+  type: 'person',
+  name_zh: '',
+  name_orig: '',
+  birth_year: 1818,
+  death_year: 1883,
+  main_location_lat_lng: [0, 0],
+  bio_event_style: [],
+  citation_urls: [],
+  ...overrides,
+});
+
+describe('mountResultPopover · showExplore（T3.3 探索形态）', () => {
+  let anchor: HTMLInputElement;
+
+  beforeEach(() => {
+    anchor = document.createElement('input');
+    anchor.type = 'search';
+    document.body.appendChild(anchor);
+  });
+
+  afterEach(() => {
+    anchor.remove();
+    document.querySelectorAll('.search-result-popover').forEach((el) => el.remove());
+  });
+
+  const mockLists = {
+    persons: [
+      { id: 'p1', name: '马克思' },
+      { id: 'p2', name: '黑格尔' },
+    ] as const,
+    concepts: [
+      {
+        label: '异化',
+        proposedBy: 'p1',
+        proposedByName: '马克思',
+        year: 1844,
+        source: '1844 手稿',
+      },
+    ] as const,
+    periods: [{ label: '1848 革命', range: [1848, 1848] as [number, number] }] as const,
+  };
+
+  it('showExplore → popover 含 3 section', () => {
+    const api = mountResultPopover({ anchor, onSelect: () => {} });
+    api.showExplore(mockLists, () => {});
+    expect(document.querySelectorAll('.search-result-section').length).toBe(3);
+    expect(api.isOpen()).toBe(true);
+  });
+
+  it('section 1 = 主要人物 / chip = 2 个', () => {
+    const api = mountResultPopover({ anchor, onSelect: () => {} });
+    api.showExplore(mockLists, () => {});
+    const sec = document.querySelector('[data-section="persons"]') as HTMLElement;
+    expect(sec.querySelector('.search-result-section-head')?.textContent).toContain('主要人物');
+    expect(sec.querySelectorAll('.search-result-chip').length).toBe(2);
+  });
+
+  it('chip 含人物简称（马克思 / 黑格尔）', () => {
+    const api = mountResultPopover({ anchor, onSelect: () => {} });
+    api.showExplore(mockLists, () => {});
+    const chips = [...document.querySelectorAll('[data-section="persons"] .search-result-chip')];
+    const texts = chips.map((c) => c.textContent);
+    expect(texts).toContain('马克思');
+    expect(texts).toContain('黑格尔');
+  });
+
+  it('chip click → onChipClick(chipText)', () => {
+    const onChipClick = vi.fn();
+    const api = mountResultPopover({ anchor, onSelect: () => {} });
+    api.showExplore(mockLists, onChipClick);
+    (document.querySelector('[data-section="persons"] .search-result-chip') as HTMLElement).click();
+    expect(onChipClick).toHaveBeenCalledWith('马克思');
+  });
+
+  it('概念 section chip = 异化', () => {
+    const api = mountResultPopover({ anchor, onSelect: () => {} });
+    api.showExplore(mockLists, () => {});
+    const sec = document.querySelector('[data-section="concepts"]') as HTMLElement;
+    expect(sec.querySelector('.search-result-chip')?.textContent).toBe('异化');
+  });
+
+  it('时段 section chip = 1848 革命', () => {
+    const api = mountResultPopover({ anchor, onSelect: () => {} });
+    api.showExplore(mockLists, () => {});
+    const sec = document.querySelector('[data-section="periods"]') as HTMLElement;
+    expect(sec.querySelector('.search-result-chip')?.textContent).toBe('1848 革命');
+  });
+
+  it('showExplore 替换不堆叠（重复调用）', () => {
+    const api = mountResultPopover({ anchor, onSelect: () => {} });
+    api.showExplore(mockLists, () => {});
+    api.showExplore(mockLists, () => {});
+    expect(document.querySelectorAll('.search-result-popover').length).toBe(1);
+  });
+
+  it('showExplore 顶部含 hint 文案', () => {
+    const api = mountResultPopover({ anchor, onSelect: () => {} });
+    api.showExplore(mockLists, () => {});
+    const hint = document.querySelector('.search-result-hint');
+    expect(hint?.textContent).toContain('探索');
+  });
+});
+
+describe('mountResultPopover · showGrouped（T3.3 分组形态）', () => {
+  let anchor: HTMLInputElement;
+  let personsMap: Map<string, PersonNode>;
+
+  beforeEach(() => {
+    anchor = document.createElement('input');
+    anchor.type = 'search';
+    document.body.appendChild(anchor);
+    personsMap = new Map();
+    personsMap.set('wd-q9061', mkPerson({ id: 'wd-q9061', name_zh: '卡尔·马克思' }));
+    personsMap.set('wd-q76422', mkPerson({ id: 'wd-q76422', name_zh: '路德维希·费尔巴哈' }));
+  });
+
+  afterEach(() => {
+    anchor.remove();
+    document.querySelectorAll('.search-result-popover').forEach((el) => el.remove());
+  });
+
+  const pressKey = (key: string) => {
+    document.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
+  };
+
+  it('showGrouped 多 author → 多 group section', () => {
+    const results = [
+      mkResult({ id: 'c1', author_id: 'wd-q9061', label: '异化劳动', year: 1844 }),
+      mkResult({ id: 'c2', author_id: 'wd-q76422', label: '神是异化', year: 1841 }),
+    ];
+    const api = mountResultPopover({ anchor, onSelect: () => {} });
+    api.showGrouped(results, personsMap, '异化', null);
+    const groups = document.querySelectorAll('[data-section="group"]');
+    expect(groups.length).toBe(2);
+  });
+
+  it('group section head 含人物名 + N 条', () => {
+    const results = [
+      mkResult({ id: 'c1', author_id: 'wd-q9061', label: '异化 A', year: 1844 }),
+      mkResult({ id: 'c2', author_id: 'wd-q9061', label: '异化 B', year: 1850 }),
+    ];
+    const api = mountResultPopover({ anchor, onSelect: () => {} });
+    api.showGrouped(results, personsMap, '异化', null);
+    const head = document.querySelector('[data-author-id="wd-q9061"] .search-result-section-head');
+    expect(head?.textContent).toContain('卡尔·马克思');
+    expect(head?.textContent).toContain('2 条');
+  });
+
+  it('claim item 含 label + 年份', () => {
+    const results = [mkResult({ id: 'c1', author_id: 'wd-q9061', label: '异化劳动', year: 1844 })];
+    const api = mountResultPopover({ anchor, onSelect: () => {} });
+    api.showGrouped(results, personsMap, '异化', null);
+    const item = document.querySelector('.search-result-claim-item') as HTMLElement;
+    expect(item.querySelector('.search-result-claim-text')?.textContent).toContain('异化劳动');
+    expect(item.querySelector('.search-result-claim-year')?.textContent).toBe('1844');
+  });
+
+  it('关键词紫高亮 em.search-result-highlight', () => {
+    const results = [
+      mkResult({
+        id: 'c1',
+        author_id: 'wd-q9061',
+        label: '现实是历经异化的过程',
+        year: 1850,
+      }),
+    ];
+    const api = mountResultPopover({ anchor, onSelect: () => {} });
+    api.showGrouped(results, personsMap, '异化', null);
+    const em = document.querySelector('.search-result-claim-text em.search-result-highlight');
+    expect(em?.textContent).toBe('异化');
+  });
+
+  it('claim item click → onSelect(item)', () => {
+    const onSelect = vi.fn();
+    const results = [mkResult({ id: 'c1', author_id: 'wd-q9061', label: '异化劳动', year: 1844 })];
+    const api = mountResultPopover({ anchor, onSelect });
+    api.showGrouped(results, personsMap, '异化', null);
+    (document.querySelector('.search-result-claim-item') as HTMLElement).click();
+    expect(onSelect).toHaveBeenCalled();
+    expect(onSelect.mock.calls[0][0].id).toBe('c1');
+  });
+
+  it('概念命中段 · conceptHit 不为 null', () => {
+    const conceptHit = {
+      label: '异化',
+      proposedBy: 'wd-q9061',
+      proposedByName: '马克思',
+      year: 1844,
+      source: '1844 经济学哲学手稿',
+    };
+    const api = mountResultPopover({ anchor, onSelect: () => {} });
+    api.showGrouped([], personsMap, '异化', conceptHit);
+    const sec = document.querySelector('[data-section="concept"]');
+    expect(sec).toBeTruthy();
+    expect(sec?.textContent).toContain('异化');
+    expect(sec?.textContent).toContain('马克思');
+    expect(sec?.textContent).toContain('1844');
+  });
+
+  it('概念命中 + 0 results → 仍显示概念段（popover open）', () => {
+    const conceptHit = {
+      label: '异化',
+      proposedBy: 'wd-q9061',
+      proposedByName: '马克思',
+      year: 1844,
+      source: '手稿',
+    };
+    const api = mountResultPopover({ anchor, onSelect: () => {} });
+    api.showGrouped([], personsMap, '异化', conceptHit);
+    expect(api.isOpen()).toBe(true);
+  });
+
+  it('无 conceptHit + 无 results → popover 不出现', () => {
+    const api = mountResultPopover({ anchor, onSelect: () => {} });
+    api.showGrouped([], personsMap, '随便', null);
+    expect(api.isOpen()).toBe(false);
+  });
+
+  it('键盘 ↓ 选第一个 claim item', () => {
+    const results = [
+      mkResult({ id: 'c1', author_id: 'wd-q9061', label: 'A', year: 1844 }),
+      mkResult({ id: 'c2', author_id: 'wd-q9061', label: 'B', year: 1850 }),
+    ];
+    const api = mountResultPopover({ anchor, onSelect: () => {} });
+    api.showGrouped(results, personsMap, 'A', null);
+    pressKey('ArrowDown');
+    const sel = document.querySelector(
+      '.search-result-claim-item[data-selected="true"]',
+    ) as HTMLElement;
+    expect(sel.dataset.resultId).toBe('c1');
+  });
+
+  it('键盘跨 section wrap（最后人物 → 第一人物）', () => {
+    const results = [
+      mkResult({ id: 'c1', author_id: 'wd-q9061', label: 'A', year: 1844 }),
+      mkResult({ id: 'c2', author_id: 'wd-q76422', label: 'B', year: 1841 }),
+    ];
+    const api = mountResultPopover({ anchor, onSelect: () => {} });
+    api.showGrouped(results, personsMap, 'B', null);
+    pressKey('ArrowDown'); // c1
+    pressKey('ArrowDown'); // c2
+    pressKey('ArrowDown'); // wrap c1
+    const sel = document.querySelector(
+      '.search-result-claim-item[data-selected="true"]',
+    ) as HTMLElement;
+    expect(sel.dataset.resultId).toBe('c1');
+  });
+
+  it('Enter on grouped item → onSelect + hide', () => {
+    const onSelect = vi.fn();
+    const results = [mkResult({ id: 'c1', author_id: 'wd-q9061', label: 'A', year: 1844 })];
+    const api = mountResultPopover({ anchor, onSelect });
+    api.showGrouped(results, personsMap, 'A', null);
+    pressKey('Enter');
+    expect(onSelect).toHaveBeenCalled();
+    expect(api.isOpen()).toBe(false);
   });
 });

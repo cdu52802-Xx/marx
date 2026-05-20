@@ -17,10 +17,13 @@ export function mountSearchInput({
   container,
   onInput,
   placeholder,
+  debounceMs,
 }: {
   container: HTMLElement;
   onInput: (query: string) => void;
   placeholder?: string;
+  /** debounce ms · default 0（立即触发 / 测试 / backward compat）/ prod 用 200 不卡 */
+  debounceMs?: number;
 }): SearchInputApi {
   const input = document.createElement('input');
   input.type = 'search';
@@ -29,8 +32,18 @@ export function mountSearchInput({
   input.autocomplete = 'off';
   input.spellcheck = false;
 
+  let timer: ReturnType<typeof setTimeout> | null = null;
   input.addEventListener('input', () => {
-    onInput(input.value);
+    if (debounceMs && debounceMs > 0) {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        onInput(input.value);
+        timer = null;
+      }, debounceMs);
+    } else {
+      // debounceMs 未传 / 0 → 立即触发（backward compat）
+      onInput(input.value);
+    }
   });
 
   container.appendChild(input);

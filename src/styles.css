@@ -248,3 +248,130 @@ body::before {
   white-space: nowrap;
   max-width: 360px;
 }
+
+/* ============= B1 Stage 3 T3.3 · 双形态 popover · 探索 + 分组 ============= */
+/* DR-078 PM mockup 拍板 / 沿用 paper 风格 / 美观度 polish 留 ship 前（DR-079） */
+
+/* 探索 hint 文案（顶部）*/
+.search-result-hint {
+  padding: 9px 14px 6px;
+  font-family: 'EB Garamond', Georgia, serif;
+  font-style: italic;
+  font-size: 11px;
+  color: #888;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid #d8cab0;
+}
+
+/* Section 容器（探索 chip section / 分组 group section / 概念命中段共用）*/
+.search-result-section {
+  border-top: 1px solid #d8cab0;
+  padding: 0;
+}
+.search-result-section:first-child,
+.search-result-hint + .search-result-section {
+  border-top: none;
+}
+
+.search-result-section-head {
+  padding: 8px 14px 4px;
+  font-family: 'EB Garamond', Georgia, serif;
+  font-style: italic;
+  color: #5b3a8c;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  font-variant: small-caps;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.search-result-section-count {
+  color: #888;
+  font-style: normal;
+  font-size: 10px;
+  font-variant: normal;
+  letter-spacing: 0.02em;
+}
+
+/* 探索 chip list（人物 / 概念 / 时段 / 概念命中也用）*/
+.search-result-chips {
+  padding: 4px 14px 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+.search-result-chip {
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 12px;
+  color: #2a2a2a;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  border-bottom: 1px dotted #c8baa0;
+  padding: 1px 0;
+  line-height: 1.5;
+  transition:
+    color 0.12s ease,
+    border-color 0.12s ease;
+}
+.search-result-chip:hover,
+.search-result-chip[data-selected='true'] {
+  color: #5b3a8c;
+  border-bottom-color: #5b3a8c;
+}
+.search-result-chip-concept {
+  color: #5b3a8c;
+  border-bottom-color: #5b3a8c;
+}
+
+/* 分组 claim list */
+.search-result-claim-list {
+  padding: 0 0 4px;
+}
+.search-result-claim-item {
+  padding: 5px 14px 6px 28px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 11.5px;
+  line-height: 1.45;
+  cursor: pointer;
+  position: relative;
+  font-family: 'EB Garamond', Georgia, serif;
+  transition: background 0.12s ease;
+}
+.search-result-claim-item::before {
+  content: '·';
+  position: absolute;
+  left: 18px;
+  top: 4px;
+  color: #5b3a8c;
+  font-weight: 700;
+}
+.search-result-claim-item:hover,
+.search-result-claim-item[data-selected='true'] {
+  background: rgba(91, 58, 140, 0.08);
+}
+.search-result-claim-text {
+  color: #2a2a2a;
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 360px;
+}
+.search-result-claim-year {
+  color: #888;
+  font-style: italic;
+  font-size: 10px;
+  flex: 0 0 auto;
+  letter-spacing: 0.04em;
+}
+
+/* 关键词高亮 em */
+em.search-result-highlight {
+  color: #5b3a8c;
+  font-style: normal;
+  font-weight: 600;
+  background: rgba(91, 58, 140, 0.1);
+  padding: 0 1px;
+}
