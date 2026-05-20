@@ -100,3 +100,28 @@ hit overlay 不用 stroke 16px / 而用 endpoint 周围 16px 圆 + path 中段 8
 | 4.4 endpoint-priority hit zone | 中 | 类似 R5 | 0 |
 
 **B 阶段推荐路径**：4.1 + 4.2 组合 — 默认用 visible stroke 距（解 80% 场景）+ 同色 cluster 触发 disambig UI（解剩余 20%）。
+
+## 8. PM 决策（2026-05-20）· A + D 不强攻 / 推 B 主线统筹
+
+**重新评估发现** spec § 4.1 算法上无效：
+
+- visible arc-layer (src/main.ts:204-229) 跟 hit arc-hit-layer (src/main.ts:234-244) path 形状 1:1 完全相同（同 generateArcPath / 同 source/target/y-3 偏移）
+- 几何距离基于 path 形状（SVGPathElement.getPointAtLength）/ 跟 stroke 粗细无关
+- 改 querySelector 从 `g.arc-hit-layer > path.arc-hit` 换成 `g.arc-layer > path.arc` / 算法结果**完全相同** / 等于不改
+
+**RC11 真根因**：同色弧 visible stroke 视觉重叠 → 用户视觉自己分不清 → 算法只能猜（50% 概率选错）。不是算法 bug 是信息歧义本质问题。
+
+**PM 决策 A + D**：
+
+| 攻法 | 选择 | 理由 |
+|---|---|---|
+| A · 接受现状（R5 hover label + endpoint 黄边 ship 兜底） | ✅ | 用户 hover 看错可移开避免 commit · 实战 UX 已 fallback |
+| D · 推 B 主线统筹 | ✅ | B 主线 5-6 周内可能弧线整体改设计（球面/平面/great circle 大圆弧）· 现在 1-2 天修可能白做 |
+| B · 4.2 cluster disambig UI 真解 | ❌ | 工程 1-2 天 / 但跟 B 主线 layout 改动会冲突 / 边际 ROI 低 |
+| C · hover sticky 加强 | ❌ | 部分解 / 先碰到可能就是错的 / 不彻底 |
+
+**Phase 0（2026-05-20）DR-069 不实施修法** · DR-069 backlog 转入 B 主线待办 · B2 副窗实施期重新审视弧线视觉（含球面 great circle 大圆弧 / 可能重设计 hit 模型）。
+
+关联：
+- [B 主线 brainstorm 决策落档 § 14 Phase 0](../docs/2026-05-20-b-mainline-brainstorm-decisions.md)
+- [M5 takeaway § 3.1 DR-069 状态升级](../docs/2026-05-19-m5-linea-takeaway.md)

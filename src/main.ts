@@ -17,8 +17,9 @@
 
 import './styles.css';
 import * as d3 from './lib/d3.ts';
-import claimsData from './data/claims.json';
-import nodesData from './data/nodes_skeleton.json';
+// Phase 0 (DR-071) · Bundle 减肥 · JSON 不 import 进 bundle / 改 async fetch · 节省 ~19 KB gzip
+import claimsUrl from './data/claims.json?url';
+import nodesUrl from './data/nodes_skeleton.json?url';
 import {
   computePersonSectionPositions,
   generateArcPath,
@@ -45,13 +46,19 @@ import type { PersonNode } from './types/Node.ts';
 
 console.log('[Marx M4] entry · claim-on-timeline');
 
-// === 1. 数据加载 ===
+// === 1. 数据加载（async fetch · Phase 0 DR-071 / JSON 不进 bundle 节省 ~19 KB gzip） ===
 
-const claims = claimsData.claims as ClaimNode[];
-const relations = claimsData.relations as ClaimRelation[];
-const persons = nodesData.nodes.filter(
-  (n: { type: string }) => n.type === 'person',
-) as PersonNode[];
+const [claimsData, nodesData] = (await Promise.all([
+  fetch(claimsUrl).then((r) => r.json()),
+  fetch(nodesUrl).then((r) => r.json()),
+])) as [
+  { claims: ClaimNode[]; relations: ClaimRelation[] },
+  { nodes: Array<{ id: string; type: string; [key: string]: unknown }> },
+];
+
+const claims = claimsData.claims;
+const relations = claimsData.relations;
+const persons = nodesData.nodes.filter((n) => n.type === 'person') as unknown as PersonNode[];
 
 console.log(
   `[Marx M4] loaded ${claims.length} claims / ${relations.length} relations / ${persons.length} persons total`,

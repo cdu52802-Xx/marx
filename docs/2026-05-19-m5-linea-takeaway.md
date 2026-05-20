@@ -104,7 +104,18 @@ M5 加的 zoom-control / arc-popover / breadcrumb / timeline 重设 都沿用同
 
 ## 3. Backlog（不阻塞 ship · 后续 milestone 处理）
 
-### 3.1 ⚠ DR-069 弧线误选 bug（**4 轮专攻仍未解 · 升级 backlog 写专项 spec**）
+### 3.1 ⚠ DR-069 弧线误选 bug · PM 决策 A+D（2026-05-20 Phase 0 更新）
+
+**2026-05-20 重新评估** · spec § 4.1 攻法算法上无效（visible 与 hit overlay path 形状 1:1 / 改 querySelector 不改算法）· PM 拍板 A + D：
+
+- **A · 接受现状** R5 hover label + endpoint 黄边 已 ship 实战 UX 兜底（用户 hover 看错可移开避免 commit）
+- **D · 推 B 主线统筹** B2 副窗 5-6 周内可能弧线整体改设计（球面 / 大圆弧）· 现在花时间修可能白做
+
+关联：[DR-069 专项 spec § 8 PM 决策](../specs/2026-05-19-dr-069-arc-misselect-fix.md) · [B 主线 brainstorm § 14](./2026-05-20-b-mainline-brainstorm-decisions.md)
+
+---
+
+### 3.0 老 DR-069 状态记录（4 轮专攻历史 · 仅供 B 主线参考）
 
 | 字段 | 内容 |
 |---|---|
