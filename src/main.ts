@@ -36,6 +36,7 @@ import {
   type SearchResultItem,
   type SearchResultPopoverApi,
 } from './components/search-result-popover.ts';
+import { search as runSearchIndex } from './lib/search-index.ts';
 import { mountBreadcrumb, type BreadcrumbApi } from './components/breadcrumb.ts';
 import { createZoom } from './viz/zoom.ts';
 import { mountZoomControl, updateZoomDisplay } from './components/zoom-control.ts';
@@ -1370,52 +1371,27 @@ document.body.appendChild(headerContainer);
 const headerApi = mountHeader({ container: headerContainer });
 
 // === 10.1 B1 T2.1 · search input mount 到 header search slot ===
-// === 10.2 B1 T2.2 · result popover + stub search（T3.1 替换为真 search-index）===
-//   现 stub: substring 搜 claim.claim_text + claim.name_zh + person.name_zh / 取前 8
-//   T3.1 加 fuzzy match + 多目标 score 排序
+// === 10.2 B1 T3.1 · 真 search-index fuzzy match（替换 Stage 2 stubSearch · DR-078）===
+//   score 分层：exact 100 > prefix 80 > substring 60
+//   多目标：claim.claim_text / name_zh / name_orig / keywords + person.name_zh / name_orig
+//   T3.2 加 debounce 200ms · T3.3 升级 popover 双形态 + 分组 · T3.4 加 curate lists
 let popoverApi: SearchResultPopoverApi | null = null;
-function stubSearch(query: string): SearchResultItem[] {
-  const q = query.trim().toLowerCase();
-  if (!q) return [];
-  const results: SearchResultItem[] = [];
-
-  // 主张候选
-  for (const c of claims) {
-    if (results.length >= 8) break;
-    const claimText = (c.claim_text ?? '').toLowerCase();
-    const nameZh = (c.name_zh ?? '').toLowerCase();
-    if (claimText.includes(q) || nameZh.includes(q)) {
-      results.push({
-        type: 'claim',
-        id: c.id,
-        label: c.name_zh ?? c.keywords ?? c.claim_text.slice(0, 32) + '…',
-      });
-    }
-  }
-
-  // 人物候选
-  for (const p of persons) {
-    if (results.length >= 8) break;
-    if ((p.name_zh ?? '').toLowerCase().includes(q)) {
-      results.push({
-        type: 'person',
-        id: p.id,
-        label: p.name_zh,
-      });
-    }
-  }
-
-  return results;
-}
 
 const searchApi = mountSearchInput({
   container: headerApi.searchSlot,
   onInput: (q) => {
-    const items = stubSearch(q);
-    if (items.length === 0) {
+    const results = runSearchIndex({ claims, persons }, q, 8);
+    if (results.length === 0) {
       popoverApi?.hide();
       return;
     }
+    // T3.3 前 popover 仍 flat list / 用 SearchResult 当 SearchResultItem 传（字段兼容）
+    const items: SearchResultItem[] = results.map((r) => ({
+      type: r.type,
+      id: r.id,
+      label: r.label,
+      matched: r.matched,
+    }));
     popoverApi?.show(items);
   },
 });
@@ -1423,8 +1399,8 @@ const searchApi = mountSearchInput({
 popoverApi = mountResultPopover({
   anchor: searchApi.input,
   onSelect: (item) => {
-    // T4.1 接真主图 highlight · 现 stub 仅 console.log + 关浮窗
-    console.log('[Marx M-B1 T2.2 stub] selected:', item.type, item.id, '·', item.label);
+    // T4.1 接真主图 highlight · 现 placeholder console.log + 关浮窗
+    console.log('[Marx M-B1 T3.1] selected:', item.type, item.id, '·', item.label);
     popoverApi?.hide();
   },
 });
