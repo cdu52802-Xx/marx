@@ -169,3 +169,82 @@ body::before {
   color: #ccc;
   padding: 0 2px;
 }
+
+/* ============= B1 Stage 2 T2.1 · 搜索输入框（paper 风格）============= */
+/* spec § 3.2 · #fcfaf6 米白 + 1px 沙石灰金 border + EB Garamond 13px + placeholder italic */
+.search-input {
+  background: #fcfaf6;
+  border: 1px solid #d8cab0;
+  padding: 4px 10px;
+  margin-right: 4px;
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 13px;
+  color: #2a2a2a;
+  width: 220px;
+  outline: none;
+  letter-spacing: 0.02em;
+  font-style: normal;
+  /* 关 border-radius / 学术编辑硬约束（PRD 视觉系统） */
+  border-radius: 0;
+}
+.search-input::placeholder {
+  font-style: italic;
+  color: #aaa;
+  letter-spacing: 0.02em;
+}
+.search-input:focus {
+  border-color: #5b3a8c;
+}
+/* search input 浏览器原生 clear button 调色（webkit / safari）*/
+.search-input::-webkit-search-cancel-button {
+  cursor: pointer;
+  opacity: 0.5;
+}
+.search-input::-webkit-search-cancel-button:hover {
+  opacity: 1;
+}
+
+/* ============= B1 Stage 2 T2.2 · 搜索下拉候选浮窗（paper 风格）============= */
+/* spec § 3.3 · 沿用 claim-popover 视觉系（border + paper-shadow + EB Garamond） */
+.search-result-popover {
+  background: #fcfaf6;
+  border: 1px solid #d8cab0;
+  box-shadow: -4px 0 18px rgba(58, 35, 96, 0.1);
+  font-family: 'EB Garamond', Georgia, serif;
+  color: #2a2a2a;
+  padding: 4px 0;
+  border-radius: 0;
+  max-width: 480px;
+}
+.search-result-item {
+  padding: 7px 14px;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.12s ease;
+  letter-spacing: 0.02em;
+}
+.search-result-item:hover,
+.search-result-item[data-selected='true'] {
+  background: rgba(91, 58, 140, 0.08);
+}
+.search-result-kicker {
+  font-style: italic;
+  font-size: 11px;
+  color: #5b3a8c;
+  letter-spacing: 0.06em;
+  flex: 0 0 auto;
+  opacity: 0.75;
+  min-width: 32px;
+}
+.search-result-label {
+  color: #2a2a2a;
+  font-size: 13px;
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 360px;
+}

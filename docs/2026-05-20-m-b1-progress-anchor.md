@@ -1,8 +1,8 @@
 # Marx M-B 主线进展 · 新窗口续接锚点（2026-05-20）
 
-> **状态**：B brainstorm 完成 / Phase 0-1 完成 / **B1 Stage 1 完成** / Stage 2 待启动
+> **状态**：B brainstorm 完成 / Phase 0-1 完成 / **B1 Stage 1-2 完成** / Stage 3 待启动（PM checkpoint 前）
 > **用途**：新窗口续接 SSOT / 30 秒重建上下文
-> **当前 HEAD**：`3f96f5a`（B1 Stage 1 commit / 加 divider 修 PM 反馈后会 update）
+> **当前 HEAD**：`9d38dbc`（Stage 1 + divider 修 + anchor 落档 · Stage 2 commit pending）
 > **Git**：clean / origin/main 同步
 > **Prod**：https://cdu52802-xx.github.io/marx/
 
@@ -21,11 +21,20 @@
 ### B1 plan（commit b4ecd29）
 - ✅ plans/2026-05-20-marx-m-b1-header-search.md（5 stage / 14 task TDD breakdown）
 
-### B1 Stage 1 完成（commit 3f96f5a + 待 divider 修 commit）
+### B1 Stage 1 完成（commit 3f96f5a → divider 修 9d38dbc）
 - ✅ T1.1 header scaffold（src/components/header.ts mountHeader function）
 - ✅ T1.2 link 重组（删 index.html footer / 视觉灵感 + 关于 + 互换 迁到 header-controls）
 - ✅ T1.3 互换按钮 placeholder（disabled / B2 启用 hook）
 - ✅ PM Stage 1 checkpoint：视觉沿用 M4 米白透明（PM 选 B）/ 4 反馈处理（见 § 2）
+
+### B1 Stage 2 完成（commit pending · 搜索 UI / 1.5 天 / 实际 1 个会话）
+- ✅ T2.1 src/components/search.ts · paper 风格输入框（米白 + 沙石灰金 border + EB Garamond 13px / placeholder italic）
+- ✅ T2.2 src/components/search-result-popover.ts · 下拉候选浮窗（max 8 / 沿用 claim-popover 视觉系 / type 4 类区分 claim/person/event/location）
+- ✅ T2.3 键盘导航 · ↑↓ wrap 选 / Enter 无选中默认选第 1 个 + hide / Esc 关 / hide 后 keyHandler detach
+- ✅ main.ts wire up + stub search（substring 匹配 claim.claim_text + name_zh + person.name_zh / 取前 8 / T3.1 真 search-index 替换）
+- ✅ Tests +28（search.test.ts 7 + search-result-popover.test.ts 21）/ 全量 201/204（3 pre-existing M3）/ lint 0 warning
+- ✅ Bundle gzip 32.08 KB（baseline 30.83 + 1.25 / 预算 ≤35 KB 内）
+- ✅ 浏览器实测（1280×800 桌面）：搜索 "马克" → 8 候选弹窗 / ↓↓ 高亮第 2 / Enter onSelect + hide / Esc hide
 
 ---
 
@@ -45,34 +54,39 @@
 
 ---
 
-## 3. 下一步 · Stage 2 · 搜索 UI（1.5 天 / T2.1-T2.3）
+## 3. 下一步 · Stage 3 · 搜索逻辑（1 天 / T3.1-T3.2）
 
-按 plan T2.1-T2.3：
+> Stage 2 PM checkpoint 待 PM 实测确认（见 § 2.2）后启动 Stage 3。
 
-### T2.1 · `search.ts` 输入框（2-3h）
-- paper 风格（米白 + 1px 沙石灰金 border）
-- EB Garamond 13px / placeholder italic
-- 输入 onInput callback
+按 plan T3.1-T3.2：
 
-### T2.2 · `search-result-popover.ts` 下拉浮窗（3-4h）
-- paper 风格（border + paper-shadow / 沿用详情卡视觉系）
-- 候选 list（max 8 个）
-- onSelect callback
+### T3.1 · `lib/search-index.ts` fuzzy match（3-4h）
+- exact + Levenshtein 简化版 + 多目标 indexing（claim text / 节点名 / 事件名 / 地点名）
+- 返回 SearchResult { type / id / label / matched / score }
+- score 排序 / exact match 优先
+- **替换 main.ts 里的 stubSearch / 同时移除 stub function**
+- label 处理优化：去掉 JS slice(0, 32) / 让 CSS ellipsis 自动截断（避免双重截断丑）
 
-### T2.3 · 键盘导航（1-2h）
-- ↑↓ 选 / Enter 确认 / Esc 关
+### T3.2 · debounce 200ms（1-2h）
+- search.ts onInput → debounce wrapper → 调 search-index
+- 250ms 不卡 / 中英文打字流畅
 
-### Stage 2 PM checkpoint
-- 搜索框打字看到下拉浮窗
-- 候选 list paper 风格
-- 键盘导航 OK
+### Stage 3 PM checkpoint
+- 打字流畅（200ms debounce 不卡）
+- 候选 list 显示对的（中文 / 英文 / 高亮匹配区间 — 高亮 backlog T2.2 留位）
+- 排序合理（exact match 优先 / fuzzy score 排）
 
-### 文件结构
-- `src/components/search.ts` (NEW)
-- `src/components/search-result-popover.ts` (NEW)
-- `tests/unit/search.test.ts` (NEW)
-- `tests/unit/search-result-popover.test.ts` (NEW)
-- `src/components/header.ts` (MOD · search slot 填充)
+### Stage 2 阶段产出（落档）
+
+**新增文件**：
+- `src/components/search.ts` (NEW · 35 行)
+- `src/components/search-result-popover.ts` (NEW · 168 行 / 含 T2.3 键盘)
+- `tests/unit/search.test.ts` (NEW · 7 test)
+- `tests/unit/search-result-popover.test.ts` (NEW · 21 test)
+
+**修改文件**：
+- `src/main.ts` (MOD · import + mountSearchInput + mountResultPopover + stubSearch 函数)
+- `src/styles.css` (MOD · .search-input + .search-result-popover/-item/-kicker/-label 视觉)
 
 ---
 
@@ -105,16 +119,16 @@
 
 ---
 
-## 6. 验证数据 baseline（Stage 1 完成时）
+## 6. 验证数据 baseline（Stage 2 完成时）
 
-| 维度 | 数据 |
-|---|---|
-| Tests | 173/176（+7 new header / 3 fail M3 pre-existing） |
-| Lint | 0 warning |
-| Build gzip | 31.21 KB（Phase 0 baseline 30.83 + B1 +0.38） |
-| 4 件套 baseline | M5 ship 时 Health 9.2 / QA 96 / Design A- / AI Slop A（待 B1 ship 重跑） |
+| 维度 | Stage 1 | Stage 2 | Δ |
+|---|---|---|---|
+| Tests | 173/176（+7 new header / 3 fail M3） | 201/204（+7+21 新 / 3 fail M3） | +28 |
+| Lint | 0 warning | 0 warning | — |
+| Build gzip | 31.21 KB | **32.08 KB** | +0.87 KB / 预算 ≤35 KB 内 |
+| 4 件套 baseline | M5 ship 时 Health 9.2 / QA 96 / Design A- / AI Slop A | 待 B1 ship 重跑 | — |
 
-Stage 2 完成后再跑 4 件套 baseline 对比。
+Stage 5 (B1 ship 时) 跑 4 件套 baseline 对比 M5。
 
 ---
 

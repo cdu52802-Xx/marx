@@ -30,6 +30,12 @@ import {
 import { mountTimeline } from './components/timeline.ts';
 import { mountSidebar } from './components/sidebar.ts';
 import { mountHeader } from './components/header.ts';
+import { mountSearchInput } from './components/search.ts';
+import {
+  mountResultPopover,
+  type SearchResultItem,
+  type SearchResultPopoverApi,
+} from './components/search-result-popover.ts';
 import { mountBreadcrumb, type BreadcrumbApi } from './components/breadcrumb.ts';
 import { createZoom } from './viz/zoom.ts';
 import { mountZoomControl, updateZoomDisplay } from './components/zoom-control.ts';
@@ -1361,6 +1367,68 @@ mountSidebar({
 const headerContainer = document.createElement('div');
 headerContainer.id = 'header-controls-fixed';
 document.body.appendChild(headerContainer);
-mountHeader({ container: headerContainer });
+const headerApi = mountHeader({ container: headerContainer });
 
-console.log('[Marx M-B1] render complete · timeline + sidebar + header-controls mounted');
+// === 10.1 B1 T2.1 · search input mount 到 header search slot ===
+// === 10.2 B1 T2.2 · result popover + stub search（T3.1 替换为真 search-index）===
+//   现 stub: substring 搜 claim.claim_text + claim.name_zh + person.name_zh / 取前 8
+//   T3.1 加 fuzzy match + 多目标 score 排序
+let popoverApi: SearchResultPopoverApi | null = null;
+function stubSearch(query: string): SearchResultItem[] {
+  const q = query.trim().toLowerCase();
+  if (!q) return [];
+  const results: SearchResultItem[] = [];
+
+  // 主张候选
+  for (const c of claims) {
+    if (results.length >= 8) break;
+    const claimText = (c.claim_text ?? '').toLowerCase();
+    const nameZh = (c.name_zh ?? '').toLowerCase();
+    if (claimText.includes(q) || nameZh.includes(q)) {
+      results.push({
+        type: 'claim',
+        id: c.id,
+        label: c.name_zh ?? c.keywords ?? c.claim_text.slice(0, 32) + '…',
+      });
+    }
+  }
+
+  // 人物候选
+  for (const p of persons) {
+    if (results.length >= 8) break;
+    if ((p.name_zh ?? '').toLowerCase().includes(q)) {
+      results.push({
+        type: 'person',
+        id: p.id,
+        label: p.name_zh,
+      });
+    }
+  }
+
+  return results;
+}
+
+const searchApi = mountSearchInput({
+  container: headerApi.searchSlot,
+  onInput: (q) => {
+    const items = stubSearch(q);
+    if (items.length === 0) {
+      popoverApi?.hide();
+      return;
+    }
+    popoverApi?.show(items);
+  },
+});
+
+popoverApi = mountResultPopover({
+  anchor: searchApi.input,
+  onSelect: (item) => {
+    // T4.1 接真主图 highlight · 现 stub 仅 console.log + 关浮窗
+    console.log('[Marx M-B1 T2.2 stub] selected:', item.type, item.id, '·', item.label);
+    popoverApi?.hide();
+  },
+});
+
+console.log(
+  '[Marx M-B1] render complete · timeline + sidebar + header-controls + search + popover mounted',
+);
