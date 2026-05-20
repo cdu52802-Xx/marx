@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Marx · 搜索 UX 升级 mockup（B1 Stage 3）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Noto+Serif+SC:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* === Marx paper 风格 SSOT（沿用 src/styles.css）=== */
+  :root {
+    --paper: #f4ede0;
+    --paper-card: #fcfaf6;
+    --paper-edge: #d8cab0;
+    --ink: #1a1a1a;
+    --ink-soft: #2a2a2a;
+    --ink-muted: #888;
+    --rule: #d8ccb8;
+    --purple: #5b3a8c;
+    --orange: #cc6633;
+    --green: #5d8a5c;
+    --red: #c24a3e;
+    --gray-place: #9b8b6f;
+    --paper-shadow: rgba(58, 35, 96, 0.10);
+    --serif-body: 'EB Garamond', Georgia, serif;
+    --serif-display: 'Playfair Display', 'Noto Serif SC', serif;
+    --serif-zh: 'Noto Serif SC', 'Songti SC', '宋体', serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--paper);
+    color: var(--ink-soft);
+    font-family: var(--serif-body);
+    line-height: 1.6;
+    padding: 40px 32px 80px;
+  }
+
+  /* === 页面标题区 === */
+  .page-title {
+    font-family: var(--serif-display);
+    font-style: italic;
+    font-weight: 600;
+    font-size: 32px;
+    margin: 0 0 4px;
+    color: var(--ink);
+  }
+  .page-subtitle {
+    font-family: var(--serif-body);
+    font-style: italic;
+    font-size: 14px;
+    color: var(--ink-muted);
+    margin: 0 0 6px;
+    letter-spacing: 0.04em;
+  }
+  .page-meta {
+    font-family: var(--serif-body);
+    font-size: 12px;
+    color: var(--ink-muted);
+    margin: 0 0 32px;
+    letter-spacing: 0.04em;
+    border-top: 1px solid var(--rule);
+    padding-top: 8px;
+  }
+
+  /* === 3 panel 对比区 === */
+  .panels {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 28px;
+    margin-bottom: 40px;
+  }
+  .panel {
+    display: flex;
+    flex-direction: column;
+  }
+  .panel-label {
+    font-family: var(--serif-body);
+    font-style: italic;
+    font-size: 13px;
+    color: var(--purple);
+    margin: 0 0 8px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-variant: small-caps;
+  }
+  .panel-label.before { color: var(--ink-muted); }
+  .panel-label .tag {
+    background: var(--paper-card);
+    border: 1px solid var(--paper-edge);
+    padding: 2px 8px;
+    margin-left: 4px;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    font-style: normal;
+    color: var(--ink-soft);
+  }
+
+  /* === mockup 容器（模拟 prod 页面环境）=== */
+  .mockup-frame {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    box-shadow: 0 2px 6px rgba(26, 26, 26, 0.04);
+    padding: 0;
+    position: relative;
+    height: 540px;
+    overflow: hidden;
+  }
+  /* 模拟 prod top divider */
+  .mockup-frame::before {
+    content: '';
+    position: absolute;
+    top: 50px;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--paper-edge);
+    z-index: 1;
+  }
+  /* 模拟 prod brand */
+  .mock-brand {
+    position: absolute;
+    top: 14px;
+    left: 16px;
+    font-family: var(--serif-body);
+    color: var(--ink);
+    z-index: 2;
+    pointer-events: none;
+  }
+  .mock-brand h1 {
+    font-family: var(--serif-display);
+    font-weight: 600;
+    font-size: 16px;
+    margin: 0;
+    color: var(--ink);
+  }
+  .mock-brand .subtitle {
+    font-family: var(--serif-body);
+    font-style: italic;
+    font-size: 10px;
+    color: var(--ink-muted);
+    margin-top: 1px;
+    letter-spacing: 0.02em;
+  }
+
+  /* 模拟 prod header-controls + 搜索框 */
+  .mock-header-controls {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    z-index: 3;
+    font-family: var(--serif-body);
+    font-style: italic;
+    font-size: 11px;
+    color: var(--ink-muted);
+    letter-spacing: 0.02em;
+  }
+  .mock-search-input {
+    background: var(--paper-card);
+    border: 1px solid var(--paper-edge);
+    padding: 3px 9px;
+    font-family: var(--serif-body);
+    font-size: 12px;
+    color: var(--ink-soft);
+    width: 160px;
+    height: 22px;
+    outline: none;
+    font-style: normal;
+    letter-spacing: 0.02em;
+  }
+  .mock-search-input::placeholder { font-style: italic; color: #aaa; }
+  .mock-search-input.focused { border-color: var(--purple); }
+  .mock-header-sep { color: #ccc; padding: 0 1px; }
+  .mock-header-link {
+    color: var(--ink-muted);
+    text-decoration: none;
+    border-bottom: 1px dotted #aaa;
+    padding: 0 1px;
+  }
+  .mock-swap-disabled { opacity: 0.5; font-style: italic; padding: 0 2px; }
+
+  /* 模拟 prod 主画布占位（极简弱化背景）*/
+  .mock-canvas-bg {
+    position: absolute;
+    top: 51px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--paper);
+    overflow: hidden;
+  }
+  .mock-canvas-bg::before {
+    content: '※ 主画布（半圆弧 / claim / timeline）— mockup 弱化';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: var(--serif-body);
+    font-style: italic;
+    font-size: 11px;
+    color: #c8baa0;
+    letter-spacing: 0.06em;
+  }
+
+  /* === 搜索 popover（核心 mockup 内容）=== */
+  /* 紧贴搜索框右下方 / 同 prod position fixed 模拟 */
+  .mock-popover {
+    position: absolute;
+    top: 44px;
+    right: 14px;
+    width: 280px;
+    background: var(--paper-card);
+    border: 1px solid var(--paper-edge);
+    box-shadow: -4px 0 18px var(--paper-shadow);
+    padding: 4px 0;
+    z-index: 10;
+    font-family: var(--serif-body);
+    color: var(--ink-soft);
+  }
+  .mock-popover.wider { width: 320px; }
+
+  /* before · flat list */
+  .mock-item-flat {
+    padding: 7px 14px;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    font-size: 12px;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    border-bottom: 1px solid transparent;
+  }
+  .mock-item-flat:hover { background: rgba(91, 58, 140, 0.08); }
+  .mock-item-flat[data-selected="true"] { background: rgba(91, 58, 140, 0.12); }
+  .mock-kicker {
+    font-style: italic;
+    font-size: 10px;
+    color: var(--purple);
+    letter-spacing: 0.06em;
+    opacity: 0.75;
+    min-width: 32px;
+    flex: 0 0 auto;
+  }
+  .mock-label {
+    color: var(--ink-soft);
+    font-size: 12px;
+    flex: 1 1 auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* after · 分组 / 探索 共用 section 样式 */
+  .mock-section {
+    padding: 0;
+  }
+  .mock-section-head {
+    padding: 8px 14px 4px;
+    border-top: 1px solid var(--rule);
+    font-family: var(--serif-body);
+    font-style: italic;
+    color: var(--purple);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    font-variant: small-caps;
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+  }
+  .mock-section:first-child .mock-section-head { border-top: none; }
+  .mock-section-head .count {
+    color: var(--ink-muted);
+    font-style: normal;
+    font-size: 10px;
+    font-variant: normal;
+    margin-left: 4px;
+    letter-spacing: 0.02em;
+  }
+
+  /* after 1 · 探索 entry 行 */
+  .mock-entry-row {
+    padding: 4px 14px 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+  }
+  .mock-entry-chip {
+    font-family: var(--serif-body);
+    font-size: 12px;
+    color: var(--ink-soft);
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    border-bottom: 1px dotted #c8baa0;
+    padding: 1px 0;
+    line-height: 1.5;
+  }
+  .mock-entry-chip:hover {
+    color: var(--purple);
+    border-bottom-color: var(--purple);
+  }
+
+  /* after 2 · 已搜分组结果 · claim sub-item */
+  .mock-claim-item {
+    padding: 5px 14px 6px 28px;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    font-size: 11.5px;
+    line-height: 1.45;
+    cursor: pointer;
+    position: relative;
+  }
+  .mock-claim-item:hover { background: rgba(91, 58, 140, 0.06); }
+  .mock-claim-item::before {
+    content: '·';
+    position: absolute;
+    left: 18px;
+    top: 4px;
+    color: var(--purple);
+    font-weight: 700;
+  }
+  .mock-claim-text {
+    color: var(--ink-soft);
+    flex: 1 1 auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .mock-claim-text em {
+    color: var(--purple);
+    font-style: normal;
+    font-weight: 600;
+    background: rgba(91, 58, 140, 0.10);
+    padding: 0 1px;
+  }
+  .mock-claim-year {
+    color: var(--ink-muted);
+    font-style: italic;
+    font-size: 10px;
+    flex: 0 0 auto;
+    letter-spacing: 0.04em;
+  }
+
+  /* after 1 · 第一行 hint 文案 */
+  .mock-hint {
+    padding: 9px 14px 4px;
+    font-family: var(--serif-body);
+    font-style: italic;
+    font-size: 11px;
+    color: var(--ink-muted);
+    letter-spacing: 0.04em;
+  }
+
+  /* === 红色 annotation 区 ====================== */
+  .anno-wrap {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 20;
+  }
+  .anno-tag {
+    position: absolute;
+    font-family: var(--serif-body);
+    font-size: 10px;
+    color: #d2493d;
+    background: rgba(255, 245, 243, 0.92);
+    border: 1px dashed #d2493d;
+    padding: 2px 6px;
+    letter-spacing: 0.04em;
+    font-style: italic;
+    pointer-events: auto;
+    z-index: 21;
+  }
+  .anno-pointer {
+    position: absolute;
+    border-left: 1px dashed #d2493d;
+    border-top: 1px dashed #d2493d;
+    pointer-events: none;
+  }
+  .anno-dot {
+    position: absolute;
+    width: 5px;
+    height: 5px;
+    background: #d2493d;
+    border-radius: 50%;
+    pointer-events: none;
+  }
+
+  /* === footer 说明区 === */
+  .panel-note {
+    font-family: var(--serif-body);
+    font-style: italic;
+    font-size: 11px;
+    color: var(--ink-muted);
+    margin-top: 10px;
+    line-height: 1.55;
+    padding: 0 4px;
+    letter-spacing: 0.02em;
+  }
+
+  /* === 差异总览表 === */
+  .diff-summary {
+    background: var(--paper-card);
+    border: 1px solid var(--paper-edge);
+    padding: 20px 24px;
+    box-shadow: -4px 0 18px var(--paper-shadow);
+  }
+  .diff-summary h2 {
+    font-family: var(--serif-display);
+    font-style: italic;
+    font-weight: 600;
+    font-size: 18px;
+    color: var(--ink);
+    margin: 0 0 12px;
+  }
+  .diff-summary ol {
+    margin: 0;
+    padding-left: 24px;
+    font-size: 13px;
+    line-height: 1.8;
+    color: var(--ink-soft);
+  }
+  .diff-summary ol li::marker {
+    color: #d2493d;
+    font-weight: 700;
+  }
+  .diff-summary strong {
+    color: var(--purple);
+    font-weight: 600;
+  }
+  .diff-summary code {
+    font-family: 'JetBrains Mono', Consolas, monospace;
+    font-size: 11px;
+    background: var(--paper);
+    padding: 1px 5px;
+    border: 1px solid var(--rule);
+    color: var(--ink-soft);
+  }
+
+  /* === 数据真实性提示 === */
+  .data-real-banner {
+    margin-top: 20px;
+    padding: 8px 14px;
+    background: rgba(122, 154, 90, 0.08);
+    border-left: 3px solid var(--green);
+    font-family: var(--serif-body);
+    font-style: italic;
+    font-size: 12px;
+    color: var(--ink-soft);
+    letter-spacing: 0.02em;
+  }
+</style>
+</head>
+<body>
+
+<h1 class="page-title">Marx · 搜索 UX 升级 mockup</h1>
+<p class="page-subtitle">B1 Stage 3 · 双形态 popover · 探索 + 已知搜索 + 按人物分组</p>
+<p class="page-meta">2026-05-20 · Karl Marx Visualization · paper 风格沿用 M5 · 真实 claims.json 数据样本</p>
+
+<div class="panels">
+
+  <!-- ============== BEFORE · 现 stub flat list ============== -->
+  <div class="panel">
+    <div class="panel-label before">[ BEFORE ]<span class="tag">现 Stage 2 stub</span></div>
+    <div class="mockup-frame">
+      <div class="mock-brand">
+        <h1>Marx</h1>
+        <div class="subtitle">思想史可视化 · 1818–1883 · 92 条主张 · 31 条思想关系</div>
+      </div>
+      <div class="mock-header-controls">
+        <input class="mock-search-input focused" value="异化" readonly>
+        <span class="mock-swap-disabled">↔ 互换</span>
+        <span class="mock-header-sep">·</span>
+        <a class="mock-header-link">关于</a>
+        <span class="mock-header-sep">·</span>
+        <a class="mock-header-link">视觉灵感</a>
+      </div>
+      <div class="mock-canvas-bg"></div>
+
+      <!-- flat popover -->
+      <div class="mock-popover">
+        <div class="mock-item-flat" data-selected="true">
+          <span class="mock-kicker">§ 主张</span>
+          <span class="mock-label">现实是历经异化的辩证历史进程</span>
+        </div>
+        <div class="mock-item-flat">
+          <span class="mock-kicker">§ 主张</span>
+          <span class="mock-label">异化劳动使工人与产品、劳动过程⋯</span>
+        </div>
+        <div class="mock-item-flat">
+          <span class="mock-kicker">§ 主张</span>
+          <span class="mock-label">唯有终结异化，人才能在有机社会⋯</span>
+        </div>
+        <div class="mock-item-flat">
+          <span class="mock-kicker">§ 主张</span>
+          <span class="mock-label">工人在资本主义劳动中被迫与劳动⋯</span>
+        </div>
+        <div class="mock-item-flat">
+          <span class="mock-kicker">§ 主张</span>
+          <span class="mock-label">神是人的本质的异化投射——不是⋯</span>
+        </div>
+        <div class="mock-item-flat">
+          <span class="mock-kicker">§ 主张</span>
+          <span class="mock-label">宗教的秘密在人类学——批判神学⋯</span>
+        </div>
+      </div>
+    </div>
+    <div class="panel-note">现状：6 条 claim 平铺 / 无层级 / 无作者归属 / 无探索入口 / 用户不知道有"异化"前永远搜不出。</div>
+  </div>
+
+  <!-- ============== AFTER 1 · 空搜索 · 探索形态 ============== -->
+  <div class="panel">
+    <div class="panel-label">[ AFTER 1 ]<span class="tag">空搜索 · 探索形态</span></div>
+    <div class="mockup-frame">
+      <div class="mock-brand">
+        <h1>Marx</h1>
+        <div class="subtitle">思想史可视化 · 1818–1883 · 92 条主张 · 31 条思想关系</div>
+      </div>
+      <div class="mock-header-controls">
+        <input class="mock-search-input focused" placeholder="搜索 · 主张 / 人物 / 地点" readonly>
+        <span class="mock-swap-disabled">↔ 互换</span>
+        <span class="mock-header-sep">·</span>
+        <a class="mock-header-link">关于</a>
+        <span class="mock-header-sep">·</span>
+        <a class="mock-header-link">视觉灵感</a>
+      </div>
+      <div class="mock-canvas-bg"></div>
+
+      <!-- explore popover -->
+      <div class="mock-popover wider">
+        <div class="mock-hint">不知道搜什么？从这里开始 ⌄</div>
+        <div class="mock-section">
+          <div class="mock-section-head">§ 主要人物 <span class="count">7 位</span></div>
+          <div class="mock-entry-row">
+            <span class="mock-entry-chip">马克思</span>
+            <span class="mock-entry-chip">恩格斯</span>
+            <span class="mock-entry-chip">黑格尔</span>
+            <span class="mock-entry-chip">费尔巴哈</span>
+            <span class="mock-entry-chip">普鲁东</span>
+            <span class="mock-entry-chip">巴枯宁</span>
+            <span class="mock-entry-chip">施蒂纳</span>
+          </div>
+        </div>
+        <div class="mock-section">
+          <div class="mock-section-head">§ 核心概念 <span class="count">8 个</span></div>
+          <div class="mock-entry-row">
+            <span class="mock-entry-chip">异化</span>
+            <span class="mock-entry-chip">阶级</span>
+            <span class="mock-entry-chip">革命</span>
+            <span class="mock-entry-chip">商品</span>
+            <span class="mock-entry-chip">资本</span>
+            <span class="mock-entry-chip">历史唯物</span>
+            <span class="mock-entry-chip">辩证法</span>
+            <span class="mock-entry-chip">剩余价值</span>
+          </div>
+        </div>
+        <div class="mock-section">
+          <div class="mock-section-head">§ 关键时段 <span class="count">4 段</span></div>
+          <div class="mock-entry-row">
+            <span class="mock-entry-chip">1840s 青年</span>
+            <span class="mock-entry-chip">1848 革命</span>
+            <span class="mock-entry-chip">1864 第一国际</span>
+            <span class="mock-entry-chip">1871 巴黎公社</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- annotation overlay -->
+      <div class="anno-wrap">
+        <span class="anno-tag" style="top:50px; right:14px;">① 顶部 hint 文案 · 引导探索</span>
+        <span class="anno-tag" style="top:140px; left:14px;">② 3 分类 entry / 点 chip 直接搜该词</span>
+      </div>
+    </div>
+    <div class="panel-note">click 搜索框 + 未打字 → popover 显示"§ 主要人物 / 核心概念 / 关键时段"3 分类入口 / 点 chip 自动填入搜索框 → 切到 AFTER 2 模式。</div>
+  </div>
+
+  <!-- ============== AFTER 2 · 已搜"异化" · 按人物分组 ============== -->
+  <div class="panel">
+    <div class="panel-label">[ AFTER 2 ]<span class="tag">已搜"异化" · 按人物分组</span></div>
+    <div class="mockup-frame">
+      <div class="mock-brand">
+        <h1>Marx</h1>
+        <div class="subtitle">思想史可视化 · 1818–1883 · 92 条主张 · 31 条思想关系</div>
+      </div>
+      <div class="mock-header-controls">
+        <input class="mock-search-input focused" value="异化" readonly>
+        <span class="mock-swap-disabled">↔ 互换</span>
+        <span class="mock-header-sep">·</span>
+        <a class="mock-header-link">关于</a>
+        <span class="mock-header-sep">·</span>
+        <a class="mock-header-link">视觉灵感</a>
+      </div>
+      <div class="mock-canvas-bg"></div>
+
+      <!-- grouped popover -->
+      <div class="mock-popover wider">
+        <div class="mock-section">
+          <div class="mock-section-head">§ 概念 <span class="count">1 个</span></div>
+          <div class="mock-entry-row">
+            <span class="mock-entry-chip" style="color:var(--purple); border-bottom-color:var(--purple);">异化 · Marx 核心 / 1844 手稿</span>
+          </div>
+        </div>
+        <div class="mock-section">
+          <div class="mock-section-head">§ 卡尔·马克思 <span class="count">4 条主张</span></div>
+          <div class="mock-claim-item">
+            <span class="mock-claim-text">现实是历经<em>异化</em>的辩证历史进程</span>
+            <span class="mock-claim-year">1850</span>
+          </div>
+          <div class="mock-claim-item">
+            <span class="mock-claim-text"><em>异化</em>劳动使工人与产品、劳动过程⋯</span>
+            <span class="mock-claim-year">1844</span>
+          </div>
+          <div class="mock-claim-item">
+            <span class="mock-claim-text">唯有终结<em>异化</em>，人才能在有机社会⋯</span>
+            <span class="mock-claim-year">1850</span>
+          </div>
+          <div class="mock-claim-item">
+            <span class="mock-claim-text">工人在资本主义劳动中被迫与劳动⋯</span>
+            <span class="mock-claim-year">1844</span>
+          </div>
+        </div>
+        <div class="mock-section">
+          <div class="mock-section-head">§ 路德维希·费尔巴哈 <span class="count">2 条主张</span></div>
+          <div class="mock-claim-item">
+            <span class="mock-claim-text">神是人的本质的<em>异化</em>投射——不是⋯</span>
+            <span class="mock-claim-year">1841</span>
+          </div>
+          <div class="mock-claim-item">
+            <span class="mock-claim-text">宗教的秘密在人类学——批判神学⋯</span>
+            <span class="mock-claim-year">1841</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- annotation overlay -->
+      <div class="anno-wrap">
+        <span class="anno-tag" style="top:60px; right:14px;">③ 概念命中独立段 · 点击直跳定义</span>
+        <span class="anno-tag" style="top:140px; left:14px;">④ 一级 = 提出者（人物）· 含条数</span>
+        <span class="anno-tag" style="top:260px; left:14px;">⑤ 二级 = 该人物 claim · 关键词紫高亮</span>
+        <span class="anno-tag" style="top:390px; right:14px;">⑥ 年份小字 italic · editorial 风格</span>
+      </div>
+    </div>
+    <div class="panel-note">打"异化" → popover 自动切到分组结果 / 一级 = 提出者 / 二级 = 该人物相关 claim / 关键词 <em style="color:var(--purple); font-style:normal; font-weight:600;">异化</em> 紫色高亮 / 年份 italic 灰色。</div>
+  </div>
+
+</div>
+
+<div class="data-real-banner">
+  本 mockup 使用 <code>src/data/claims.json</code> 真实数据样本：6 条含"异化"的 claim（Marx 4 / 费尔巴哈 2）/ 不是占位文字。"主要人物"7 位中 5 位数据库已有真 claim · 普鲁东（皮埃爾-約瑟夫·普魯東 / 数据库繁体）3 条 · 施蒂纳（麥克斯·施蒂納）3 条。
+</div>
+
+<div class="diff-summary" style="margin-top: 32px;">
+  <h2>核心差异 · 6 点</h2>
+  <ol>
+    <li><strong>顶部 hint 文案</strong>："不知道搜什么？从这里开始" · 引导探索者用户 / 不强 demand 已知关键词。</li>
+    <li><strong>3 分类 entry chip</strong>：主要人物 / 核心概念 / 关键时段 · 点 chip 自动填入搜索框 + 自动切到 AFTER 2 分组结果。</li>
+    <li><strong>概念命中独立段</strong>：搜"异化"时 popover 第 1 段是"§ 概念" / 显示"异化"本身的元信息（Marx 核心 / 1844 手稿）/ 点击直跳定义。</li>
+    <li><strong>一级 = 提出者人物</strong>：之前 flat list / 现在按 <code>author_id</code> group / 每组显示 "§ 人物名 · N 条主张"。</li>
+    <li><strong>二级 = 该人物 claim</strong>：缩进 28px / · bullet / 关键词紫色高亮 <em style="color:var(--purple); font-style:normal; font-weight:600;">异化</em> · 1 行 ellipsis 截断。</li>
+    <li><strong>年份小字 italic</strong>：右对齐 / 灰色 / editorial 风格 / 给学者用户时序感。</li>
+  </ol>
+
+  <h2 style="margin-top:24px;">两形态切换规则</h2>
+  <ol>
+    <li>搜索框 click + 输入框空 → 显示 <strong>AFTER 1</strong>（探索形态）</li>
+    <li>用户打字 → 自动切到 <strong>AFTER 2</strong>（分组结果）</li>
+    <li>清空输入 → 切回 <strong>AFTER 1</strong>（探索形态）</li>
+    <li>Esc / 点空白 → 关 popover（同 Stage 2 行为）</li>
+    <li>键盘 ↑↓ 仍工作 / 跨 section 跳（Marx 最后一条 ↓ → 费尔巴哈第一条）</li>
+  </ol>
+
+  <h2 style="margin-top:24px;">Stage 3 工程量调整</h2>
+  <ol>
+    <li>T3.1 <code>lib/search-index.ts</code> fuzzy match · 不变（仍 3-4h）</li>
+    <li>T3.2 debounce 200ms · 不变（仍 1-2h）</li>
+    <li>T3.3 <strong>新增</strong> · popover 升级双形态 + 分组 + 概念段 · 约 3-4h</li>
+    <li>T3.4 <strong>新增</strong> · curate lists（人物 7 / 概念 8 / 时段 4 / 短文案）· 约 1h</li>
+    <li>总 Stage 3 估时 1 天 → 1.5 天 · spec 升级 v2 + DR-078 落档</li>
+  </ol>
+
+  <h2 style="margin-top:24px;">⚠ 已知遗留 · Stage 3 PM checkpoint 决</h2>
+  <ol>
+    <li>"概念"段命中如何识别？8 个 curate 概念查中即显 / 模糊匹配如"商"匹配"商品"也算？建议精确匹配 8 chip / 模糊匹配只走 claim 文本。</li>
+    <li>分组超过 5 人时 popover 太长？建议 max 4 组人物 + "查看全部 N 位"折叠链接 / 折叠详情留 backlog。</li>
+    <li>关键词高亮支持中英文混搜？英文搜"Marx"也高亮中文"马克思"？建议 V1 仅高亮搜索字面（不做翻译映射）/ 翻译映射 V2。</li>
+  </ol>
+</div>
+
+</body>
+</html>
