@@ -375,34 +375,3 @@ em.search-result-highlight {
   background: rgba(91, 58, 140, 0.1);
   padding: 0 1px;
 }
-
-/* ============= B1 DR-079 polish · search popover 入场微动效（DR-088）============= */
-/* PM 2026-05-21 拍板方案 A · ship 前 polish
- * - 180ms 整体 fade + translateY(-4px) 入场（editorial 杂志风轻量入场）
- * - transform + opacity 走 GPU 合成 / 不触发 layout
- * - prefers-reduced-motion 全局兜底（顺手修 Finding 3 / 尊重晕动症 + 视觉敏感用户）
- */
-@keyframes search-popover-enter {
-  from {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-.search-result-popover {
-  animation: search-popover-enter 180ms ease-out;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
-}
