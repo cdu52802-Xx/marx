@@ -1,142 +1,98 @@
-# Marx M-B 主线进展 · 新窗口续接锚点（2026-05-20）
+# Marx M-B 主线进展 · 新窗口续接锚点（2026-05-20 ~ 2026-05-21）
 
-> **状态**：B brainstorm 完成 / Phase 0-1 完成 / **B1 Stage 1-2 完成** + **mockup PM 拍板** / Stage 3 v2 待启动
-> **用途**：新窗口续接 SSOT / 30 秒重建上下文
-> **当前 HEAD**：`bffcae4`（Stage 2 ship `fa1c2ef` + mockup ship `bffcae4` + spec v2 升级 pending）
+> **状态**：B1 Stage 1-2-3 ship 完成 + 2 PM bug 修 / **Stage 4 待启动**（PM "go Stage 4" 拍板已收到）
+> **当前 HEAD**：`6719672`（Stage 3 outside click bug 2 R2 修 / 2026-05-21）
 > **Git**：clean / origin/main 同步
 > **Prod**：https://cdu52802-xx.github.io/marx/
 > **Mockup**：https://cdu52802-xx.github.io/marx/m-b1-search-ux-mockup.html
 
 ---
 
-## 1. 已完成（2026-05-20 当日）
+## 1. 已完成（B1 / 2026-05-20 ~ 2026-05-21）
 
-### Phase 0 · M5 backlog 清（commit 6719ef6）
-- ✅ DR-069 PM 决策 A+D（不强攻 / 推 B 主线统筹 / R5 hover label 兜底实战 UX）
-- ✅ Bundle 减肥 vite `?url` + top-level await fetch / JS gzip 47.04 → 30.83 KB / -34.5%
+### Phase 0 · M5 backlog 清（`6719ef6` / 2026-05-20）
+- DR-069 PM A+D · 不强攻 / 推 B 主线统筹
+- Bundle 减肥 vite `?url` + top-level await fetch · 47.04 → 30.83 KB · -34.5%
 
-### Phase 1 · B spec 草案（commit 4426a68）
-- ✅ specs/2026-05-20-m-b-mainline-design.md v1（涵盖 B1/B2/B3 + 8 个新 DR）
-- ✅ PM ack（回 A）
+### Phase 1 · B spec + B1 plan（`4426a68` + `b4ecd29` / 2026-05-20）
+- `specs/2026-05-20-m-b-mainline-design.md` v1 → v2（PM mockup 拍板后升级）
+- `plans/2026-05-20-marx-m-b1-header-search.md` 5 stage / 14 task → 16 task
 
-### B1 plan（commit b4ecd29）
-- ✅ plans/2026-05-20-marx-m-b1-header-search.md（5 stage / 14 task TDD breakdown）
+### B1 Stage 1 · header 重组（`9d38dbc` / 2026-05-20）
+- header.ts scaffold / link 重组 / 互换按钮 placeholder
+- PM 5 反馈：divider 立即修 + 其他 polish backlog
 
-### B1 Stage 1 完成（commit 3f96f5a → divider 修 9d38dbc）
-- ✅ T1.1 header scaffold（src/components/header.ts mountHeader function）
-- ✅ T1.2 link 重组（删 index.html footer / 视觉灵感 + 关于 + 互换 迁到 header-controls）
-- ✅ T1.3 互换按钮 placeholder（disabled / B2 启用 hook）
-- ✅ PM Stage 1 checkpoint：视觉沿用 M4 米白透明（PM 选 B）/ 4 反馈处理（见 § 2）
+### B1 Stage 2 · 搜索 UI（`fa1c2ef` / 2026-05-20）
+- search.ts + search-result-popover.ts + 28 test
+- stub search wire up（T3.1 替换）
 
-### B1 Stage 2 完成（commit pending · 搜索 UI / 1.5 天 / 实际 1 个会话）
-- ✅ T2.1 src/components/search.ts · paper 风格输入框（米白 + 沙石灰金 border + EB Garamond 13px / placeholder italic）
-- ✅ T2.2 src/components/search-result-popover.ts · 下拉候选浮窗（max 8 / 沿用 claim-popover 视觉系 / type 4 类区分 claim/person/event/location）
-- ✅ T2.3 键盘导航 · ↑↓ wrap 选 / Enter 无选中默认选第 1 个 + hide / Esc 关 / hide 后 keyHandler detach
-- ✅ main.ts wire up + stub search（substring 匹配 claim.claim_text + name_zh + person.name_zh / 取前 8 / T3.1 真 search-index 替换）
-- ✅ Tests +28（search.test.ts 7 + search-result-popover.test.ts 21）/ 全量 201/204（3 pre-existing M3）/ lint 0 warning
-- ✅ Bundle gzip 32.08 KB（baseline 30.83 + 1.25 / 预算 ≤35 KB 内）
-- ✅ 浏览器实测（1280×800 桌面）：搜索 "马克" → 8 候选弹窗 / ↓↓ 高亮第 2 / Enter onSelect + hide / Esc hide
+### B1 mockup · 高保真双形态对比（`bffcae4` / 2026-05-20）
+- `public/m-b1-search-ux-mockup.html` · 3 panel 对比 · paper 风格高保真 · 真实 claims.json 数据
+
+### B1 spec v2 升级（`854bc30` / 2026-05-20）
+- spec § 3.3 双形态 + 分组 + 概念命中段
+- § 3.4 视觉 polish placeholder（PM 美观度反馈 / 留 ship 前）
+- DR-078~081 落档
+
+### B1 Stage 3 · 搜索逻辑（`363a62d` + `e973c12` / 2026-05-21）
+- T3.1 `lib/search-index.ts` fuzzy match（exact 100 / prefix 80 / substring 60）· +16 test
+- T3.2 `search.ts` debounce 200ms · +3 test
+- T3.3 popover 双形态升级（showExplore + showGrouped + 紫高亮 em）· +19 test
+- T3.4 `lib/search-curate.ts`（MAIN_PERSONS 7 + CORE_CONCEPTS 8 + KEY_PERIODS 4）· +20 test
+
+### B1 outside click 关闭 + 2 PM bug 修（`76facab` + `0716461` + `6719672` / 2026-05-21）
+- 加 outside click 关浮窗（PM A · 不豁免工具栏）· +10 test
+- Bug 1 修：listener 改 **capture phase**（防主画布 obs/arc click handler 的 stopPropagation 拦截 · DR-082）· +1 test
+- Bug 2 修：input.focus + click 都监听 reopenSearchPopover + isOpen guard（input 焦点未失场景 focus event 不 fire）
 
 ---
 
 ## 2. PM checkpoint 反馈累积
 
-### 2.1 PM Stage 1 checkpoint 反馈（2026-05-20）
+### 2.1 Stage 1 反馈（2026-05-20）
+- divider 立即修 / 互换按钮 polish 入 B2 backlog / 关于 link 内容等 PM 后补
 
-| # | 反馈 | 处理 |
-|---|---|---|
-| 1 | header 跟画布无分界线别扭 | ✅ **立即修** vision-level / styles.css body::before 加 0.5px 沙石灰金 fixed divider top:50 |
-| 2 | ↔ 互换按钮 low / 设计感不够 | ⏳ **backlog · B2 Stage 6 polish** / 后期统筹 |
-| 3 | 关于 link modal 内容未定 | ⏳ **backlog** / 等 PM 后补内容方向 |
-| 4 | 视觉灵感 denizcemonduygu 文字 OK | ✅ no change |
+### 2.2 Stage 2 + mockup 拍板（2026-05-20）
+- 方案 A · 双形态 popover（探索 + 已知分组）/ DR-078
+- curate 清单按建议默认（7 人 / 8 概念 / 4 时段）
+- 美观度 polish 留 ship 前（PM "真正用过才能找到方案" / DR-079）
+- 3 待决项默认（概念精确匹配 DR-080 / max 4 折叠实施期决 / V1 仅字面高亮）
+- stub 保留不动 / T3.1 一次性替换
 
-补充 PM 指示（记下 B2 实施期落实）：
-- 借鉴知名网站样例 + philosophy_vis 参考（朋友项目 https://github.com/Sia12345678/philosophy_vis）
-- 调 skill + 找素材学习 / 设计更好方案
-- gstack 等 skill 自行判断调用
-
-### 2.2 PM Stage 2 checkpoint + mockup 拍板（2026-05-20）
-
-PM 反馈 4 点 → AI 提 mockup 方案 A 双形态 → PM 拍板：
-
-| # | PM 原话 | 方案 / 处理 |
-|---|---|---|
-| 1 | "需要探索形式的搜索"（不知道"异化"前永远搜不出） | ✅ 方案 A 形态 1 探索 / DR-078 |
-| 2 | "搜出具体观点时应将提出者也显示" / 一级人物 二级 claim | ✅ 方案 A 形态 2 分组 / DR-078 |
-| 3 | stub search 解释 | ✅ 白话答（"草稿版" / T3.1 替换真 fuzzy） |
-| 4 | denizcemonduygu menu 整合搜索栏参考 | ⚠ AI challenge: 不照搬 sidebar form / 但采用 mental model 在 popover 实现 |
-
-PM mockup 拍板细节：
-- **形式认可** · 双形态思路 OK
-- **美观度差点 / 设计感没有很高级 / 字体细节后续微调** → DR-079 polish 留 Stage 3 实施期 + ship 前
-- **3 待决项全按建议默认**：
-  - 概念命中 = 精确匹配 8 chip（DR-080）
-  - max 4 组人物 + "查看全部"折叠（实施期 PM checkpoint 验证）
-  - 关键词高亮 V1 仅字面 / 中英映射 V2
-- **stub 保留不动** · T3.1 一次性替换（不做 throwaway 半成品）
-
-落档：
-- specs/2026-05-20-m-b-mainline-design.md § 3.3 升级 v2 + § 3.4 视觉 polish placeholder + DR-078~081
-- plans/2026-05-20-marx-m-b1-header-search.md Stage 3 + T3.3 + T3.4
-- 本 anchor § 3 Stage 3 v2 plan
+### 2.3 Stage 3 ship 后反馈 + 2 bug 修（2026-05-21）
+- PM 加"点空白关闭"（PM A · 不豁免工具栏）
+- **Bug 1** · 点画布不关 → 根因主画布 obs/arc click stopPropagation（src/main.ts line 273/754/816 防关详情卡）→ event 不 bubble → bubble phase listener 收不到 → 改 **capture phase** 解决 / DR-082
+- **Bug 2** · Esc 关后再 click 不重开 → 根因 input 焦点未失 → focus event 不 fire → focus listener 不触发 → 加 **click event listener** 兜底 + `isOpen()` guard 防 flicker
+- 实测"阶级"出 11 组超 spec § 7 max 4 / 留 ship 前决断
 
 ---
 
-## 3. 下一步 · Stage 3 v2 · 搜索逻辑（1.5 天 / T3.1-T3.4 / PM mockup 拍板）
+## 3. 下一步 · Stage 4 · 主图高亮 + filter chip + 副图 hook（0.5-1 天）
 
-> PM 2026-05-20 Stage 2 checkpoint + mockup（`public/m-b1-search-ux-mockup.html` 部署 prod）拍板：
-> - 方案 A · 双形态 popover（探索 + 已知分组）
-> - 美观度 polish 留 Stage 3 实施期 + B1 ship 前（PM 反馈"真正用用之后才能找到方案"）
-> - 3 待决项全按建议默认（spec § 3.3.4 概念精确匹配 / max 4 组折叠 / V1 仅字面高亮）
-> - 落 DR-078~081 · spec § 3.3 升级 v2 + § 3.4 视觉 polish placeholder
+> PM "A" 拍板（2026-05-21）· `go Stage 4` 已收到 · 新窗口立即按 T4.1 开工
 
-按 plan T3.1-T3.4：
+按 plan T4.1-T4.3：
 
-### T3.1 · `lib/search-index.ts` fuzzy match（3-4h）
-- exact + prefix + substring + Levenshtein 简化版
-- 多目标 indexing（claim.claim_text / name_zh / name_orig / keywords / person.name_zh）
-- SearchResult { type / id / label / matched? / score / author_id? / year? }
-- score 排序：exact > prefix > substring > Levenshtein
-- **替换 main.ts 里的 stubSearch / 删 stub function**
+### T4.1 · 主图 highlight API（2-3h）
+- `highlightObs(claimId)` → 紫圈高亮 + opacity fade 其他
+- `clearHighlight()`
+- search popover `onSelect` → highlightObs（替换现 console.log placeholder · main.ts line ~1430）
+- 测试：unit + 浏览器实测搜→选→主图高亮联动
 
-### T3.2 · `search.ts` debounce 200ms（1-2h）
-- debounce wrapper · trailing edge
-- 测 rapid type 只触发最后一次（fake timers）
+### T4.2 · filter chip dropdown（2-3h · 可能简化）
+- spec § 3.3 写过 filter chip / 但探索形态 chip 已内嵌（§ 主要人物 + § 核心概念 + § 关键时段）
+- **实施期 PM checkpoint 决**：还需独立 chip dropdown 吗 / 或并入探索 chip？
+- AI 主动 challenge PM 优化 / 不一味实现
 
-### T3.3 · popover 升级双形态 + 分组（3-4h）⭐ v2 新增
-- **AGENTS.md 三件套硬约束**：实施前调 `frontend-design` + `ui-ux-pro-max` skill
-- API 扩展 · showExplore + showGrouped
-- 空 query → 探索形态（3 段 chip · 主要人物/核心概念/关键时段）
-- 非空 query → 分组形态（按 author_id / § 概念命中段 / claim 紫高亮）
-- 键盘导航跨 section wrap
+### T4.3 · 副图 highlight hook event（1h）
+- dispatch custom event `marx:search-highlight` { type, id }
+- B1 期间无 listener / B2 实现 listener 接收
+- 单元测 dispatchEvent + 浏览器 console verify
 
-### T3.4 · `lib/search-curate.ts` curate lists（1h）⭐ v2 新增
-- MAIN_PERSONS 7（按数据库真实 person.id 映射 · 普鲁东繁体 / 施蒂纳取代圣西门）
-- CORE_CONCEPTS 8（含元信息：提出者 / 年份 / 出处）
-- KEY_PERIODS 4（含 year range）
-- isExactConceptHit helper（DR-080）
-
-### Stage 3 PM checkpoint（v2 · PM 实测 5 点）
-- 空搜索 → popover 探索形态 OK（3 段 chip）
-- 打字"马克思" → 分组形态 OK（一级人物 / 二级 claim）
-- 打字"异化" → § 概念段命中 + Marx 4 + 费尔巴哈 2
-- 键盘导航跨 section wrap
-- **PM 美观度反馈**（字体 / 间距 / 配色 / 微动效 / DR-079 处理）
-
-### Stage 2 阶段产出（落档）
-
-**新增文件**（Stage 2）：
-- `src/components/search.ts` (NEW · 35 行)
-- `src/components/search-result-popover.ts` (NEW · 168 行 / 含 T2.3 键盘)
-- `tests/unit/search.test.ts` (NEW · 7 test)
-- `tests/unit/search-result-popover.test.ts` (NEW · 21 test)
-
-**修改文件**（Stage 2）：
-- `src/main.ts` (MOD · import + mountSearchInput + mountResultPopover + stubSearch 函数 · T3.1 替换 stub)
-- `src/styles.css` (MOD · .search-input + .search-result-popover/-item/-kicker/-label 视觉)
-
-**mockup 产出**（PM checkpoint 用）：
-- `public/m-b1-search-ux-mockup.html` (NEW · 693 行 / 3 panel 对比 / paper 风格高保真 / prod URL https://cdu52802-xx.github.io/marx/m-b1-search-ux-mockup.html)
+### Stage 4 PM checkpoint
+- 搜索框选候选 → 主图 obs 紫圈高亮 + fade 其他
+- filter chip 工作（如保留）
+- 副图 event console.log 看到（B2 启用 listener）
 
 ---
 
@@ -144,41 +100,38 @@ PM mockup 拍板细节：
 
 ```bash
 1. cd F:\AI\projects\Marx
-2. git pull origin main         # 同步本 anchor + Stage 1 + divider 修
-3. 读 AGENTS.md                 # 项目级 agent context · 三件套硬约束
-4. 读本 anchor（你正在读）       # B1 Stage 1 完成 + Stage 2 待启动
-5. 读 docs/2026-05-20-b-mainline-brainstorm-decisions.md  # B 主线 brainstorm SSOT
-6. 读 specs/2026-05-20-m-b-mainline-design.md             # B spec v1
-7. 读 plans/2026-05-20-marx-m-b1-header-search.md         # B1 5-stage plan
-8. 读 memory MEMORY.md          # 自动加载 / 含 m-b 系列条目
-9. PM 一句话 "go Stage 2" → AI 立即按 plan T2.1 开工
+2. git pull origin main
+3. 读 AGENTS.md                  # 项目级 agent context
+4. 读本 anchor                   # 你正在读
+5. 读 specs/2026-05-20-m-b-mainline-design.md v2 § 3.3-3.7（双形态 + Stage 4 acceptance）
+6. 读 plans/2026-05-20-marx-m-b1-header-search.md Stage 4 章节（T4.1-T4.3）
+7. memory MEMORY.md 自动加载（含 m-b-stage2-3 条目）
+8. PM 已说 "go Stage 4" → AI 立即按 T4.1 开工（TDD red → green）
 ```
 
 ---
 
 ## 5. 工作流约束（沿用 / 不重复）
 
-- spec-first（AGENTS.md 铁律）
-- atomic commit + push（双机协作生命线）
-- 中文 commit message 走 -F 文件方式
-- 3 层 review（TDD task 内 + Stage 间自审 + PM checkpoint）
-- vision-level 立即修 / polish 入 backlog
-- mockup 解 PM 看不懂（visual companion 用 / 重要交互必画 mockup）
-- chain push 拒（git add / commit / push 分开跑）
-- M5 累积 lessons 复用（memory feedback_m5_* 系列）
+- spec-first / atomic commit + push / 中文 commit -F 文件方式 / 3 层 review
+- vision-level 立即修 / polish 入 backlog（DR-079 美观度等 ship 前）
+- mockup 解 PM 看不懂（before/after 对比 + 真实数据 + 红线 annotation）
+- chain push 拒（git add / commit / push 分开跑 / classifier 误判）
+- M5 + B1 累积 lessons 复用（memory feedback_m5_* + m-b-* 系列）
+- AI 主动 challenge PM 反馈分类（实现遗漏 vs polish）
 
 ---
 
-## 6. 验证数据 baseline（Stage 2 完成时）
+## 6. 验证数据 baseline
 
-| 维度 | Stage 1 | Stage 2 | Δ |
-|---|---|---|---|
-| Tests | 173/176（+7 new header / 3 fail M3） | 201/204（+7+21 新 / 3 fail M3） | +28 |
-| Lint | 0 warning | 0 warning | — |
-| Build gzip | 31.21 KB | **32.08 KB** | +0.87 KB / 预算 ≤35 KB 内 |
-| 4 件套 baseline | M5 ship 时 Health 9.2 / QA 96 / Design A- / AI Slop A | 待 B1 ship 重跑 | — |
+| 维度 | Stage 1 | Stage 2 | Stage 3 | Stage 3 + outside fix（当前 HEAD） |
+|---|---|---|---|---|
+| Tests | 173/176 | 201/204 | 259/262 | **270/273** |
+| Lint | 0 | 0 | 0 | **0** |
+| Build gzip | 31.21 KB | 32.08 KB | 33.95 KB | **34.01 KB**（预算 ≤35 KB 内 / 还剩 0.99 KB）|
+| 4 件套 baseline | — | — | — | 待 B1 ship 重跑 |
 
-Stage 5 (B1 ship 时) 跑 4 件套 baseline 对比 M5。
+3 fail tests 是 pre-existing M3 baseline（concept successor notes range）/ 持平 / 非 B1 引入。
 
 ---
 
@@ -188,15 +141,16 @@ Stage 5 (B1 ship 时) 跑 4 件套 baseline 对比 M5。
 |---|---|---|
 | Stage 1 PM #2 | ↔ 互换按钮设计感 | B2 Stage 6 polish |
 | Stage 1 PM #3 | 关于 link modal 内容 | 等 PM 后补 |
-| M5 takeaway § 3.2 | DR-069 弧线误选 | B2 期间统筹（已 PM A+D 决策） |
-| M5 takeaway § 3.2 | B3 mobile popover 5px overflow | B3 整合 |
-| M5 takeaway § 3.2 | B4 tablet sidebar 跟 timeline 撞 | B3 整合 |
-| M5 takeaway § 3.2 | Focus popover 关后焦点回中心 | B3 整合 |
+| Stage 3 PM | 美观度 / 字体 / 间距 / 配色 polish（DR-079）| B1 ship 前 polish 阶段 |
+| Stage 3 PM | max 4 组人物折叠（spec § 7）· 实测"阶级"出 11 组超 4 | 实施期 PM checkpoint 决 |
+| Stage 3 PM | keywords 命中但 claim_text 不含 query 时不高亮 / 看着诡异 | V2 backlog（中英映射也 V2） |
+| M5 takeaway | DR-069 弧线误选（4 轮修未解）| B2 期间统筹（PM A+D 不强攻）|
+| M5 takeaway | B3 mobile popover 5px overflow / B4 tablet sidebar 撞 / Focus popover 焦点回中心 | B3 整合 |
 
 ---
 
 ## 8. 跨窗口续接简单确认句
 
-> "我在新窗口续接 Marx · B 主线 / B brainstorm + Phase 0/1 + B1 Stage 1 完成 / 进 Stage 2 搜索 UI / 读 docs/2026-05-20-m-b1-progress-anchor.md + brainstorm-decisions.md + B1 plan"
+> "我在新窗口续接 Marx · B1 Stage 1-2-3 + outside click 修 全部 ship（HEAD 6719672）/ PM 已 `go Stage 4` / 立即按 T4.1 主图高亮开工 / 读 docs/2026-05-20-m-b1-progress-anchor.md + spec v2 + plan Stage 4"
 
-AI 应立即按 § 3 Stage 2 plan + T2.1 开工。
+新窗口 AI 应立即按 § 3 Stage 4 T4.1 plan 开工 · 不再等 PM 二次确认（PM 已拍板）。
