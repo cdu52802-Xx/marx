@@ -68,6 +68,9 @@ export function mountResultPopover({
   onClose?: () => void;
 }): SearchResultPopoverApi {
   let currentPopover: HTMLElement | null = null;
+  /** D2 · 正在 exit 动画但未 remove 的旧 popover（防 race · 出快入慢 / 120ms exit + 重建 path 同帧）*/
+  let closingPopover: HTMLElement | null = null;
+  let closingTimer: ReturnType<typeof setTimeout> | null = null;
   /** 当前可被键盘选择的 element list（统一 T2/T3 两种形态） */
   let selectableEls: HTMLElement[] = [];
   /** 每 element 对应 Enter / click 时调的 action */
@@ -150,11 +153,31 @@ export function mountResultPopover({
     }, 0);
   }
 
-  function hide(): void {
-    if (currentPopover) {
-      currentPopover.remove();
-      currentPopover = null;
+  /**
+   * D2 · 关闭浮窗（DR-096 / 2026-05-21）
+   *
+   * 默认走 120ms exit 动画（opacity 1→0 + translateY 0→-2px / ease-in / forwards）
+   *   - 给 popover 加 `.popover-closing` class · CSS 动画自驱
+   *   - setTimeout 140ms 后 remove element（120 动画 + 20 buffer）
+   *
+   * `opts.immediate = true` 同步立即 remove · 内部重建 path 用（_createPopover / show* 开头）
+   *   - 防双 popover 同帧（e2e spec 4 chip 切换 race / showGrouped 期望 count = 1）
+   *
+   * 防累积 race：每次 hide 进入先清掉前一个 closing popover（如有）/ 防多次连续 hide 残留
+   */
+  function hide(opts?: { immediate?: boolean }): void {
+    if (closingPopover) {
+      closingPopover.remove();
+      closingPopover = null;
     }
+    if (closingTimer) {
+      clearTimeout(closingTimer);
+      closingTimer = null;
+    }
+
+    if (!currentPopover) return;
+    const popoverToHide = currentPopover;
+
     if (keyHandler) {
       document.removeEventListener('keydown', keyHandler);
       keyHandler = null;
@@ -171,10 +194,27 @@ export function mountResultPopover({
     selectableEls = [];
     selectableActions = [];
     selectedIndex = -1;
+    currentPopover = null;
+
+    if (opts?.immediate) {
+      popoverToHide.remove();
+      return;
+    }
+
+    // exit 动画 path
+    popoverToHide.classList.add('popover-closing');
+    closingPopover = popoverToHide;
+    closingTimer = setTimeout(() => {
+      if (closingPopover === popoverToHide) {
+        popoverToHide.remove();
+        closingPopover = null;
+      }
+      closingTimer = null;
+    }, 140);
   }
 
   function _createPopover(): HTMLElement {
-    hide();
+    hide({ immediate: true });
     const popover = document.createElement('div');
     popover.className = 'search-result-popover';
     popover.setAttribute('role', 'listbox');
@@ -201,7 +241,7 @@ export function mountResultPopover({
   // 老 API · T2.2 flat list show(items)（backward compat）
   // ============================================================
   function show(items: SearchResultItem[]): void {
-    hide();
+    hide({ immediate: true });
     if (items.length === 0) return;
     const visible = items.slice(0, MAX_RESULTS);
     const popover = _createPopover();
@@ -242,7 +282,7 @@ export function mountResultPopover({
   // T3.3 · 探索形态 showExplore(lists, onChipClick)
   // ============================================================
   function showExplore(lists: ExploreLists, onChipClick: (text: string) => void): void {
-    hide();
+    hide({ immediate: true });
     const popover = _createPopover();
 
     const hint = document.createElement('div');
@@ -333,7 +373,7 @@ export function mountResultPopover({
     query: string,
     conceptHit: CoreConcept | null,
   ): void {
-    hide();
+    hide({ immediate: true });
     if (results.length === 0 && !conceptHit) return;
 
     const popover = _createPopover();

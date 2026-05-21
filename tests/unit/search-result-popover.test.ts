@@ -44,11 +44,21 @@ describe('mountResultPopover', () => {
     expect(document.querySelector('.search-result-popover')).toBeTruthy();
   });
 
-  it('hide() → popover 移除', () => {
-    const api = mountResultPopover({ anchor, onSelect: () => {} });
-    api.show([mkItem('a', '马克思')]);
-    api.hide();
-    expect(document.querySelector('.search-result-popover')).toBeNull();
+  it('hide() → popover 移除（D2 · 默认 120ms exit 动画后从 DOM remove）', () => {
+    vi.useFakeTimers();
+    try {
+      const api = mountResultPopover({ anchor, onSelect: () => {} });
+      api.show([mkItem('a', '马克思')]);
+      api.hide();
+      // hide 立即生效：isOpen=false / popover 加 .popover-closing class（exit 动画期）
+      expect(api.isOpen()).toBe(false);
+      expect(document.querySelector('.search-result-popover.popover-closing')).toBeTruthy();
+      // 120ms 动画 + 20ms buffer 后从 DOM remove
+      vi.advanceTimersByTime(140);
+      expect(document.querySelector('.search-result-popover')).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('每个候选渲染为 .search-result-item / 数量 = items.length', () => {
@@ -245,11 +255,18 @@ describe('mountResultPopover · 键盘导航', () => {
   });
 
   it('hide 后按 ↓ → 不影响 / 无 popover 出现（handler detached）', () => {
-    const api = mountResultPopover({ anchor, onSelect: () => {} });
-    api.show([mkItem('a', '一')]);
-    api.hide();
-    pressKey('ArrowDown');
-    expect(document.querySelector('.search-result-popover')).toBeNull();
+    vi.useFakeTimers();
+    try {
+      const api = mountResultPopover({ anchor, onSelect: () => {} });
+      api.show([mkItem('a', '一')]);
+      api.hide();
+      vi.advanceTimersByTime(140); // 完成 D2 exit 动画 · popover 从 DOM remove
+      pressKey('ArrowDown');
+      expect(document.querySelector('.search-result-popover')).toBeNull();
+      expect(api.isOpen()).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('Enter 无候选 hide 但不 onSelect（empty items 边界）', () => {
@@ -756,3 +773,127 @@ describe('mountResultPopover · click outside 关闭（PM A）', () => {
     }
   });
 });
+
+// ============================================================
+// B1 polish D2 · search popover 退场动效（DR-096 · 2026-05-21 晚）
+// 出快入慢（M5 DR-046 lesson · 入 180 / 出 120）
+//
+// API 行为：
+//   - hide() 默认 → 走 120ms exit 动画（加 .popover-closing class + 140ms setTimeout remove）
+//     isOpen() 立即返 false（用户语义上"已关闭"）
+//     DOM 中 popover 还在 120ms exit 动画期 + .popover-closing class
+//   - hide({ immediate: true }) → 同步立即 remove（防 race · 重建 path 用）
+//     内部 _createPopover / show / showExplore / showGrouped 开头调用
+//
+// 防 race：每次 hide 进入先清掉前一个 closing popover（防多次连续 hide 累积 DOM 残留）
+// ============================================================
+
+describe('mountResultPopover · D2 退场动效（DR-096）', () => {
+  let anchor: HTMLInputElement;
+
+  beforeEach(() => {
+    anchor = document.createElement('input');
+    anchor.type = 'search';
+    document.body.appendChild(anchor);
+  });
+
+  afterEach(() => {
+    anchor.remove();
+    document.querySelectorAll('.search-result-popover').forEach((el) => el.remove());
+  });
+
+  const mkItemD2 = (
+    id: string,
+    label: string,
+    type: SearchResultItem['type'] = 'claim',
+  ): SearchResultItem => ({ type, id, label });
+
+  it('hide() 默认 → 立即加 .popover-closing class · isOpen=false · DOM 中仍在', () => {
+    vi.useFakeTimers();
+    try {
+      const api = mountResultPopover({ anchor, onSelect: () => {} });
+      api.show([mkItemD2('a', '马克思')]);
+      api.hide();
+      // 立即态：isOpen 已 false / popover 加 closing class / 但还在 DOM
+      expect(api.isOpen()).toBe(false);
+      const closing = document.querySelector('.search-result-popover.popover-closing');
+      expect(closing).toBeTruthy();
+      // 90ms 期 · popover 还在 fading（未达 140ms 移除时刻）
+      vi.advanceTimersByTime(90);
+      expect(document.querySelector('.search-result-popover')).toBeTruthy();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('hide() 默认 → 140ms 后 popover 从 DOM remove', () => {
+    vi.useFakeTimers();
+    try {
+      const api = mountResultPopover({ anchor, onSelect: () => {} });
+      api.show([mkItemD2('a', '马克思')]);
+      api.hide();
+      vi.advanceTimersByTime(140);
+      expect(document.querySelector('.search-result-popover')).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('hide({ immediate: true }) → 同步立即 remove（不加 closing class）', () => {
+    const api = mountResultPopover({ anchor, onSelect: () => {} });
+    api.show([mkItemD2('a', '马克思')]);
+    api.hide({ immediate: true });
+    // 同步立即生效 / 不用 fake timer
+    expect(api.isOpen()).toBe(false);
+    expect(document.querySelector('.search-result-popover')).toBeNull();
+  });
+
+  it('show 重建 path → 旧 popover 同步 remove · 不留 closing 残留（race 防御）', () => {
+    const api = mountResultPopover({ anchor, onSelect: () => {} });
+    api.show([mkItemD2('a', '一')]);
+    api.show([mkItemD2('b', '二')]);
+    // 重建 path 走 immediate · DOM 中只有 1 个 popover（无 closing 残留）
+    expect(document.querySelectorAll('.search-result-popover').length).toBe(1);
+    expect(document.querySelectorAll('.search-result-popover.popover-closing').length).toBe(0);
+  });
+
+  it('hide() 后立即 show → 旧 closing popover 同步清掉 · 不累积 DOM', () => {
+    vi.useFakeTimers();
+    try {
+      const api = mountResultPopover({ anchor, onSelect: () => {} });
+      api.show([mkItemD2('a', '一')]);
+      api.hide(); // 进入 exit 动画期（旧 popover 还在 DOM · closing class）
+      // 还在 exit 动画期就立即 show 新内容（模拟 e2e spec 4 chip 切换场景）
+      api.show([mkItemD2('b', '二')]);
+      // 关键断言：DOM 中只有 1 个 popover（旧 closing 被新 show 内的 immediate hide 清掉）
+      expect(document.querySelectorAll('.search-result-popover').length).toBe(1);
+      expect(document.querySelectorAll('.search-result-popover.popover-closing').length).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('多次连续 hide() → 第二次 hide 立即清前一个 closing · DOM 不累积 · 不抛错', () => {
+    vi.useFakeTimers();
+    try {
+      const api = mountResultPopover({ anchor, onSelect: () => {} });
+      api.show([mkItemD2('a', '一')]);
+      api.hide(); // closing 状态 · DOM 中 1 个 popover
+      expect(document.querySelectorAll('.search-result-popover').length).toBe(1);
+
+      // 立即再 hide · 内部 _removeClosingNow 同步清掉前一个 closing popover · DOM = 0
+      expect(() => api.hide()).not.toThrow();
+      expect(document.querySelectorAll('.search-result-popover').length).toBe(0);
+
+      // 第三次 hide · 无 closing 无 current · 安全无 op
+      expect(() => api.hide()).not.toThrow();
+
+      // 即使 timer fire 也 OK · closingTimer 已清 / 不会 double remove
+      vi.advanceTimersByTime(140);
+      expect(document.querySelectorAll('.search-result-popover').length).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+

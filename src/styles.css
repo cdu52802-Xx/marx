@@ -575,3 +575,25 @@ g.obs.obs-spring-enter circle.obs-dot {
 .search-result-popover {
   animation: search-popover-enter 180ms ease-out;
 }
+
+/* ============= B1 polish D2 · search popover 退场动效（DR-096）============= */
+/* PM 2026-05-21 拍板 polish buffet 最后 1 项 · 出快入慢（M5 DR-046 lesson · 入 180 / 出 120）
+ * - 120ms fade + translateY(0 → -2px) ease-in exit
+ * - `forwards` 保持终态 / 防 remove 前闪回 opacity=1 出现一帧
+ * - `pointer-events: none` 退场期内不接受 click（防误触 closing popover）
+ * - JS 侧 hide() 加 immediate 分流（DR-096 注释）/ 内部重建 path 用 immediate 防 race
+ */
+@keyframes search-popover-exit {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+}
+.search-result-popover.popover-closing {
+  animation: search-popover-exit 120ms ease-in forwards;
+  pointer-events: none;
+}
