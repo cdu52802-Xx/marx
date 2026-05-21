@@ -63,13 +63,14 @@ describe('claim-popover · 详情右侧栏 (M4 T9 改造 / spec § 8.2)', () => 
     expect(document.querySelector('.claim-popover')).toBeNull();
   });
 
-  it('sidebar 位置 = position:fixed right:0 top:0 bottom:60px width:380px (Stage 3 R4 DR-051 timeline 单行后同步)', () => {
+  it('sidebar 位置 = position:fixed right:0 top:54px bottom:60px width:380px (B1 DR-084 让出 header)', () => {
     showClaimPopover(mockClaim, mockCtx);
     const sidebar = document.querySelector('.claim-popover') as HTMLElement;
     expect(sidebar.style.position).toBe('fixed');
     expect(sidebar.style.right).toBe('0px');
-    expect(sidebar.style.top).toBe('0px');
+    // top: 0→54 (B1 bug fix 2026-05-21 DR-084 · 让出 header 工具栏区域)
     // R2: bottom 0→160 / R3: 160→100 / R4: 100→60 (timeline 单行后同步)
+    expect(sidebar.style.top).toBe('54px');
     expect(sidebar.style.bottom).toBe('60px');
     expect(sidebar.style.width).toBe('380px');
   });

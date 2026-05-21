@@ -548,6 +548,7 @@ Stage 1 prototype checkpoint：
 | DR-081 | 2026-05-20 | B1 普鲁东 数据库实存繁体「皮埃爾-約瑟夫·普魯東」/「圣西门」缺 → 替换为「施蒂纳」（麥克斯·施蒂納 / 3 条 claim）| 自建圣西门数据 / 中繁体 normalize | 数据真实优先 / 不为 curate list 自建数据 / 中繁体差异留 V2 normalize backlog |
 | DR-082 | 2026-05-21 | B1 outside click listener 用 capture phase（非 bubble）| bubble phase / 拆 main.ts stopPropagation | 主画布 obs/arc click handler 已 stopPropagation 防关详情卡（main.ts line 273/754/816）/ bubble 收不到 / capture 在 target 阶段前不受影响 / 100% 命中 |
 | DR-083 | 2026-05-21 | B1 V2 filter chip dropdown（T4.2）砍 / 留 V2 专题设计 backlog | 按 plan 完整做（节点类型 + 关系类型 + 人名）/ 简化版 1-2 chip | (1) 探索形态 chip + § author_id 分组 + § 概念命中段已覆盖筛选场景；(2) B1 数据维度只有「主张 + 作者 + 年份」/ 节点类型 + 关系类型 chip 等 B2 副图数据足才有意义；(3) header 36px 已挤 / 浮窗加 chip 一行视觉吵 / DR-079 polish 留 ship 前；(4) PM "如有更合适筛选方案后面专题设计"|
+| DR-084 | 2026-05-21 | B1 详情卡 + arc-popover top:0 → top:54px / 让出 header 工具栏 + outsideHandler 白名单补 header-controls/header-brand/search-result-popover | top 不动 + z-index 调高 header / 详情卡 padding-top:70 留 hole | (1) layout 边界清晰（4 区域 spec § 2.1 原图设计 = header 顶 + 主画布 + 详情卡中右 + timeline 底 / 不重叠）；(2) z-index 方案视觉混乱（详情卡米白背景仍铺到顶遮 header）；(3) M4 写详情卡时 header 还是占位 / B1 Stage 1 header 1st-class 后暴露遗漏；(4) PM 报告：详情卡展开遮挡搜索栏 / 资深 UIUX 视角 = layout 让位优于 z-index 让位 |
 
 ---
 

@@ -89,9 +89,10 @@ function _doShow(p: ArcPopoverParams, relKey: string): void {
   aside.dataset.relKey = relKey;
   // 已展开侧（'source' / 'target' / null）→ 用 dataset 持久 + DOM class
   aside.dataset.expandedSide = '';
+  // top:54px · B1 bug fix 2026-05-21 (DR-084) · 同 claim-popover 让出 header
   aside.style.cssText = `
     position:fixed;
-    top:0;
+    top:54px;
     right:0;
     bottom:60px;
     width:380px;
@@ -239,6 +240,7 @@ function _doShow(p: ArcPopoverParams, relKey: string): void {
   (aside as unknown as { _escHandler: (e: KeyboardEvent) => void })._escHandler = escHandler;
 
   // === 外点 click 关闭（同 claim-popover 工具栏白名单）===
+  //   B1 bug fix 2026-05-21 (DR-084 派生)：补 header-controls + header-brand + search popover 白名单
   const outsideHandler = (e: MouseEvent) => {
     if (aside.contains(e.target as Node)) return;
     const target = e.target as Element;
@@ -246,7 +248,10 @@ function _doShow(p: ArcPopoverParams, relKey: string): void {
       target.closest('.sidebar') ||
       target.closest('.zoom-control') ||
       target.closest('#timeline-fixed') ||
-      target.closest('.breadcrumb-top')
+      target.closest('.breadcrumb-top') ||
+      target.closest('.header-controls') || // 顶部工具栏 (搜索 + 互换 + 关于)
+      target.closest('.header-brand') || // 顶部 brand 标题区
+      target.closest('.search-result-popover') // 搜索下拉浮窗
     ) {
       return;
     }

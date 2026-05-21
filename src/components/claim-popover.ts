@@ -98,10 +98,13 @@ function _doShowClaim(claim: ClaimNode, ctx: ClaimPopoverContext) {
   // PM R3 Fix 2 · 160 → 100px (DR-050 timeline 瘦身后同步)
   // PM R4 Fix · 100 → 60px (DR-051 timeline 单行后同步)
   //   bottom:60px 跟 main.ts padding-bottom:60px 一致 / 跟 TIMELINE_PX 同步
-  //   详情卡只占屏幕中部 → timeline 底部完全可见可拖
+  //   top:54px · B1 bug fix 2026-05-21 (DR-084) · 让出 header 区域（搜索栏 + brand + 关于 link）
+  //     - header content top:14 + bottom:39 ≈ 总占 50px / 设 54 留 4px buffer + 跟 breadcrumb top:54 视觉对齐
+  //     - 之前 top:0 + z-index:1000 覆盖 header（B1 Stage 1 header 1st-class 后暴露）
+  //   详情卡占屏幕中部 → timeline 底部完全可见可拖 / header 顶部完全可见可点
   sidebar.style.cssText = `
     position:fixed;
-    top:0;
+    top:54px;
     right:0;
     bottom:60px;
     width:380px;
@@ -391,6 +394,8 @@ function _doShowClaim(claim: ClaimNode, ctx: ClaimPopoverContext) {
   // setTimeout 0 trick 仍然必要（防"打开本次 click"立即被识别为外部关闭）
   // Stage 2 R4 Issue #1 修：工具栏点击不关详情卡（人在看内容时点工具栏 / 不应关）
   //   工具栏 = 左 sidebar 筛选 / 左下 zoom-control / 底部 timeline
+  //   B1 bug fix 2026-05-21 (DR-084 派生)：补 header-controls + header-brand + search popover 白名单
+  //     （B1 Stage 1 header 1st-class 化后 / 之前 M4 占位 header 没列）
   //   只在点 svg 画布空白时关 / 点 popover 自己也不关
   const outsideHandler = (e: MouseEvent) => {
     if (sidebar.contains(e.target as Node)) return;
@@ -398,7 +403,10 @@ function _doShowClaim(claim: ClaimNode, ctx: ClaimPopoverContext) {
     if (
       target.closest('.sidebar') || // 左侧筛选 sidebar
       target.closest('.zoom-control') || // 左下缩放控件
-      target.closest('#timeline-fixed') // 底部时间轴
+      target.closest('#timeline-fixed') || // 底部时间轴
+      target.closest('.header-controls') || // 顶部工具栏 (搜索 + 互换 + 关于)
+      target.closest('.header-brand') || // 顶部 brand 标题区
+      target.closest('.search-result-popover') // 搜索下拉浮窗（候选 list / 探索 chip）
     ) {
       return; // 工具栏点击不关
     }

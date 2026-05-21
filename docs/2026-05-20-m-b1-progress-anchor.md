@@ -1,7 +1,7 @@
 # Marx M-B 主线进展 · 新窗口续接锚点（2026-05-20 ~ 2026-05-21）
 
-> **状态**：B1 Stage 1-2-3-4 全 ship 完成 / **Stage 5 待启动**（E2E + 4 件套 baseline + ship）
-> **当前 HEAD**：`522b04b`（T4.3 副图 hook dispatch event / 2026-05-21）
+> **状态**：B1 Stage 1-4 全 ship + PM bug 修（DR-084 详情卡让出 header）/ **Stage 5 待启动**（E2E + 4 件套 baseline + ship）
+> **当前 HEAD**：见 `git log -1 --oneline`（最新含 DR-084 bug fix · 2026-05-21）
 > **Git**：clean / origin/main 同步
 > **Prod**：https://cdu52802-xx.github.io/marx/
 > **Mockup**：https://cdu52802-xx.github.io/marx/m-b1-search-ux-mockup.html
@@ -52,6 +52,27 @@
 - **T4.3** `522b04b`：window dispatch `marx:search-highlight` { type, id } · B2 副图 listener 接收
 - 浏览器实测 ✓：搜"异化"→ 选 claim-marx-013 → obs 紫圈 + 其他全 fade + dispatch event listener 收到 detail
 - Bundle 34.13 KB gzip（+0.12 from baseline · ≤35 预算 / 剩 0.87 KB）
+
+### B1 PM bug 修 · 详情卡让出 header（DR-084 / 2026-05-21）
+PM 报告：右侧详情卡展开遮挡 header 工具栏（搜索栏 + brand + 关于 link）。
+
+**根因**：claim-popover + arc-popover 用 `top:0` + `z-index:1000` / header `top:14` + `z-index:9` → 详情卡从屏幕顶起 + z 高于 header = 覆盖 header 整个右上 76px 区域。
+M4 写详情卡时 header 还是 occupier placeholder / B1 Stage 1 header 1st-class 化后暴露遗漏。
+
+**资深 UIUX 视角 3 方案 → 选 A**（落 DR-084）：
+- A · layout 让位 ✅：详情卡 `top:0 → top:54px`（跟 breadcrumb top:54 视觉对齐 / 跟 spec § 2.1 4 区域 layout 图一致）
+- B · z-index 让位：详情卡背景仍铺到顶 / 视觉混乱
+- C · 详情卡 padding-top:70：背景仍遮 header
+
+**派生修**：outsideHandler 白名单补 `.header-controls` + `.header-brand` + `.search-result-popover` / 点搜索栏不关详情卡（同既有 sidebar/zoom-control/timeline 工具栏属性）。
+
+**修改文件**：claim-popover.ts + arc-popover.ts + claim-popover.test.ts（断言同步）
+
+**实测 ✓**：
+1. 点 obs 弹详情卡 → top=54 / header 完全可见
+2. 详情卡打开状态下 click 搜索栏 → 详情卡不关 + 搜索 popover 开
+3. 输"异化"+ 选候选 → highlightObs 触发 + 详情卡保持 + 搜索 popover 关
+4. Bundle 34.15 KB gzip（+0.02 from Stage 4 · ≤35 预算 / 剩 0.85 KB）
 
 ---
 
@@ -167,6 +188,6 @@
 
 ## 8. 跨窗口续接简单确认句
 
-> "我在新窗口续接 Marx · B1 Stage 1-4 全 ship（HEAD 522b04b · T4.2 砍 DR-083 / T4.1+T4.3 ship）/ 等 PM `go Stage 5` 启动 E2E + 4 件套 baseline + B1 ship / 读 docs/2026-05-20-m-b1-progress-anchor.md + spec v2 + plan Stage 5"
+> "我在新窗口续接 Marx · B1 Stage 1-4 全 ship + PM bug 修 DR-084（详情卡让出 header · top:54）/ 等 PM `go Stage 5` 启动 E2E + 4 件套 baseline + B1 ship / 读 docs/2026-05-20-m-b1-progress-anchor.md + spec v2 + plan Stage 5"
 
 新窗口 AI 续接时不动代码 · 等 PM 拍 `go Stage 5` 再启 T5.1。
