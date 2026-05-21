@@ -757,6 +757,21 @@ sectionG.each(function (section) {
     hideArcPopover();
     restoreArcOpacity();
 
+    // DR-087 · obs click 选中 visual indicator（PM 反馈 / 用户视线回画布能定位当前选定）
+    //   紫圈 stroke (米白 #fcfaf6 sw=2 r=5) + obs-text font-weight 加粗 700
+    //   不淡显其他 obs（跟 search 选定区别：search 还有 fade · click 仅紫圈+加粗）
+    //   restoreArcOpacity 已清旧 stroke + 加粗 / 此处给新选中加
+    document
+      .querySelectorAll<SVGCircleElement>(`g.obs[data-claim-id="${c.id}"] circle.obs-dot`)
+      .forEach((el) => {
+        d3.select(el).attr('r', 5).attr('stroke', '#fcfaf6').attr('stroke-width', 2);
+      });
+    document
+      .querySelectorAll<SVGTextElement>(`g.obs[data-claim-id="${c.id}"] text.obs-text`)
+      .forEach((el) => {
+        d3.select(el).attr('font-weight', '700');
+      });
+
     const currentK = zoomCtrl.getCurrentTransform().k;
     const obsElement = event.currentTarget as SVGGElement;
     // 仅 k=1 全景态触发 flyto（首次进入探索）/ k>1 时只切详情卡
@@ -807,6 +822,8 @@ sectionG.each(function (section) {
       onHoverFocusPreview: (cid) => applyHoverPreviewFiltering(computeFocusSet(cid)),
       onLeaveFocusPreview: () => clearHoverPreviewFiltering(),
       onEnterFocus: (cid) => enterFocusMode(cid),
+      // DR-087 · 详情卡关时清主图选中 visual indicator（紫圈 + 加粗）
+      onClose: () => restoreArcOpacity(),
     });
   });
 
@@ -1307,6 +1324,8 @@ function restoreArcOpacity(): void {
   });
   // R2 · obs 圆点恢复 r=2.3 + 无 stroke
   d3.selectAll<SVGCircleElement, unknown>('circle.obs-dot').attr('r', 2.3).attr('stroke', null);
+  // DR-087 · 清 obs-text 加粗（systematic 复原）
+  d3.selectAll<SVGTextElement, unknown>('text.obs-text').attr('font-weight', null);
   // B1 polish DR-085 · 清 search 选定 + 复原全画布 opacity（focus mode 下不动）
   if (inFocusMode) return;
   searchFocusClaimId = null;
@@ -1324,21 +1343,29 @@ function restoreArcOpacity(): void {
 // ============================================================
 function highlightObs(claimId: string): void {
   searchFocusClaimId = claimId;
-  // 1. 复原所有 obs-dot · 防多次调累积 stroke / 然后给选中加紫圈
+  // 1. 复原所有 obs-dot stroke + obs-text 加粗（防多次调累积）
   d3.selectAll<SVGCircleElement, unknown>('circle.obs-dot').attr('r', 2.3).attr('stroke', null);
+  d3.selectAll<SVGTextElement, unknown>('text.obs-text').attr('font-weight', null);
+  // 2. 选中 obs · 紫圈 + obs-text 加粗（DR-087 visual indicator · search 跟 click 视觉一致）
   document
     .querySelectorAll<SVGCircleElement>(`g.obs[data-claim-id="${claimId}"] circle.obs-dot`)
     .forEach((el) => {
       d3.select(el).attr('r', 5).attr('stroke', '#fcfaf6').attr('stroke-width', 2);
     });
-  // 2. 复用 focusSet visual · 含 obs + 关联 obs + 提出者 person（DR-085 坑 1 一致性）
+  document
+    .querySelectorAll<SVGTextElement>(`g.obs[data-claim-id="${claimId}"] text.obs-text`)
+    .forEach((el) => {
+      d3.select(el).attr('font-weight', '700');
+    });
+  // 3. 复用 focusSet visual · 含 obs + 关联 obs + 提出者 person（DR-085 坑 1 一致性）
   applyHoverPreviewFiltering(computeFocusSet(claimId));
 }
 
 function clearSearchHighlight(): void {
   searchFocusClaimId = null;
-  // 1. 复原 obs-dot 默认 r + 无 stroke
+  // 1. 复原 obs-dot 默认 r + 无 stroke + obs-text 加粗（DR-087）
   d3.selectAll<SVGCircleElement, unknown>('circle.obs-dot').attr('r', 2.3).attr('stroke', null);
+  d3.selectAll<SVGTextElement, unknown>('text.obs-text').attr('font-weight', null);
   // 2. focus mode 下不破坏 focus state · 否则恢复到当前 timeline state
   if (inFocusMode) return;
   const cy = timelineApi?.getCurrentYear() ?? INITIAL_CURSOR_YEAR;

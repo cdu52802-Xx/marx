@@ -44,6 +44,9 @@ export interface ClaimPopoverContext {
   onHoverFocusPreview?: (claimId: string) => void;
   onLeaveFocusPreview?: () => void;
   onEnterFocus?: (claimId: string) => void;
+  // DR-087 · 详情卡关闭时通知（× / Esc / outside click 任一路径都触发）
+  //   main.ts wire 清主图选中 visual indicator（紫圈 + obs-text 加粗）
+  onClose?: () => void;
 }
 
 const CATS_LABELS: Record<string, string> = {
@@ -416,9 +419,12 @@ function _doShowClaim(claim: ClaimNode, ctx: ClaimPopoverContext) {
   const sidebarAny = sidebar as unknown as {
     _outsideHandler: (e: MouseEvent) => void;
     _outsideTimer: ReturnType<typeof setTimeout>;
+    _onCloseCallback?: () => void;
   };
   sidebarAny._outsideHandler = outsideHandler;
   sidebarAny._outsideTimer = outsideTimer;
+  // DR-087 · 存 onClose callback / hideClaimPopover 调时 fire
+  sidebarAny._onCloseCallback = ctx.onClose;
 }
 
 export function hideClaimPopover() {
@@ -436,10 +442,13 @@ export function hideClaimPopover() {
       _escHandler?: (e: KeyboardEvent) => void;
       _outsideHandler?: (e: MouseEvent) => void;
       _outsideTimer?: ReturnType<typeof setTimeout>;
+      _onCloseCallback?: () => void;
     };
     if (meta._escHandler) document.removeEventListener('keydown', meta._escHandler);
     if (meta._outsideHandler) document.removeEventListener('click', meta._outsideHandler);
     if (meta._outsideTimer) clearTimeout(meta._outsideTimer);
+    // DR-087 · 通知 main.ts 清主图选中 visual indicator
+    if (meta._onCloseCallback) meta._onCloseCallback();
 
     // Stage 2 R4 Issue #4 · 滑出用快 transition (200ms easeInQuart / 出快入慢)
     el.style.transition = HIDE_TRANSITION;

@@ -1,7 +1,7 @@
 # Marx M-B 主线进展 · 新窗口续接锚点（2026-05-20 ~ 2026-05-21）
 
-> **状态**：B1 Stage 1-4 全 ship + 3 轮 PM bug/polish 修（DR-084 详情卡让出 header / DR-085 双层 hover 状态机 / DR-086 search 直达详情卡）/ **Stage 5 待启动**（E2E + 4 件套 baseline + ship）
-> **当前 HEAD**：见 `git log -1 --oneline`（最新含 DR-086 polish · 2026-05-21）
+> **状态**：B1 Stage 1-4 全 ship + 4 轮 PM bug/polish 修（DR-084 详情卡让出 header / DR-085 双层 hover / DR-086 search 直达详情卡 / DR-087 obs click 选中 visual indicator）/ **Stage 5 待启动**（E2E + 4 件套 baseline + ship）
+> **当前 HEAD**：见 `git log -1 --oneline`（最新含 DR-087 polish · 2026-05-21）
 > **Git**：clean / origin/main 同步
 > **Prod**：https://cdu52802-xx.github.io/marx/
 > **Mockup**：https://cdu52802-xx.github.io/marx/m-b1-search-ux-mockup.html
@@ -52,6 +52,54 @@
 - **T4.3** `522b04b`：window dispatch `marx:search-highlight` { type, id } · B2 副图 listener 接收
 - 浏览器实测 ✓：搜"异化"→ 选 claim-marx-013 → obs 紫圈 + 其他全 fade + dispatch event listener 收到 detail
 - Bundle 34.13 KB gzip（+0.12 from baseline · ≤35 预算 / 剩 0.87 KB）
+
+### B1 polish · obs click 选中 visual indicator（DR-087 / 2026-05-21）
+
+PM 反馈：obs click 选中后 / 画布无 visual indicator / 用户视线回画布找不到刚选的那条。
+
+**资深 UIUX 视角**：commit selection 标配 visual indicator（Figma 蓝框 / 邮件蓝底 / link visited）
+
+**方案 X1（PM 拍板 A）**：obs click → **紫圈 stroke + obs-text font-weight 700 加粗**（保深灰不变色 / 克制 editorial 风）·**不淡显其他**
+
+**跟 search 选定区别**：
+| 元素 | search 选定（DR-086）| obs click 选定（DR-087）|
+|---|---|---|
+| obs-dot 紫圈 stroke | ✓ | ✓ |
+| obs-text 加粗 | ✓（同步加 / 一致性）| ✓ |
+| fade 其他 | ✓（筛选辅助）| ✗（不打扰其他）|
+
+视觉一致原则：紫圈+加粗 = "当前选中谁"（commit 标记）/ fade = "正在筛选"（独立维度）
+
+**何时清紫圈+加粗 5 路径**（PM 拍 A+B+C+D+E 全部）：
+- A · 点画布空白（既有 restoreArcOpacity）✓
+- B · 详情卡 × 按钮（DR-087 加 onClose callback）✓
+- C · Esc 关详情卡（同 B 走 hideClaimPopover）✓
+- D · 点另一 obs 切换（obs click handler restoreArcOpacity 清旧 + 加新）✓
+- E · 搜索栏选新主张（search 路径 dispatch obs click 同 D）✓
+
+**hover 跟紫圈交互**（PM Q2 A）：紫圈+加粗保留 / hover 触发 hover preview 叠加 / leave 回 commit 状态
+
+**派生改动**：
+- ClaimPopoverContext 加 `onClose?: () => void`
+- claim-popover.ts hideClaimPopover 内调 `_onCloseCallback`
+- main.ts obs click handler 传 `onClose: () => restoreArcOpacity()`
+- restoreArcOpacity 末尾追加清 `obs-text font-weight`
+- highlightObs（search 路径）同步加 obs-text 加粗（视觉一致）
+
+**浏览器实测 ✓**（D click / B ×关 / A 空白 / C Esc / E search 全 5 场景）：
+| 场景 | a1 stroke | a1 weight | popover |
+|---|---|---|---|
+| D obs click | #fcfaf6 | 700 | open ✓ |
+| B × 关 | null | null | closed ✓ |
+| C Esc 关 | null | null | closed ✓ |
+| A 点空白 | null | null | closed ✓ |
+| E search 选 | #fcfaf6 | 700 | open ✓（+89 fade）|
+| hover B1 | #fcfaf6 (保留) | 700 (保留) | open ✓（88 fade · A1+B1 圈子并集）|
+| leave B1 | #fcfaf6 (保留) | 700 (保留) | open ✓（回 89 fade · A1 圈子）|
+
+**baseline**: Lint 0 / Tests 270/273 / Bundle 34.42 KB gzip（+0.09 from DR-086 · ≤35 / 剩 0.58 KB）
+
+---
 
 ### B1 polish · search onSelect 直达详情卡（DR-086 / 2026-05-21）
 
