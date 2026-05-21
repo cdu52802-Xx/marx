@@ -537,3 +537,195 @@ describe('mountResultPopover · showGrouped（T3.3 分组形态）', () => {
     expect(api.isOpen()).toBe(false);
   });
 });
+
+// ============================================================
+// PM checkpoint feedback · 点空白关闭（PM A · 不豁免工具栏）
+// 沿用 claim-popover pattern · setTimeout(0) trick 防 self-trigger
+// 不关：popover 自己 + anchor 输入框 / 关：其他任意 click（含工具栏）
+// ============================================================
+
+describe('mountResultPopover · click outside 关闭（PM A）', () => {
+  let anchor: HTMLInputElement;
+
+  beforeEach(() => {
+    anchor = document.createElement('input');
+    anchor.type = 'search';
+    document.body.appendChild(anchor);
+  });
+
+  afterEach(() => {
+    anchor.remove();
+    document.querySelectorAll('.search-result-popover').forEach((el) => el.remove());
+  });
+
+  const mkItemLocal = (
+    id: string,
+    label: string,
+    type: SearchResultItem['type'] = 'claim',
+  ): SearchResultItem => ({ type, id, label });
+
+  const dispatchClick = (target: Node) => {
+    target.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+  };
+
+  it('show 后 setTimeout(0) 跨过前点 body → 不立即关（self-trigger 防护）', () => {
+    vi.useFakeTimers();
+    try {
+      const api = mountResultPopover({ anchor, onSelect: () => {} });
+      api.show([mkItemLocal('a', '马克思')]);
+      // setTimeout 0 还没触发 / listener 未 attach / 此时点 body 不该关
+      dispatchClick(document.body);
+      expect(api.isOpen()).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('show 后跨过 setTimeout(0) 点 body 空白 → 关闭', () => {
+    vi.useFakeTimers();
+    try {
+      const api = mountResultPopover({ anchor, onSelect: () => {} });
+      api.show([mkItemLocal('a', '马克思')]);
+      vi.advanceTimersByTime(1);
+      dispatchClick(document.body);
+      expect(api.isOpen()).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('点 popover 容器自己 → 不关（容器内点击 / 不算 outside）', () => {
+    vi.useFakeTimers();
+    try {
+      const api = mountResultPopover({ anchor, onSelect: () => {} });
+      api.show([mkItemLocal('a', '马克思')]);
+      vi.advanceTimersByTime(1);
+      const popover = document.querySelector('.search-result-popover') as HTMLElement;
+      dispatchClick(popover);
+      expect(api.isOpen()).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('点 anchor 搜索框 → 不关（用户继续编辑）', () => {
+    vi.useFakeTimers();
+    try {
+      const api = mountResultPopover({ anchor, onSelect: () => {} });
+      api.show([mkItemLocal('a', '马克思')]);
+      vi.advanceTimersByTime(1);
+      dispatchClick(anchor);
+      expect(api.isOpen()).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('outside click → onClose callback 触发', () => {
+    vi.useFakeTimers();
+    try {
+      const onClose = vi.fn();
+      const api = mountResultPopover({ anchor, onSelect: () => {}, onClose });
+      api.show([mkItemLocal('a', '马克思')]);
+      vi.advanceTimersByTime(1);
+      dispatchClick(document.body);
+      expect(onClose).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('hide 后 listener detach（再点 body 不再触发 onClose）', () => {
+    vi.useFakeTimers();
+    try {
+      const onClose = vi.fn();
+      const api = mountResultPopover({ anchor, onSelect: () => {}, onClose });
+      api.show([mkItemLocal('a', '马克思')]);
+      vi.advanceTimersByTime(1);
+      api.hide();
+      onClose.mockClear();
+      dispatchClick(document.body);
+      expect(onClose).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('点工具栏 sidebar → 关（PM A · 不豁免）', () => {
+    vi.useFakeTimers();
+    try {
+      const sidebar = document.createElement('div');
+      sidebar.className = 'sidebar';
+      document.body.appendChild(sidebar);
+
+      const api = mountResultPopover({ anchor, onSelect: () => {} });
+      api.show([mkItemLocal('a', '马克思')]);
+      vi.advanceTimersByTime(1);
+      dispatchClick(sidebar);
+      expect(api.isOpen()).toBe(false);
+
+      sidebar.remove();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('点主画布 svg → 关', () => {
+    vi.useFakeTimers();
+    try {
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.id = 'relations-svg';
+      document.body.appendChild(svg);
+
+      const api = mountResultPopover({ anchor, onSelect: () => {} });
+      api.show([mkItemLocal('a', '马克思')]);
+      vi.advanceTimersByTime(1);
+      dispatchClick(svg);
+      expect(api.isOpen()).toBe(false);
+
+      svg.remove();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('showExplore outside click → 关', () => {
+    vi.useFakeTimers();
+    try {
+      const api = mountResultPopover({ anchor, onSelect: () => {} });
+      api.showExplore(
+        {
+          persons: [{ id: 'p1', name: '马克思' }],
+          concepts: [],
+          periods: [],
+        },
+        () => {},
+      );
+      vi.advanceTimersByTime(1);
+      dispatchClick(document.body);
+      expect(api.isOpen()).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('showGrouped outside click → 关', () => {
+    vi.useFakeTimers();
+    try {
+      const personsMap = new Map<string, PersonNode>();
+      personsMap.set('wd-q9061', mkPerson({ id: 'wd-q9061', name_zh: '马克思' }));
+      const api = mountResultPopover({ anchor, onSelect: () => {} });
+      api.showGrouped(
+        [mkResult({ id: 'c1', author_id: 'wd-q9061', label: 'A', year: 1844 })],
+        personsMap,
+        'A',
+        null,
+      );
+      vi.advanceTimersByTime(1);
+      dispatchClick(document.body);
+      expect(api.isOpen()).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});

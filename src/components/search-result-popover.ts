@@ -74,6 +74,9 @@ export function mountResultPopover({
   let selectableActions: (() => void)[] = [];
   let selectedIndex = -1;
   let keyHandler: ((e: KeyboardEvent) => void) | null = null;
+  /** PM checkpoint feedback · 点空白关闭（PM A · 不豁免工具栏）*/
+  let outsideClickHandler: ((e: MouseEvent) => void) | null = null;
+  let outsideClickTimer: ReturnType<typeof setTimeout> | null = null;
 
   function _wrap(idx: number, total: number): number {
     if (total === 0) return -1;
@@ -119,6 +122,28 @@ export function mountResultPopover({
     document.addEventListener('keydown', keyHandler);
   }
 
+  /**
+   * PM checkpoint feedback · 点空白关闭（PM A · 2026-05-21）
+   * 不关：popover 自己 + anchor 输入框自己
+   * 关：其他任意 click（含工具栏 sidebar / zoom-control / timeline · 不豁免）
+   * 用 click event（mousedown 被 d3.zoom 在 svg 上 stopImmediatePropagation 拦截 / 参考 claim-popover line 388）
+   * setTimeout(0) trick 防"打开本次 click"立即被识别为外部关闭
+   */
+  function _attachOutsideClick(): void {
+    outsideClickHandler = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (currentPopover?.contains(target)) return;
+      if (anchor.contains(target)) return;
+      hide();
+      onClose?.();
+    };
+    outsideClickTimer = setTimeout(() => {
+      if (outsideClickHandler) {
+        document.addEventListener('click', outsideClickHandler);
+      }
+    }, 0);
+  }
+
   function hide(): void {
     if (currentPopover) {
       currentPopover.remove();
@@ -127,6 +152,14 @@ export function mountResultPopover({
     if (keyHandler) {
       document.removeEventListener('keydown', keyHandler);
       keyHandler = null;
+    }
+    if (outsideClickHandler) {
+      document.removeEventListener('click', outsideClickHandler);
+      outsideClickHandler = null;
+    }
+    if (outsideClickTimer) {
+      clearTimeout(outsideClickTimer);
+      outsideClickTimer = null;
     }
     selectableEls = [];
     selectableActions = [];
@@ -192,6 +225,7 @@ export function mountResultPopover({
     document.body.appendChild(popover);
     currentPopover = popover;
     _attachKeys();
+    _attachOutsideClick();
   }
 
   // ============================================================
@@ -237,6 +271,7 @@ export function mountResultPopover({
     document.body.appendChild(popover);
     currentPopover = popover;
     _attachKeys();
+    _attachOutsideClick();
   }
 
   function _addChipSection(
@@ -320,6 +355,7 @@ export function mountResultPopover({
     document.body.appendChild(popover);
     currentPopover = popover;
     _attachKeys();
+    _attachOutsideClick();
   }
 
   function _addConceptSection(popover: HTMLElement, conceptHit: CoreConcept): void {
