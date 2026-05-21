@@ -246,13 +246,16 @@ M4 写详情卡时 header 还是 occupier placeholder / B1 Stage 1 header 1st-cl
 
 ```bash
 1. cd F:\AI\projects\Marx
-2. git pull origin main
-3. 读 AGENTS.md                  # 项目级 agent context
-4. 读本 anchor                   # 你正在读
-5. 读 specs/2026-05-20-m-b-mainline-design.md v2 § 3.3-3.7（双形态 + Stage 4 acceptance）
-6. 读 plans/2026-05-20-marx-m-b1-header-search.md Stage 4 章节（T4.1-T4.3）
-7. memory MEMORY.md 自动加载（含 m-b-stage2-3 条目）
-8. PM 已说 "go Stage 4" → AI 立即按 T4.1 开工（TDD red → green）
+2. git pull origin main           # 应已同步 HEAD fb54f88
+3. 读 AGENTS.md                   # 项目级 agent context
+4. 读本 anchor                    # 你正在读 / § 1 累积 Stage 1-4 + 4 轮 polish · § 3 Stage 5 plan
+5. 读 specs/2026-05-20-m-b-mainline-design.md § 10 DR-084~087（4 轮 polish 决策追溯）
+6. 读 plans/2026-05-20-marx-m-b1-header-search.md Stage 5 章节（T5.1 E2E + T5.2 ship）
+7. memory MEMORY.md 自动加载（含 m-b1-stage4-polish-go-stage5 ⭐⭐⭐ 条目）
+8. PM 已说 "go Stage 5" → AI 立即按 T5.1 E2E 4 spec 开工（TDD red → green）
+   · DR-079 美观度 polish 实施期主动召唤 frontend-design + ui-ux-pro-max skill
+   · 4 件套 baseline 跑 health + benchmark + qa + design-review · 跟 M5 对比
+   · ship 前 tag m-b1-final
 ```
 
 ---
