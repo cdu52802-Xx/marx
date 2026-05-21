@@ -54,6 +54,7 @@ import {
 import { showClaimPopover } from './components/claim-popover.ts';
 import { showArcPopover, hideArcPopover } from './components/arc-popover.ts';
 import { applyClaimFilters } from './components/apply-claim-filters.ts';
+import { mountGeographicCanvas } from './components/geographic-canvas.ts';
 import type { ClaimNode, ClaimRelation } from './types/Claim.ts';
 import type { PersonNode } from './types/Node.ts';
 
@@ -1605,3 +1606,21 @@ searchApi.input.addEventListener('click', reopenSearchPopover);
 console.log(
   '[Marx M-B1] render complete · timeline + sidebar + header-controls + search + popover mounted',
 );
+
+// === M-B2 T1.3 · Stage 1 prototype 临时挂载（主画面右上 300×200 浮窗） ===
+// 不删 M5 主图 / 不动 B1 header + claim-popover 主流程
+// Stage 2 接真 obs 数据 + great circle 关系连线 + timeline 联动后下线临时浮窗
+const protoSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+protoSvg.setAttribute('width', '300');
+protoSvg.setAttribute('height', '200');
+protoSvg.style.cssText =
+  'position:fixed;right:10px;top:50px;background:#fcfaf6;border:1px solid #d8cab0;z-index:1000';
+document.body.appendChild(protoSvg);
+const protoApi = mountGeographicCanvas({
+  container: protoSvg,
+  width: 300,
+  height: 200,
+  initialMode: 'sphere',
+  marxCurrentLocation: [10, 50],
+});
+(window as unknown as { protoApi: typeof protoApi }).protoApi = protoApi; // PM console 调
