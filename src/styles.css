@@ -159,11 +159,18 @@ body::before {
   border-bottom: 1px dotted #aaa;
   /* B5 D13 · padding 0 2px → 2px 4px / 上下不再紧贴 link 文字（基础 UIUX 透气）*/
   padding: 2px 4px;
+  /* B2 D7 · letter-spacing transition · hover 文字微舒展（精致细节 / editorial 杂志风）*/
+  letter-spacing: 0.02em;
+  transition:
+    color 0.18s ease,
+    border-color 0.18s ease,
+    letter-spacing 0.18s ease;
 }
 .header-controls .header-about:hover,
 .header-controls .header-credit:hover {
   color: #5b3a8c;
   border-bottom-color: #5b3a8c;
+  letter-spacing: 0.04em;
 }
 
 .header-controls .header-sep {
@@ -224,12 +231,16 @@ body::before {
   gap: 12px;
   font-size: 13px;
   cursor: pointer;
-  transition: background 0.12s ease;
+  /* B2 D3 · letter-spacing transition · hover 文字微舒展 */
+  transition:
+    background 0.15s ease,
+    letter-spacing 0.18s ease;
   letter-spacing: 0.02em;
 }
 .search-result-item:hover,
 .search-result-item[data-selected='true'] {
   background: rgba(91, 58, 140, 0.08);
+  letter-spacing: 0.04em;
 }
 .search-result-kicker {
   font-style: italic;
@@ -311,14 +322,18 @@ body::before {
   /* B5 D14 · padding 1px 0 → 3px 4px / chip 不再紧贴 + click 区扩大（基础 UIUX 透气 + 触屏更友好）*/
   padding: 3px 4px;
   line-height: 1.5;
+  /* B2 D4 · letter-spacing transition · hover chip 单字"舒展呼吸"（editorial 精致）*/
   transition:
-    color 0.12s ease,
-    border-color 0.12s ease;
+    color 0.18s ease,
+    border-color 0.18s ease,
+    letter-spacing 0.22s ease,
+    background 0.18s ease;
 }
 .search-result-chip:hover,
 .search-result-chip[data-selected='true'] {
   color: #5b3a8c;
   border-bottom-color: #5b3a8c;
+  letter-spacing: 0.06em;
 }
 .search-result-chip-concept {
   color: #5b3a8c;
@@ -339,7 +354,11 @@ body::before {
   cursor: pointer;
   position: relative;
   font-family: 'EB Garamond', Georgia, serif;
-  transition: background 0.12s ease;
+  /* B2 D3 · letter-spacing transition · hover claim 行微舒展 */
+  letter-spacing: 0.02em;
+  transition:
+    background 0.15s ease,
+    letter-spacing 0.18s ease;
 }
 .search-result-claim-item::before {
   content: '·';
@@ -352,6 +371,7 @@ body::before {
 .search-result-claim-item:hover,
 .search-result-claim-item[data-selected='true'] {
   background: rgba(91, 58, 140, 0.08);
+  letter-spacing: 0.04em;
 }
 .search-result-claim-text {
   color: #2a2a2a;
