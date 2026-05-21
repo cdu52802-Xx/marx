@@ -1,7 +1,7 @@
 # Marx M-B 主线进展 · 新窗口续接锚点（2026-05-20 ~ 2026-05-21）
 
-> **状态**：B1 Stage 1-4 全 ship + PM bug 修（DR-084 详情卡让出 header）/ **Stage 5 待启动**（E2E + 4 件套 baseline + ship）
-> **当前 HEAD**：见 `git log -1 --oneline`（最新含 DR-084 bug fix · 2026-05-21）
+> **状态**：B1 Stage 1-4 全 ship + 2 轮 PM bug/polish 修（DR-084 详情卡让出 header / DR-085 双层 hover 状态机）/ **Stage 5 待启动**（E2E + 4 件套 baseline + ship）
+> **当前 HEAD**：见 `git log -1 --oneline`（最新含 DR-085 polish · 2026-05-21）
 > **Git**：clean / origin/main 同步
 > **Prod**：https://cdu52802-xx.github.io/marx/
 > **Mockup**：https://cdu52802-xx.github.io/marx/m-b1-search-ux-mockup.html
@@ -52,6 +52,45 @@
 - **T4.3** `522b04b`：window dispatch `marx:search-highlight` { type, id } · B2 副图 listener 接收
 - 浏览器实测 ✓：搜"异化"→ 选 claim-marx-013 → obs 紫圈 + 其他全 fade + dispatch event listener 收到 detail
 - Bundle 34.13 KB gzip（+0.12 from baseline · ≤35 预算 / 剩 0.87 KB）
+
+### B1 polish · search commit + hover transient 双层状态机（DR-085 / 2026-05-21）
+
+PM 反馈 3 issue 一波修（资深 UIUX 双层状态机方案）：
+
+**4 状态机**：
+| 状态 | 触发 | 视觉 |
+|---|---|---|
+| 0 默认 | 进入 / Esc / 点空白 / 画布点 obs | 全 92 obs normal |
+| 1 search A1 | 搜索栏选 A1 | A1 + 关联 obs + 提出者 person normal · 其他 fade · A1 obs-dot **紫圈** |
+| 1+ search A1 + hover B1 | 状态 1 hover B1 | A1 圈子 ∪ B1 圈子 normal · 其他 fade · A1 紫圈 / B1 **无圈**（区分 commit vs transient） |
+| 0+ hover B1（无 search） | 默认时 hover B1 | B1 圈子 normal · 其他 fade · 无紫圈 |
+
+**实施**：
+- `searchFocusClaimId: string \| null` state（main.ts line 869）
+- highlightObs 复用 `applyHoverPreviewFiltering(computeFocusSet(id))` 含 person（DR-085 坑 1 一致性）
+- obs `mouseenter` / `mouseleave` handler · 合并 searchSet ∪ hoverSet
+- clearHoverPreviewFiltering 加 searchFocus guard（坑 2 · 详情卡 hover button leave 不丢 search）
+- restoreArcOpacity 末尾追加 applyTimelineFiltering（Issue 3 fix · 清 g.obs opacity 残留）
+- 全局 `document keydown Esc` listener（state1 时 popover 已关 / 补 detach Esc）
+- search popover z:20 → 1100（Issue 1 · 高于详情卡 1000）
+- focus mode 下 hover 不触发（`if (inFocusMode) return`）
+
+**视觉区分**：A1 搜定 = 紫圈 stroke / B1 hover = 仅 opacity normal 无圈 → 用户能分清"哪个是搜的、哪个是鼠标当下指的"
+
+**浏览器实测 ✓**（92 obs / 状态切换正确）：
+- state0 → hover A1 → 3 normal / 89 fade · 无紫圈
+- leave → 92 normal · 全恢复
+- search A1 → 3 normal / 89 fade · A1 紫圈
+- state1 + hover B1 → **4 normal / 88 fade** · A1 紫圈 + B1 无圈 ✓
+- leave B1 → 回 state1（3 normal）✓
+- Esc / 点空白 / 画布点 obs → 全 92 normal 清 search ✓
+- 详情卡 z:1000 / 搜索浮窗 z:1100 ✓
+
+**留 backlog**：focus mode + search 同存 corner case（罕见 + PM 没明确意图 / 后面专题处理）
+
+**baseline**: Lint 0 / Tests 270/273（pre-existing）/ Bundle 34.29 KB gzip（+0.14 from DR-084 · ≤35 预算 / 剩 0.71 KB）
+
+---
 
 ### B1 PM bug 修 · 详情卡让出 header（DR-084 / 2026-05-21）
 PM 报告：右侧详情卡展开遮挡 header 工具栏（搜索栏 + brand + 关于 link）。
@@ -181,6 +220,7 @@ M4 写详情卡时 header 还是 occupier placeholder / B1 Stage 1 header 1st-cl
 | Stage 3 PM | max 4 组人物折叠（spec § 7）· 实测"阶级"出 11 组超 4 | 实施期 PM checkpoint 决 |
 | Stage 3 PM | keywords 命中但 claim_text 不含 query 时不高亮 / 看着诡异 | V2 backlog（中英映射也 V2） |
 | Stage 4 challenge | filter chip 砍掉 / DR-083 | **B1 V2 专题设计**（跟中英映射 V2 一起） |
+| DR-085 corner case | 焦点模式 + search 同存（罕见 PM 没明确意图）| **B2 / B3 阶段或专题** |
 | M5 takeaway | DR-069 弧线误选（4 轮修未解）| B2 期间统筹（PM A+D 不强攻）|
 | M5 takeaway | B3 mobile popover 5px overflow / B4 tablet sidebar 撞 / Focus popover 焦点回中心 | B3 整合 |
 

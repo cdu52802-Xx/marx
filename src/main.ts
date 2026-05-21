@@ -823,6 +823,36 @@ sectionG.each(function (section) {
     }
     // 已在 >= chooseTargetK 不再 flyto / 详情卡已在 click handler 更新
   });
+
+  // B1 polish DR-085 · obs hover 双层状态机
+  //   状态 0 + hover B1 → B1 focusSet（B1 + 提出者 + 关联 obs/arc）normal · 其他 fade
+  //   状态 1 + hover B1 → searchSet(A1) ∪ hoverSet(B1) normal · 其他 fade（A1 紫圈 / B1 无圈）
+  //   leave → searchFocus 还在 → 回 search 状态；否则回 timeline default
+  //   focus mode（仅相关）下不触发 hover
+  obsG.on('mouseenter', (_event, c) => {
+    if (inFocusMode) return;
+    const hoverSet = computeFocusSet(c.id);
+    let combinedSet: FocusSet = hoverSet;
+    if (searchFocusClaimId !== null && searchFocusClaimId !== c.id) {
+      const searchSet = computeFocusSet(searchFocusClaimId);
+      combinedSet = {
+        obsIds: new Set([...searchSet.obsIds, ...hoverSet.obsIds]),
+        personIds: new Set([...searchSet.personIds, ...hoverSet.personIds]),
+      };
+    }
+    applyHoverPreviewFiltering(combinedSet);
+  });
+  obsG.on('mouseleave', () => {
+    if (inFocusMode) return;
+    if (searchFocusClaimId !== null) {
+      // 回 search 选定状态
+      applyHoverPreviewFiltering(computeFocusSet(searchFocusClaimId));
+    } else {
+      // 回 timeline default
+      const cy = timelineApi?.getCurrentYear() ?? INITIAL_CURSOR_YEAR;
+      applyTimelineFiltering(cy);
+    }
+  });
 });
 
 // Stage 2 R3 · disable d3 默认 dblclick zoom（默认是 k*2 / 跟我们 chooseTargetK 策略冲突）
@@ -865,6 +895,13 @@ const NORMAL_OPACITY = 1;
 let timelineApi: { getCurrentYear: () => number } | null = null;
 let breadcrumbApi: BreadcrumbApi | null = null;
 let inFocusMode = false;
+
+// B1 polish DR-085 · 双层状态机
+//   search commit（持久）+ hover transient（临时）共存
+//   null = 无 search 选定 / 非 null = 当前 search 选定 claim id
+//   highlightObs 设此 state · clearSearchHighlight / restoreArcOpacity 清此 state
+//   obs mouseenter/leave + clearHoverPreviewFiltering 据此决定回什么状态
+let searchFocusClaimId: string | null = null;
 
 function applyTimelineFiltering(cursorYear: number): void {
   // 观点（紫圆点 + claim_text 行）淡显
@@ -950,6 +987,12 @@ function applyHoverPreviewFiltering(fs: FocusSet): void {
 
 function clearHoverPreviewFiltering(): void {
   if (inFocusMode) return; // 焦点模式下 leave 不恢复（保持 focus）
+  // B1 polish DR-085 坑 2 · 详情卡按钮 hover leave 时如有 search 选定 → 回 search 状态而非清空
+  //   原 bug：search 选 A1 → hover 详情卡「查看关联」按钮 → leave → 全画面 normal / search 状态丢失
+  if (searchFocusClaimId !== null) {
+    applyHoverPreviewFiltering(computeFocusSet(searchFocusClaimId));
+    return;
+  }
   // 否则恢复时间游标 filtering
   const cy = timelineApi?.getCurrentYear() ?? INITIAL_CURSOR_YEAR;
   applyTimelineFiltering(cy);
@@ -1249,6 +1292,11 @@ function applyArcSelection(
 }
 
 // Stage 5 R2 · 复原所有弧线 + obs 圆点 + 清 selectedArc state（点其他弧线 / 点 obs / 点空白时调）
+// B1 polish DR-085 Issue 3 fix · 追加清 search 选定 + 复原全画布 opacity
+//   原 bug：search highlight 状态下点 obs → arc 复原 ✓ / obs-dot stroke 复原 ✓ /
+//          但 g.obs opacity（search 设的 fade 0.15）残留 ✗
+//   根因：M5 时代写时 g.obs opacity 唯一源头是 timeline filter / B1 highlightObs 多动了这维度
+//   修法：restoreArcOpacity 末尾调 applyTimelineFiltering 重设全画布 opacity / focus mode 下不动
 function restoreArcOpacity(): void {
   d3.selectAll<SVGPathElement, ClaimRelation>('path.arc').each(function (r) {
     const style = getArcStyle(r.type);
@@ -1259,41 +1307,53 @@ function restoreArcOpacity(): void {
   });
   // R2 · obs 圆点恢复 r=2.3 + 无 stroke
   d3.selectAll<SVGCircleElement, unknown>('circle.obs-dot').attr('r', 2.3).attr('stroke', null);
+  // B1 polish DR-085 · 清 search 选定 + 复原全画布 opacity（focus mode 下不动）
+  if (inFocusMode) return;
+  searchFocusClaimId = null;
+  const cy = timelineApi?.getCurrentYear() ?? INITIAL_CURSOR_YEAR;
+  applyTimelineFiltering(cy);
 }
 
 // ============================================================
-// B1 T4.1 · 搜索结果高亮 API（spec § 3.3.3）
-//   highlightObs(claimId)：紫圈高亮选中 obs + opacity fade 其他 obs/arc
-//   clearSearchHighlight()：复原 obs-dot + 恢复 timeline filtering state
+// B1 T4.1 + polish DR-085 · 搜索结果高亮 API（spec § 3.3.3）
+//   highlightObs(claimId)：set searchFocusClaimId state + 紫圈 obs-dot stroke + applyHoverPreviewFiltering(focusSet)
+//     - 复用 focusSet · 含 obs + 关联 obs + 提出者 person section（坑 1 一致性 · 跟 hover 同 visual）
+//     - obs-dot 紫圈 = search commit 标记 / 区分 hover transient 无圈
+//   clearSearchHighlight()：清 state + 复原 obs-dot + 恢复 timeline filtering（focus mode 下不动）
 //   视觉沿用既有 highlightArcAndDots pattern（米白 #fcfaf6 stroke / r=5 / width=2）
-//   tradeoff：focus mode 同时搜索是 corner case · clearSearchHighlight 不主动恢复 focus state
 // ============================================================
 function highlightObs(claimId: string): void {
-  // 1. 复原所有 obs-dot · 防多次调累积 stroke
+  searchFocusClaimId = claimId;
+  // 1. 复原所有 obs-dot · 防多次调累积 stroke / 然后给选中加紫圈
   d3.selectAll<SVGCircleElement, unknown>('circle.obs-dot').attr('r', 2.3).attr('stroke', null);
-  // 2. 紫圈高亮选中 obs-dot
   document
     .querySelectorAll<SVGCircleElement>(`g.obs[data-claim-id="${claimId}"] circle.obs-dot`)
     .forEach((el) => {
       d3.select(el).attr('r', 5).attr('stroke', '#fcfaf6').attr('stroke-width', 2);
     });
-  // 3. fade 其他 obs · 选中 obs 保持 normal
-  d3.selectAll<SVGGElement, ClaimWithCoords>('g.obs').attr('opacity', (c) =>
-    c.id === claimId ? NORMAL_OPACITY : FADED_OPACITY,
-  );
-  // 4. fade arc · 跟选中 obs 关联的 arc 保持 normal
-  d3.selectAll<SVGPathElement, ClaimRelation>('path.arc').attr('opacity', (r) =>
-    r.source === claimId || r.target === claimId ? NORMAL_OPACITY : FADED_OPACITY,
-  );
+  // 2. 复用 focusSet visual · 含 obs + 关联 obs + 提出者 person（DR-085 坑 1 一致性）
+  applyHoverPreviewFiltering(computeFocusSet(claimId));
 }
 
 function clearSearchHighlight(): void {
+  searchFocusClaimId = null;
   // 1. 复原 obs-dot 默认 r + 无 stroke
   d3.selectAll<SVGCircleElement, unknown>('circle.obs-dot').attr('r', 2.3).attr('stroke', null);
-  // 2. opacity 恢复到当前 timeline state
+  // 2. focus mode 下不破坏 focus state · 否则恢复到当前 timeline state
+  if (inFocusMode) return;
   const cy = timelineApi?.getCurrentYear() ?? INITIAL_CURSOR_YEAR;
   applyTimelineFiltering(cy);
 }
+
+// B1 polish DR-085 · 全局 Esc 清 search 状态
+//   场景：state1 时 popover 已 hide（onSelect 后 popover hide / Esc 监听已 detach）
+//   补全局 listener 让 Esc 在 state1 任何时候都能清搜索高亮 + 退出搜索选择模式
+//   跟既有 popover Esc listener 并存安全（clearSearchHighlight 幂等）
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && searchFocusClaimId !== null) {
+    clearSearchHighlight();
+  }
+});
 
 // DR-058 · zoom-fit 接受紧凑后的新坐标 Map（不再用原 claimIdToCoords）
 // Stage 5 R2 polish · bbox center 飞到 visCenterVB 而非 viewBox center

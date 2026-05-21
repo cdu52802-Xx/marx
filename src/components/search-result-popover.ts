@@ -184,7 +184,10 @@ export function mountResultPopover({
     popover.style.left = `${rect.left}px`;
     popover.style.minWidth = `${Math.max(rect.width, 240)}px`;
     popover.style.maxWidth = '480px';
-    popover.style.zIndex = '20';
+    // B1 polish fix DR-085 · 2026-05-21
+    //   z:20 → 1100（高于详情卡 z:1000）/ 搜索浮窗作为 transient overlay 应永远在最上层
+    //   原 z:20 在窄屏（viewport ≤ 1614）时被详情卡盖右半部分
+    popover.style.zIndex = '1100';
     return popover;
   }
 
