@@ -452,6 +452,29 @@ em.search-result-highlight {
   color: #5b3a8c !important;
 }
 
+/* D9 · obs 紫圈 spring 弹出（DR-094）· obs click + search highlight 调用
+ * scale 0.5 → 1.2 (overshoot) → 1.0 / 220ms / spring 缓动
+ * transform-box: fill-box 让 svg circle transform-origin 走 element 中心
+ */
+circle.obs-dot {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+@keyframes obs-spring {
+  0% {
+    transform: scale(0.5);
+  }
+  55% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+g.obs.obs-spring-enter circle.obs-dot {
+  animation: obs-spring 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
 /* D12 · 详情卡"查看关联"CTA hover · bg 反相 + letter-spacing 展开 + 微浮
  * inline transition 已在 claim-popover.ts 加 letter-spacing + transform 字段
  * 这里只定义 :hover 终态

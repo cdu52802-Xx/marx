@@ -771,6 +771,8 @@ sectionG.each(function (section) {
       .forEach((el) => {
         d3.select(el).attr('font-weight', '700');
       });
+    // D9 · 紫圈 spring 弹出（obs click 路径）
+    triggerObsSpring(c.id);
 
     const currentK = zoomCtrl.getCurrentTransform().k;
     const obsElement = event.currentTarget as SVGGElement;
@@ -1334,6 +1336,24 @@ function restoreArcOpacity(): void {
 }
 
 // ============================================================
+// B1 polish D9 DR-094 · obs 紫圈 spring 弹出动效
+//   obs click 选中 + search onSelect 选中 / 紫圈出场 220ms spring scale 0.5→1.2→1.0
+//   CSS @keyframes obs-spring 在 styles.css / 这里只做 class toggle + force reflow restart
+// ============================================================
+function triggerObsSpring(claimId: string): void {
+  const obsGroups = document.querySelectorAll<SVGGElement>(`g.obs[data-claim-id="${claimId}"]`);
+  obsGroups.forEach((g) => {
+    // remove + force reflow + re-add · 让 animation 每次 highlight 都重新跑
+    g.classList.remove('obs-spring-enter');
+    void g.getBoundingClientRect();
+    g.classList.add('obs-spring-enter');
+    g.addEventListener('animationend', () => g.classList.remove('obs-spring-enter'), {
+      once: true,
+    });
+  });
+}
+
+// ============================================================
 // B1 T4.1 + polish DR-085 · 搜索结果高亮 API（spec § 3.3.3）
 //   highlightObs(claimId)：set searchFocusClaimId state + 紫圈 obs-dot stroke + applyHoverPreviewFiltering(focusSet)
 //     - 复用 focusSet · 含 obs + 关联 obs + 提出者 person section（坑 1 一致性 · 跟 hover 同 visual）
@@ -1359,6 +1379,8 @@ function highlightObs(claimId: string): void {
     });
   // 3. 复用 focusSet visual · 含 obs + 关联 obs + 提出者 person（DR-085 坑 1 一致性）
   applyHoverPreviewFiltering(computeFocusSet(claimId));
+  // 4. D9 spring 弹出（search highlight 路径）
+  triggerObsSpring(claimId);
 }
 
 function clearSearchHighlight(): void {
