@@ -8,10 +8,17 @@
 // d3-zoom attach to svg / scaleExtent [1,8] / on('zoom') → k 反查 mode → render()
 // k ≤ 2.5 sphere / k ≥ 4.5 plane / 中间 transition · 阈值见 lib/projection.ts ZOOM_THRESHOLDS
 // 真平滑内插（k 区间内 scale/rotate 渐变）留 Step 1.5 / 当前 mode 切换 + scale hardcode (200/400/800)
+//
+// M-B2 T1.5 · Marx follow + drag 旋转
+// 监听 window 'marx:time-change' event (timeline T4.x dispatch · 现在只 listen)
+//   → year → marxLocationAtYear() → setMarxLocation → 球面 reorient (currentLoc 推 projection center)
+// d3-drag attach svg · 球面 mode 下 dx/dy → currentRotate 累加 (sphere 旋转视角)
+//   平面 mode 不响应 drag 旋转（zoom 自带 drag handling for pan）
 
 import { select } from 'd3-selection';
 import { geoPath, geoGraticule } from 'd3-geo';
 import { zoom, type ZoomBehavior } from 'd3-zoom';
+import { drag } from 'd3-drag';
 import { interpolateProjection, ZOOM_THRESHOLDS, type ProjectionMode } from '../lib/projection.ts';
 
 // Stage 1 prototype 测试节点（5 个 / 真数据 Stage 2 接）
@@ -24,6 +31,24 @@ const TEST_NODES: { id: string; lonLat: [number, number] }[] = [
   { id: 'paris', lonLat: [2.35, 48.86] },
   { id: 'london', lonLat: [-0.13, 51.51] },
 ];
+
+// M-B2 T1.5 · Marx 行迹 6 段 (spec § 4.3)
+// yearEnd 是 exclusive (年区间 [yearStart, yearEnd))
+// 1883 死 / 最后一段 [1849, 1883] 用 < 1884 写法 → 但 Marx 死在 1883.03.14 / 1883 整年都算伦敦
+//   ∴ 最后段 yearEnd = 1884 / 1849-1883 整年覆盖
+const MARX_LOCATIONS: { yearStart: number; yearEnd: number; loc: [number, number] }[] = [
+  { yearStart: 1818, yearEnd: 1835, loc: [6.64, 49.75] }, // 特里尔
+  { yearStart: 1835, yearEnd: 1841, loc: [13.4, 52.52] }, // 波恩/柏林
+  { yearStart: 1841, yearEnd: 1843, loc: [6.96, 50.94] }, // 科隆
+  { yearStart: 1843, yearEnd: 1845, loc: [2.35, 48.86] }, // 巴黎
+  { yearStart: 1845, yearEnd: 1848, loc: [4.35, 50.85] }, // 布鲁塞尔
+  { yearStart: 1849, yearEnd: 1884, loc: [-0.13, 51.51] }, // 伦敦
+];
+
+function marxLocationAtYear(year: number): [number, number] {
+  const rec = MARX_LOCATIONS.find((r) => year >= r.yearStart && year < r.yearEnd);
+  return rec?.loc ?? [10, 50]; // fallback 欧洲中心
+}
 
 export interface GeographicCanvasOptions {
   container: SVGSVGElement;
@@ -66,6 +91,34 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
       }
     });
   svg.call(zoomBehavior);
+
+  // T1.5 · d3-drag attach · 球面 mode 下 dx/dy → currentRotate 累加（sphere 视角旋转）
+  // 平面 mode 不响应（zoom 自带 pan handling 走 wheel + drag · 此处只补 sphere 旋转）
+  // 0.5 系数：1px 拖动 = 0.5° 旋转（手感经验值 / 见 https://observablehq.com/@d3/versor-dragging）
+  // 注：spec 设 zoom 只 wheel · drag 给 globe 旋转 / 但 zoom default 同时挂 drag pan
+  //   → MVP 阶段保留 zoom drag pan（不冲突 / d3 内部 event 顺序 zoom 先 drag 后）
+  const dragBehavior = drag<SVGSVGElement, unknown>().on('drag', (event) => {
+    if (currentMode !== 'sphere') return; // 平面/过渡 不响应 drag 旋转
+    const dx = event.dx as number;
+    const dy = event.dy as number;
+    const rotate = currentRotate ?? [-currentLoc[0], -currentLoc[1], 0];
+    currentRotate = [rotate[0] + dx * 0.5, rotate[1] - dy * 0.5, rotate[2]];
+    render();
+  });
+  svg.call(dragBehavior);
+
+  // T1.5 · window 'marx:time-change' event listener · year → Marx 当年地点 → reorient
+  // timeline T4.x dispatch 此 event · 现在只 listen（dispatch 由后续 task 加）
+  // listener 必须 destroy 时 detach（不然组件卸载后 stale closure 持续累加）
+  const timeHandler = (e: Event): void => {
+    const detail = (e as CustomEvent).detail as { year?: number } | undefined;
+    if (typeof detail?.year === 'number') {
+      currentLoc = marxLocationAtYear(detail.year);
+      currentRotate = undefined; // reset drag · 让 currentLoc 重新 drive projection center
+      render();
+    }
+  };
+  window.addEventListener('marx:time-change', timeHandler);
 
   function render(): void {
     // mode → k 反推（interpolateProjection 内分支按 k）
@@ -123,6 +176,7 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
       render();
     },
     destroy(): void {
+      window.removeEventListener('marx:time-change', timeHandler);
       g.remove();
     },
   };

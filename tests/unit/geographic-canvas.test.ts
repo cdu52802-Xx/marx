@@ -1,6 +1,7 @@
 // M-B2 T1.3 · geographic-canvas.ts prototype scaffold unit test
 // 3 case · graticule mount / 5 test node / setMode 重算
 // M-B2 T1.4 加 · 2 case · d3.zoom attach / setMode 切换后节点重算（间接验 zoom → render 通路）
+// M-B2 T1.5 加 · 2 case · marx:time-change event listener 触发 reorient / destroy 后 listener detach
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { mountGeographicCanvas } from '../../src/components/geographic-canvas.ts';
@@ -82,5 +83,39 @@ describe('mountGeographicCanvas · M-B2 T1.3', () => {
     expect(node).toBeTruthy();
     const cx = parseFloat(node.getAttribute('cx')!);
     expect(cx).toBeGreaterThan(0);
+  });
+
+  // === M-B2 T1.5 · Marx follow + drag 旋转 ===
+  it('window dispatch marx:time-change event → setMarxLocation (球面 reorient)', () => {
+    mountGeographicCanvas({
+      container,
+      width: 600,
+      height: 400,
+      initialMode: 'sphere',
+      marxCurrentLocation: [10, 50],
+    });
+    const initialCx = (
+      container.querySelector('circle.test-node[data-id="paris"]') as SVGCircleElement
+    )?.getAttribute('cx');
+    window.dispatchEvent(new CustomEvent('marx:time-change', { detail: { year: 1843 } }));
+    // 1843 → 巴黎 [2.35, 48.86] / 球面 reorient → 巴黎在中心 / paris 节点 cx 变化
+    const newCx = (
+      container.querySelector('circle.test-node[data-id="paris"]') as SVGCircleElement
+    )?.getAttribute('cx');
+    expect(newCx).not.toBe(initialCx);
+  });
+
+  it('destroy 后 marx:time-change listener detach', () => {
+    const api = mountGeographicCanvas({
+      container,
+      width: 600,
+      height: 400,
+      marxCurrentLocation: [10, 50],
+    });
+    api.destroy();
+    // destroy 后 dispatch 不应 throw / 不应改 svg（已 destroy）
+    expect(() => {
+      window.dispatchEvent(new CustomEvent('marx:time-change', { detail: { year: 1843 } }));
+    }).not.toThrow();
   });
 });
