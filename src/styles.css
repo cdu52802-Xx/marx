@@ -375,3 +375,24 @@ em.search-result-highlight {
   background: rgba(91, 58, 140, 0.1);
   padding: 0 1px;
 }
+
+/* ============= B1 polish D1 · search popover 入场动效（DR-089）============= */
+/* PM 2026-05-21 拍板"全部做 / 顺序 B 一个个做" · DR-088 重做（去掉全局 reduced-motion 规则）
+ * - 180ms fade + translateY(-4px) ease-out entry
+ * - GPU 合成 transform + opacity / 不触发 layout
+ * - 不加 @media (prefers-reduced-motion) · PM 系统 Win10 默认 reduce / 但 PM 想看到动效
+ *   尊重 PM 产品决策 > 严格 WCAG AAA
+ */
+@keyframes search-popover-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.search-result-popover {
+  animation: search-popover-enter 180ms ease-out;
+}
