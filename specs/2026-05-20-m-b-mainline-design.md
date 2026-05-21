@@ -326,13 +326,18 @@ PM 2026-05-20 mockup 反馈："形式认可 / 美观度差点 / 设计感没有�
 - **球面默认中心** ⭐ = **Marx 当前时间所在地点**（时间游标变 → 球面 reorient / 球面跟随 Marx 行迹）
 - **球面可旋转** ⭐（D3 drag 标准能力 / 用户自由探索）
 
-### 4.7 动态历史国界（V1 全连续过渡 · PM 选 B）
+### 4.7 动态历史国界（V1 真历史切片 · DR-099 final · 2026-05-22）
 
-- V1 = 全连续动态（不是切片）/ 拖时间游标时国界平滑变化
-- 1818-1883 间欧洲国界大变：拿破仑后 / 1848 革命 / 1871 德意志统一 / 1883
-- 数据源候选：Euratlas / HGIS Datasets / OpenStreetMap Historical / 学术 GeoJSON
-- 必要时 Stage 4 自建（PM checkpoint）
-- 学术参考：D3 Observable / Tom MacWright / Yan Holtz
+- V1 = **CShapes-Europe.geojson**（CC BY-NC-SA 4.0 · ETH Zurich · 1816-2023 · 322 features / 70 Marx-era states · 含 1871 德意志统一 + 1867 奥匈二元制 etc）
+- 数据源 Stage 0+ spike 拍板（DR-099 / 国内可达 / `tmp/cshapes/CShapes-Europe.geojson` 已下载备用）
+- 实施路径：
+  - **Stage 1**：build-time 过滤 Marx 1818-1883 子集（~480 KB · -45%）+ `public/geo/cshapes-marx-era.geojson` 走 vite ?url asset 不嵌 bundle
+  - **Stage 2 / Stage 4**：mapshaper simplify（geometry 简化 · 目标 200-300 KB gzip · -67%）
+  - **Stage 1+**：i18n 中文国名映射表（70 states · 含 "Germany" 1816-1870 → "普鲁士" / 1871+ → "德意志帝国" / "Saxe-Weimar" → "萨克森-魏玛" 等 · +1-2h 工程）
+- 时间游标拖动 → CShapes 时段切片选择 + d3 transition 平滑过渡（不是 frame-by-frame 连续 · 是 state-snapshot transition）
+- License 合规：网站底部加 "地理国界数据 © Schvitz et al. 2022 · CC BY-NC-SA 4.0" 署名
+- L1 fallback：cshapes 加载失败 → world-atlas 38 KB 当代国界兜底（确保副窗不空）
+- 学术参考：Schvitz et al. 2022 JCR · Cederman et al. 2025 Cambridge UP
 
 ### 4.8 主副联动 + 互换（元素 #14 + #15）
 
@@ -559,6 +564,8 @@ Stage 1 prototype checkpoint：
 | DR-087 | 2026-05-21 | B1 polish · obs click 选中 visual indicator = 紫圈 stroke + **obs-text 加粗**（不淡显其他） | X2 紫圈+全 fade（跟 search 完全一样 / 太重）/ X3 紫色 ring 区分 search（用户记两套规则）/ X4 caret 指示器（跟 paper editorial 风不符）/ 仅加粗不变色（深灰）vs 加粗+变紫 | PM 反馈：obs click 后画布无 visual indicator / 用户视线回画布找不到选中的；资深 UIUX = commit selection 标准做法；方案 X1：紫圈（米白 #fcfaf6 sw=2 r=5）+ obs-text font-weight:700 加粗（保深灰 #2a2a2a · PM 选 A 仅加粗不变色 / 克制 editorial 风）·不淡显其他（跟 search 区分：search 还 fade）；视觉一致 = 搜索选定 + obs click 选定共用紫圈+加粗（用户大脑只记一个规则"紫圈+粗 = 当前选中"）；何时清：详情卡关 5 路径（A 点空白 + B × 按钮 + C Esc + D 点另一 obs 切换 + E 搜索栏选另一条）/ 派生：claim-popover.ts ClaimPopoverContext 加 onClose callback · hideClaimPopover 调 _onCloseCallback / main.ts 传 onClose=restoreArcOpacity wire 关详情卡时清 visual / restoreArcOpacity 内追加清 obs-text font-weight · highlightObs 同步加粗（DR-086 一致性）；hover 时紫圈+加粗保留（PM Q2 A · transient 跟 commit 解耦） |
 | DR-088~096 | 2026-05-21 | B1 polish 阶段 9 决策（DR-088 revert / D1+B5+B3+B4+D9+B6+D2 全 PM 留 / B2 letter-spacing 撤改 B6）| 详见 [docs/2026-05-21-m-b1-takeaway.md § 8](../docs/2026-05-21-m-b1-takeaway.md#8-polish-阶段-7-batch-收尾dr-088096--2026-05-21-晚) | M-B1 polish 7 batch 全 ship · Bundle 34.58 KB / Tests 276+4 E2E / Design A · tag `m-b1-final` |
 | **DR-097** | **2026-05-21** | **B2 启动 (A+) 路径 · 直接进 writing-plans + 加 Stage 0 数据可达性验证**（0.5 天 · 中国大陆网络硬约束）| (A) 纯直接进 plan / (B) re-validate spec / (C) brainstorm placeholder / (D) 重审 V1 | **第一性原理**：B2 真风险是技术 #1（球面+平面+great circle）+ 数据 #2（国外 GeoJSON 可达）/ brainstorm 解不了 / 必须 prototype + 数据测试；设计 #3 已 95% brainstorm done（spec § 4）/ § 7 placeholder 留 Stage PM checkpoint 实测决（M5 lesson 实测必要 vs 凭空想）；避免 vision drift（M4 lesson · 离 PRD/spec 越远越易 drift）；早 ship 早 feedback（PRD 敏捷精神 · B2 5-6 周已长）；(+) Stage 0 来自 user_environment_china_network memory · 国外 endpoint 5 周后才发现拉不下来 = 灾难性 / 0.5 天前置 = 高 ROI |
+| **DR-098** | 2026-05-21 | Stage 0 数据可达性验证完成 · 推荐 V1 用 jsdelivr world-atlas TopoJSON（38 KB 当代国界占位）| Euratlas 子页 404 / HGIS 探索高 / OSM Historical DNS fail / Naturalearthdata 当代 | 4 主源全 fail 1818-1883 真历史 / world-atlas jsdelivr 国内 0.57s 极稳定 / 38 KB safe Bundle · **被 DR-099 升级取代** |
+| **DR-099** | **2026-05-22** | **B2 历史国界 V1 = CShapes-Europe**（1816-2023 / 322 features / 70 Marx-era states · CC BY-NC-SA 4.0）· **升级取代 DR-098** | (1) cshapes 升级 / (2) 谈 concerns 后定 / (3) 退 world-atlas 当代 / (4) 重审 spec § 4.7 | PM 2026-05-22 拍 (B) Stage 0+ cshapes spike · 100% 成功（预期 5% Branch A 命中）/ ETH Zurich 同站有 CShapes-Europe 欧洲专版 1816-2023 / 完全覆盖 Marx 时代 / 国内直连可达 / 180/322 features overlap Marx 1818-1883 (56%) / 含 1871 德意志统一精准捕捉（56→23 states）/ 体积 4.36 MB raw / 891 KB gzip · 按需 fetch 不进 main bundle / Stage 1+ build-time 过滤 ~480 KB / Stage 2 mapshaper simplify ~200-300 KB / 3 concerns 可控（License ShareAlike 加 1 句署名 / 891 KB 首屏 V1+ 优化 / i18n 70 states 映射 +1-2h Stage 1）/ 守 spec § 4.7 原 vision · 第一性原理：spike 大赢 deserve commitment |
 
 ---
 
