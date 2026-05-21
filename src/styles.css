@@ -452,6 +452,18 @@ em.search-result-highlight {
   color: #5b3a8c !important;
 }
 
+/* D12 · 详情卡"查看关联"CTA hover · bg 反相 + letter-spacing 展开 + 微浮
+ * inline transition 已在 claim-popover.ts 加 letter-spacing + transform 字段
+ * 这里只定义 :hover 终态
+ */
+.claim-popover .popover-focus-btn:hover {
+  background: #5b3a8c !important;
+  color: #fcfaf6 !important;
+  letter-spacing: 0.06em;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(91, 58, 140, 0.2);
+}
+
 /* ============= B5 polish D16 · 全局 :focus-visible 键盘 a11y（DR-090）============= */
 /* 键盘 Tab 导航时 focus ring 用紫色 halo（box-shadow）/ editorial-academic 友好
  * 鼠标 click 不显示 ring（:focus 但非 :focus-visible / Chrome 默认）

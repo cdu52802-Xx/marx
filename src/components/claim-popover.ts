@@ -158,7 +158,7 @@ function _doShowClaim(claim: ClaimNode, ctx: ClaimPopoverContext) {
       font-size:28px;
       font-weight:600;
       margin:0 0 4px;
-      line-height:1.2;
+      line-height:1.35;
       color:#2a2a2a;
       word-break:break-word;
       overflow-wrap:anywhere;
@@ -171,7 +171,7 @@ function _doShowClaim(claim: ClaimNode, ctx: ClaimPopoverContext) {
             font-size:15px;
             color:#888;
             letter-spacing:0.02em;
-            margin-top:2px;
+            margin-top:8px;
           ">${escapeHtml(claim.name_orig)}</div>`
         : ''
     }
@@ -328,7 +328,7 @@ function _doShowClaim(claim: ClaimNode, ctx: ClaimPopoverContext) {
         letter-spacing:0.04em;
         cursor:pointer;
         text-align:center;
-        transition:background 0.15s;
+        transition:background 0.2s ease, color 0.2s ease, letter-spacing 0.22s ease, transform 0.2s ease;
       ">→ 查看关联 · 仅显示这 ${ctx.agreementClaims.length + ctx.disagreementClaims.length + 1} 条相关观点</button>
     `
         : ''
