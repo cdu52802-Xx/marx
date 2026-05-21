@@ -1,10 +1,11 @@
 # M-B1 Takeaway · header + 全局搜索（2026-05-20 ~ 2026-05-21）
 
-> **状态**：B1 全 ship · tag `m-b1-final` 待打 · 等 PM prod 实测 6 个 user journey 验收 + 拍 `tag`
-> **HEAD**：097d91b（DR-088 polish 后）
+> **状态**：**M-B1 全 ship · tag `m-b1-final` 已打**（2026-05-21 晚 · PM 全 polish 7 batch 实测留 + 拍 `go tag`）
+> **HEAD**：`fd8b545`（D2 hotfix · GH Pages deploy success 52s）
+> **Tag**：`m-b1-final` → fd8b545
 > **Prod**：https://cdu52802-xx.github.io/marx/
 > **Mockup**：https://cdu52802-xx.github.io/marx/m-b1-search-ux-mockup.html
-> **Tag 候选**：m-b1-final（T5.2 Step 4 PM 拍板后打）
+> **相关 anchor**：[polish-anchor](./2026-05-21-m-b1-polish-anchor.md)（polish 阶段 SSOT）/ [progress-anchor](./2026-05-20-m-b1-progress-anchor.md)（实施期 SSOT · 已归档参考）
 
 ---
 
@@ -199,6 +200,114 @@ Health + QA 略低于阀值的具体原因都是 **非 B1 引入** + **入 backl
 
 ---
 
-## 8. 续接简单确认句
+## 8. polish 阶段 7 batch 收尾（DR-088~096 · 2026-05-21 晚）
 
-> "M-B1 收尾完成 2026-05-21 · DR-078~088 累积 · 4 件套 baseline #2 Design A + AI Slop A · 等 PM prod 实测 + 拍 tag m-b1-final"
+ship 后 PM prod 实测反馈："1. 搜索入场动效没看到；2. 详情卡飞入飞出消失；3. 网页 low / 没高级感 / 不留人 / 不吸引继续用。" 进入 polish 修订阶段。
+
+### 8.1 polish 7 batch 完整时间表
+
+| Batch | DR | commit | 内容 | PM 拍 |
+|---|---|---|---|---|
+| **DR-088** | revert (5345810) | DR-088 加全局 `*` `@media (prefers-reduced-motion: reduce)` 顺手修 design-review Finding 3 / 触发 Win10 默认 reduce-motion 全 transition 被 kill | ❌ revert |
+| **D1** | DR-089 | `08c9ffc` | search popover 180ms fade+translateY entry · 不加全局 reduced-motion | ✅ 留 |
+| **B5** | DR-090 | `a18e89a` | header link padding + chip padding + 全局 `:focus-visible` halo + 副标题 11→12px（D13-D20 audit 7 项基础修正）| ✅ 留 |
+| B2 | DR-091 | 5a429c0 | 文字类 hover letter-spacing 舒展 4 处 | ⚠ 后撤 / B6 修 |
+| **B3** | DR-092 | `2d7fc0f` | button 类 hover scale + glow 4 处（zoom + sidebar + tl-play + 详情卡 ×）| ✅ 留 |
+| **B4** | DR-093 | `3c1727a` | 详情卡 hierarchy（H2 line-height + Entfremdung 间距 + CTA hover bg 反相）| ✅ 留 |
+| **D9** | DR-094 | `0046c88` | obs 紫圈 spring scale 0.5→1.2→1.0 / 220ms cubic-bezier | ✅ 留 |
+| **B6** | DR-095 | `6fc4485` | 撤 B2 letter-spacing → underline draw-in + left border slide-in（::after scaleX/scaleY · GPU 合成 / 不破 layout）| ✅ 留 |
+| **D2** | DR-096 | `744f8c6` + hotfix `fd8b545` | search popover 退场 120ms fade + translateY(-2px) up · `hide({immediate})` 分流防 race · CSS `@keyframes search-popover-exit` + `.popover-closing` | ✅ 留 |
+
+### 8.2 polish 阶段 Bundle 变化
+
+| commit | JS gzip | CSS gzip | 累积 delta |
+|---|---|---|---|
+| c42eee8 ship baseline | 34.42 KB | 1.72 KB | — |
+| **fd8b545 D2 (final)** | **34.58 KB** | **2.33 KB** | JS +0.16 / CSS +0.61 |
+
+**Bundle 最终**：JS 34.58 KB / 上限 35 KB / 剩 **0.42 KB** ✓
+
+### 8.3 4 件套 baseline 终态（M-B1 全 ship + polish 7 batch）
+
+| 维度 | M5 ship | B1 ship #2 | **B1 final（polish 7 batch）** |
+|---|---|---|---|
+| Bundle gzip | 49.61 KB | 34.42 KB | **34.58 KB** ✓ (-30% from M5) |
+| Tests unit | 持平 | 270/273 | **276/279**（+6 D2 new test 全过 / 3 pre-existing M3）|
+| Tests E2E | 6 spec | 10 spec | **10 spec**（4 B1 + 6 M5 sanity · `deploy.spec.ts` 5 fail M2 obsolete 入 B2 cleanup）|
+| Design grade | — | A · AI Slop A | **A · AI Slop A**（polish 后 motion + hover hierarchy 全 A）|
+
+---
+
+## 9. Lessons 累积 6 条（polish 阶段新增 / 跟实施期 8 lessons 互补）
+
+### 9.1 ⚠ DR-088 Windows 10 默认 reduce-motion 教训
+
+**事件**：DR-088 加全局 `*` `@media (prefers-reduced-motion: reduce) { transition-duration: 0.01ms !important }` 顺手修 design-review Finding 3 / 但 **Win10 系统默认开启"减少动画效果"** → Chrome/Edge 检测后 `prefers-reduced-motion: reduce` 返回 true → 全局规则激活 → 详情卡 inline transition + hover transition 全 kill → 用户体验崩溃。
+
+**教训**：
+1. **检测平台默认值**：Windows 10/11 默认 reduce-motion 与 macOS 默认 no-preference 不同 · Win 用户做 motion polish 前必须先测
+2. **不用全局 `*` 规则**：reduced-motion 应针对装饰性动画（search popover fade）/ 不包装"essential motion"（详情卡 slide / hover 反馈）
+3. **PM 优先于 WCAG AAA**：PM 自由意志想看动效 / 严格 WCAG 让 reduce-motion 用户看不到 fade-in / 应让 PM 决定 trade-off
+
+### 9.2 ⚠ design-review skill 评分 ≠ PM 主观感受
+
+**事件**：B1 ship 前 design-review 跑出 **A-** + AI Slop **A** / 我认为是 ship-ready / PM 实测后说 "low / 没高级感"。
+
+**教训**：
+1. **skill rubric 是参考 / 不是绝对**：design-review 用 weighted rubric / 不 capture "细节用心 / 高级感 / 留人" 这种主观感受
+2. **PM 主观感受 = ground truth**：再高的 letter-grade 都没 PM 一句"low"分量重
+3. **审视风格根本假设**：editorial-academic 风是 PM 早期 brainstorm 选的 / 实际用过后 PM 觉得"静谧 ≠ 高级感" / 应在 ship 前 PM 实测时 question 这个假设
+
+### 9.3 ⚠ letter-spacing hover 在紧凑元素上 low + 撑 layout
+
+**事件**：B2 给 chip / claim-item / search-item / header-link 加 letter-spacing 0.02 → 0.04-0.06em hover 展开。PM 反馈 "弹得 low / 没设计感 / 搜索浮窗跟着加宽别扭"。
+
+**教训**：
+1. letter-spacing 在紧凑 inline 元素上视觉是"被推开"/ 不优雅 / 偏 SaaS 套路（"AI Slop"中容易出现的微动效）
+2. 任何影响 layout 字段的 hover effect 都会撑 container · popover 这种 dynamic width 容器会跟着抖
+3. editorial 杂志风的优雅 hover = **underline draw-in + left border slide-in**（B6 修订方向）：`::after` absolute 定位 + `scaleX/scaleY` transform / 不破 layout / GPU 合成 / 28ms cubic-bezier(0.4, 0, 0.2, 1)
+
+### 9.4 polish buffet 7 batch atomic 顺序 B 流程
+
+**事件**：PM 选 "全部做 + 顺序 B 一个个" / 我列 5 batch 后实施 / 又 hotfix B6（PM 不喜欢 B2）/ 又加 D2 7/7 完成。
+
+**教训**：
+1. **CSS-only batch 低 risk 一波多 D**（B5 4 项 / B3 4 项）· 每 batch 1 commit / PM 1 次实测拍板 / 节省 PM 时间
+2. **JS 改动单 D 单 commit**（D1 entry / D9 spring / D2 exit · 各 1 commit）· 风险隔离 / 易 revert
+3. **GH Pages CDN cache 5-10 分钟刷新** + Win10 浏览器 cache 顽固 · 教 PM Ctrl+F5 + DevTools Network "Disable cache" + Application Storage clear
+4. **PM "看不到效果" 不等于 CSS 没生效**：先用 browse hover + css 命令查 computed style 验证 / 数据说话 / 然后让 PM 排查 cache
+
+### 9.5 主动 audit ≠ 等 PM 列违规
+
+**事件**：PM 补丁说 "基础 UIUX 准则你也要主动 audit / 行间距 / 紧贴边缘 / 不能只盯 PM 强调的点"。
+
+**教训**：
+1. PM 列的是 D-buffet 12 项（飞入飞出 / hover 等显式动效）/ 我用 browse JS audit 出 8 项 PM 没提的基础违规（D13-D20）
+2. **audit 工具链**：browse + JS 测 text overflow / line-height ratio / padding 紧贴 / focus-visible rules
+3. **资深 UIUX 视角**：不只做 PM 强调的 / 主动查 PM 视野盲区
+
+### 9.6 ⚠⚠ **新增 · D2 deploy gap 教训**（ship 流程改进）
+
+**事件**：D2 commit `744f8c6` push 后我立即跑 ship 报告 "全验证 / Bundle / unit / e2e / preview 全过 / 等 PM 实测"。但 **GitHub Actions Deploy workflow 18s 就 fail** —— ESLint `--max-warnings=0` 把 test 文件末尾一个多余空行 (prettier `Delete ⏎` warning) 当 error 拒了。**prod 还停在 B6 旧版本**。PM Ctrl+F5 看到的是 B6 状态，反馈 "没看到效果"。我以为 PM 测错位置或者 cache 问题 / 实际是 prod 根本没部署 D2。
+
+**教训（ship 流程硬约束）**：
+1. **push ≠ ship**：commit push 只是触发 deploy / deploy 可能 fail / fail 时 prod 不更新
+2. **ship 完成必须等 deploy success**：`gh run watch <run-id> --exit-status` 显式等 GH Actions 部署完且 success 才算真 done
+3. **`--max-warnings=0` 严格模式**：prettier `Delete ⏎` `Insert ⏎` 这种格式 warning 也会拒 deploy / 本地 `npm run lint` 必须 0 warning 才 push（不是 0 error）
+4. **修法**：每次 push 后 background `gh run watch` · 等通知再报 ship done · 失败立即 fix + 再 push（这次 hotfix `fd8b545` 删 trailing 空行）
+5. **PM 没看到效果 ≠ 测错位置 / cache 问题**：先查 `gh run list` deploy 状态 / 是 fail 就立即修 / 不要让 PM 反复刷新等 cache
+
+---
+
+## 10. 后续 ship 流程（M-B1 完成 → B2 待启）
+
+- ✅ tag `m-b1-final` 已打 / push origin · HEAD fd8b545
+- ✅ takeaway 更新（本文件 · 含 polish 7 batch + 6 lessons）
+- ⏸ archive M-B1 plan / spec 入 `archive/` 子目录（可选 · PM 未要求 / 沿用当前位置）
+- ⏸ 等 PM 拍 `go B2` 启动副图地理图 brainstorm（visual companion + 双 skill 召唤 + spec 视觉风格定调）
+
+---
+
+## 11. 续接简单确认句
+
+> "M-B1 全 ship + tag `m-b1-final` (fd8b545) · 2026-05-21 · DR-078~096 累积 · polish 7 batch 全 PM 留 · Bundle 34.58 KB / Test 276 + 4 E2E / Design A · 6 lessons 落档 · 等 PM 拍 `go B2`"
