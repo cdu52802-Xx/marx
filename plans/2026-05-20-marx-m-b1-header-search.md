@@ -27,9 +27,9 @@
 | 3 | T3.2 | `search.ts` debounce 200ms | 1-2h | T2.2, T3.1 |
 | 3 | T3.3 ⭐ | `search-result-popover.ts` 升级双形态 + 分组（DR-078 / PM mockup 拍板） | 3-4h | T3.1, T3.2 |
 | 3 | T3.4 ⭐ | `lib/search-curate.ts` 新建：人物 7 / 概念 8 / 时段 4 静态 const | 1h | — |
-| 4 | T4.1 | 主图 highlight API：紫圈 obs + fade 其他 | 2-3h | T3.1 |
-| 4 | T4.2 | filter chip dropdown（节点类型 + 关系类型 + 人名） | 2-3h | T4.1 |
-| 4 | T4.3 | 副图 highlight hook 预留（dom event） | 1h | T4.1 |
+| 4 | T4.1 | 主图 highlight API：紫圈 obs + fade 其他 | ~1h | T3.1 | ✅ 7590d8c |
+| 4 | T4.2 | ~~filter chip dropdown~~ · ❌ DELETED · DR-083 | — | — | — |
+| 4 | T4.3 | 副图 highlight hook 预留（dispatch event） | ~30min | T4.1 | ✅ 522b04b |
 | 5 | T5.1 | E2E 新加 4 spec（搜索打字 / 候选选择 / Esc 关 / filter chip） | 2-3h | 全部 |
 | 5 | T5.2 | 4 件套 baseline + ship | 1-2h | T5.1 |
 
@@ -357,45 +357,50 @@ export const KEY_PERIODS = [
 
 ---
 
-## Stage 4 · 主图高亮 + filter chip（1 天）
+## Stage 4 · 主图 obs 高亮 + 副图 hook event（0.5 天 / done 2026-05-21）
 
-### Task 4.1: 主图 highlight API
-
-**Files:**
-- Modify: `src/main.ts`
-
-- [ ] **Step 1: 加 `highlightObs(claimId)` function**：紫圈高亮 selected obs + opacity fade 其他
-
-- [ ] **Step 2: 加 `clearHighlight()` function**
-
-- [ ] **Step 3: search-result-popover onSelect → highlightObs**
-
-### Task 4.2: filter chip dropdown
-
-**Files:**
-- Modify: `src/components/search.ts`
-- Modify: `src/components/search-result-popover.ts`
-
-- [ ] **Step 1: 搜索框右侧 dropdown UI（节点类型 / 关系类型 / 人名 chip）**
-
-- [ ] **Step 2: chip 选中 → filter search results**
-
-- [ ] **Step 3: 沿用 sidebar filter pattern**
-
-### Task 4.3: 副图 highlight hook 预留
+### Task 4.1: 主图 highlight API ✅ done（commit 7590d8c）
 
 **Files:**
 - Modify: `src/main.ts`
 
-- [ ] **Step 1: 触发 custom event `marx:search-highlight` { type, id }**
+- [x] **Step 1: 加 `highlightObs(claimId)` function**：紫圈高亮 selected obs + opacity fade 其他
+- [x] **Step 2: 加 `clearSearchHighlight()` function**
+- [x] **Step 3: search-result-popover onSelect → highlightObs（claim type）+ onClose → clearSearchHighlight**
 
-- [ ] **Step 2: B2 期间 listener 接收（B1 期间无 listener / dispatch 但无 effect）**
+实施 notes：
+- 视觉沿用 highlightArcAndDots pattern（米白 #fcfaf6 stroke / r=5 / width=2 · NORMAL_OPACITY=1 / FADED_OPACITY=0.15）
+- onClose wire：Esc / 点空白 → 清高亮；选中 candidate hide 不走 onClose 保留高亮
+- 浏览器实测 ✓（搜"异化"→ 选 claim-marx-013 → 紫圈+全 fade → Esc 复原）
 
-### Stage 4 PM checkpoint
+### Task 4.2: filter chip dropdown · ❌ DELETED · DR-083（2026-05-21）
 
-- 选中候选 → 主图 obs 紫圈 + fade 其他
-- filter chip 工作正常
-- 副图 hook 预留（dispatch event console.log 看到）
+**砍掉原因**（spec § 10 DR-083）：
+1. 探索形态 chip + § author_id 分组 + § 概念命中段已覆盖筛选场景
+2. B1 数据维度只有「主张 + 作者 + 年份」/ 节点类型 + 关系类型 chip 等 B2 副图数据足才有意义
+3. header 36px 已挤 / 浮窗加 chip 一行视觉吵
+4. PM "如有更合适筛选方案后面专题设计"
+
+留 B1 V2 backlog（跟中英映射高亮一起 V2 专题处理）。
+
+### Task 4.3: 副图 highlight hook ✅ done（commit 522b04b）
+
+**Files:**
+- Modify: `src/main.ts`
+
+- [x] **Step 1: dispatch CustomEvent `marx:search-highlight` { type, id }** （window scope）
+- [x] **Step 2: B1 期间无 listener / B2 副图按 type 选择性 listen（实施 B2 Stage 3）**
+
+实施 notes：
+- 所有 type 都 dispatch（含 claim · 让 B2 副图也能高亮选中 obs 对应地理位置）
+- 跟主图 highlightObs 并存 / 无副作用
+- 浏览器实测 ✓（addEventListener 收到 detail `{type:'claim', id:'claim-marx-013'}`）
+
+### Stage 4 PM checkpoint ✅ done
+
+- ✅ 选中候选 → 主图 obs 紫圈 + fade 其他
+- ❌ filter chip（T4.2 砍 · DR-083）
+- ✅ 副图 hook 预留（dispatch event listener 收到）
 
 ---
 
@@ -455,7 +460,7 @@ git push origin main --tags
 - Stage 1：link 列表具体内容（关于 / 致谢 / GitHub link / 其他）
 - Stage 2：搜索框 placeholder 文字 / 候选 list max 数量
 - Stage 3：fuzzy match algorithm（exact 优先 vs Levenshtein vs 自建）
-- Stage 4：filter chip 默认选哪些（节点类型 全选 vs 默认人/事件）/ 高亮 fade 数值
+- Stage 4：~~filter chip 默认选哪些~~（砍 / DR-083）· 高亮 fade 数值已实施期默认（FADED_OPACITY=0.15）
 - Stage 5：B1 takeaway 内容 + 是否需要 prod 部署 verify
 
 ---

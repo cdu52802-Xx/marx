@@ -1,7 +1,7 @@
 # Marx M-B 主线进展 · 新窗口续接锚点（2026-05-20 ~ 2026-05-21）
 
-> **状态**：B1 Stage 1-2-3 ship 完成 + 2 PM bug 修 / **Stage 4 待启动**（PM "go Stage 4" 拍板已收到）
-> **当前 HEAD**：`6719672`（Stage 3 outside click bug 2 R2 修 / 2026-05-21）
+> **状态**：B1 Stage 1-2-3-4 全 ship 完成 / **Stage 5 待启动**（E2E + 4 件套 baseline + ship）
+> **当前 HEAD**：`522b04b`（T4.3 副图 hook dispatch event / 2026-05-21）
 > **Git**：clean / origin/main 同步
 > **Prod**：https://cdu52802-xx.github.io/marx/
 > **Mockup**：https://cdu52802-xx.github.io/marx/m-b1-search-ux-mockup.html
@@ -45,6 +45,14 @@
 - Bug 1 修：listener 改 **capture phase**（防主画布 obs/arc click handler 的 stopPropagation 拦截 · DR-082）· +1 test
 - Bug 2 修：input.focus + click 都监听 reopenSearchPopover + isOpen guard（input 焦点未失场景 focus event 不 fire）
 
+### B1 Stage 4 · 主图 obs 高亮 + 副图 hook event（`7590d8c` + `522b04b` / 2026-05-21）
+- **T4.1** `7590d8c`：`highlightObs(claimId)` 紫圈+fade · `clearSearchHighlight()` 复原 · onSelect wire claim type · onClose wire 清高亮
+  - 视觉沿用 highlightArcAndDots pattern（米白 #fcfaf6 stroke / r=5 / width=2 · NORMAL=1 / FADED=0.15）
+- **T4.2** ❌ DELETED · DR-083 / PM "如有更合适筛选方案后面专题设计" / 留 B1 V2 backlog
+- **T4.3** `522b04b`：window dispatch `marx:search-highlight` { type, id } · B2 副图 listener 接收
+- 浏览器实测 ✓：搜"异化"→ 选 claim-marx-013 → obs 紫圈 + 其他全 fade + dispatch event listener 收到 detail
+- Bundle 34.13 KB gzip（+0.12 from baseline · ≤35 预算 / 剩 0.87 KB）
+
 ---
 
 ## 2. PM checkpoint 反馈累积
@@ -65,34 +73,41 @@
 - **Bug 2** · Esc 关后再 click 不重开 → 根因 input 焦点未失 → focus event 不 fire → focus listener 不触发 → 加 **click event listener** 兜底 + `isOpen()` guard 防 flicker
 - 实测"阶级"出 11 组超 spec § 7 max 4 / 留 ship 前决断
 
+### 2.4 Stage 4 实施期 challenge（2026-05-21）
+- AI 主动 challenge T4.2 filter chip → PM A 拍板砍 / DR-083 落档
+- 砍掉理由：探索 chip + author_id 分组已覆盖筛选 / B1 数据维度不够 / header 36px 已挤 / "后面专题设计"
+- 留 B1 V2 backlog 跟中英映射高亮一起 V2 专题处理
+
 ---
 
-## 3. 下一步 · Stage 4 · 主图高亮 + filter chip + 副图 hook（0.5-1 天）
+## 3. 下一步 · Stage 5 · E2E + 4 件套 baseline + ship（0.5 天）
 
-> PM "A" 拍板（2026-05-21）· `go Stage 4` 已收到 · 新窗口立即按 T4.1 开工
+> Stage 4 已 ship（2026-05-21）· 等 PM "go Stage 5" 启动
 
-按 plan T4.1-T4.3：
+按 plan T5.1-T5.2：
 
-### T4.1 · 主图 highlight API（2-3h）
-- `highlightObs(claimId)` → 紫圈高亮 + opacity fade 其他
-- `clearHighlight()`
-- search popover `onSelect` → highlightObs（替换现 console.log placeholder · main.ts line ~1430）
-- 测试：unit + 浏览器实测搜→选→主图高亮联动
+### T5.1 · E2E 新加 4 spec（2-3h）
 
-### T4.2 · filter chip dropdown（2-3h · 可能简化）
-- spec § 3.3 写过 filter chip / 但探索形态 chip 已内嵌（§ 主要人物 + § 核心概念 + § 关键时段）
-- **实施期 PM checkpoint 决**：还需独立 chip dropdown 吗 / 或并入探索 chip？
-- AI 主动 challenge PM 优化 / 不一味实现
+`e2e/m-b1-header-search.spec.ts`（新建）：
+1. 搜索打字 "异化" → popover 候选 list 显示（concept 段 + claim items + group）
+2. 候选 click → 主图 obs 紫圈 + fade（验证 stroke=#fcfaf6 / opacity=0.15）
+3. Esc → 浮窗关 + 高亮清（obs-dot stroke=null / opacity=1）
+4. ~~filter chip~~（砍 · DR-083）/ **替补**：空 query → 探索形态 3 段 chip / chip click → 自动填搜索框 + 切结果形态
 
-### T4.3 · 副图 highlight hook event（1h）
-- dispatch custom event `marx:search-highlight` { type, id }
-- B1 期间无 listener / B2 实现 listener 接收
-- 单元测 dispatchEvent + 浏览器 console verify
+### T5.2 · 4 件套 baseline + ship（1-2h）
 
-### Stage 4 PM checkpoint
-- 搜索框选候选 → 主图 obs 紫圈高亮 + fade 其他
-- filter chip 工作（如保留）
-- 副图 event console.log 看到（B2 启用 listener）
+- npm test + lint + build（baseline 保持 / 数字落档）
+- gstack 4 件套（health + benchmark + qa + design-review）跑一遍 · 跟 M5 baseline 对比 / 不退化
+- `docs/2026-05-XX-m-b1-takeaway.md` 写 takeaway（含 Phase 0/1 + B1 Stage 1-5 lessons / DR-078~083 落档 / backlog 给 B2）
+- 美观度 polish（DR-079 · Stage 3 ship 前留的 placeholder）实施期 PM checkpoint 决（字体 hierarchy / 间距 rhythm / 配色 / 微动效）
+- AGENTS.md 三件套 frontend-design + ui-ux-pro-max skill 主动召唤
+- atomic commit + push + tag `m-b1-final`
+
+### Stage 5 PM checkpoint = ship
+- B1 prod 部署 OK（GH Pages auto deploy）
+- 6 user journey 实测验收（spec § 3.7 Acceptance v2 全 GREEN）
+- 4 件套 baseline 不退化（Health ≥ 9 / QA ≥ 96 / Design ≥ A- / AI Slop ≥ A）
+- PM 美观度反馈处理（DR-079）
 
 ---
 
@@ -124,12 +139,12 @@
 
 ## 6. 验证数据 baseline
 
-| 维度 | Stage 1 | Stage 2 | Stage 3 | Stage 3 + outside fix（当前 HEAD） |
-|---|---|---|---|---|
-| Tests | 173/176 | 201/204 | 259/262 | **270/273** |
-| Lint | 0 | 0 | 0 | **0** |
-| Build gzip | 31.21 KB | 32.08 KB | 33.95 KB | **34.01 KB**（预算 ≤35 KB 内 / 还剩 0.99 KB）|
-| 4 件套 baseline | — | — | — | 待 B1 ship 重跑 |
+| 维度 | Stage 1 | Stage 2 | Stage 3 | Stage 3 + outside fix | **Stage 4（当前 HEAD）** |
+|---|---|---|---|---|---|
+| Tests | 173/176 | 201/204 | 259/262 | 270/273 | **270/273**（无新增测 / Stage 4 是 wire up）|
+| Lint | 0 | 0 | 0 | 0 | **0** |
+| Build gzip | 31.21 KB | 32.08 KB | 33.95 KB | 34.01 KB | **34.13 KB**（预算 ≤35 KB / 剩 0.87 KB）|
+| 4 件套 baseline | — | — | — | — | 待 B1 ship 重跑 |
 
 3 fail tests 是 pre-existing M3 baseline（concept successor notes range）/ 持平 / 非 B1 引入。
 
@@ -144,6 +159,7 @@
 | Stage 3 PM | 美观度 / 字体 / 间距 / 配色 polish（DR-079）| B1 ship 前 polish 阶段 |
 | Stage 3 PM | max 4 组人物折叠（spec § 7）· 实测"阶级"出 11 组超 4 | 实施期 PM checkpoint 决 |
 | Stage 3 PM | keywords 命中但 claim_text 不含 query 时不高亮 / 看着诡异 | V2 backlog（中英映射也 V2） |
+| Stage 4 challenge | filter chip 砍掉 / DR-083 | **B1 V2 专题设计**（跟中英映射 V2 一起） |
 | M5 takeaway | DR-069 弧线误选（4 轮修未解）| B2 期间统筹（PM A+D 不强攻）|
 | M5 takeaway | B3 mobile popover 5px overflow / B4 tablet sidebar 撞 / Focus popover 焦点回中心 | B3 整合 |
 
@@ -151,6 +167,6 @@
 
 ## 8. 跨窗口续接简单确认句
 
-> "我在新窗口续接 Marx · B1 Stage 1-2-3 + outside click 修 全部 ship（HEAD 6719672）/ PM 已 `go Stage 4` / 立即按 T4.1 主图高亮开工 / 读 docs/2026-05-20-m-b1-progress-anchor.md + spec v2 + plan Stage 4"
+> "我在新窗口续接 Marx · B1 Stage 1-4 全 ship（HEAD 522b04b · T4.2 砍 DR-083 / T4.1+T4.3 ship）/ 等 PM `go Stage 5` 启动 E2E + 4 件套 baseline + B1 ship / 读 docs/2026-05-20-m-b1-progress-anchor.md + spec v2 + plan Stage 5"
 
-新窗口 AI 应立即按 § 3 Stage 4 T4.1 plan 开工 · 不再等 PM 二次确认（PM 已拍板）。
+新窗口 AI 续接时不动代码 · 等 PM 拍 `go Stage 5` 再启 T5.1。

@@ -214,8 +214,8 @@ PM 2026-05-20 mockup 反馈："形式认可 / 美观度差点 / 设计感没有�
 |---|---|---|---|
 | 1 | header layout 重组（brand 字号 / link 位置 / 互换按钮预留位） | 1 天 | ✓ done 2026-05-20 |
 | 2 | 搜索 UI（输入框 + 下拉浮窗 + 键盘 / Stage 2 ship `fa1c2ef`） | 1.5 天 | ✓ done 2026-05-20 |
-| 3 | **搜索逻辑 v2**（T3.1 fuzzy + T3.2 debounce + **T3.3 popover 双形态升级** + **T3.4 curate lists**） | **1.5 天**（v1 1d → v2 +0.5d） | ✓ |
-| 4 | 主图高亮 logic（主图 obs 高亮 / fade 其他）+ filter chip（探索形态已内嵌 chip / 可能简化） | 0.5-1 天 | ✓ |
+| 3 | **搜索逻辑 v2**（T3.1 fuzzy + T3.2 debounce + **T3.3 popover 双形态升级** + **T3.4 curate lists**） | **1.5 天**（v1 1d → v2 +0.5d） | ✓ done 2026-05-21 |
+| 4 | 主图 obs 高亮 + 副图 hook event（T4.1 highlightObs + T4.3 dispatch · **T4.2 filter chip 砍 · DR-083**） | 0.5 天 | ✓ done 2026-05-21 |
 | 5 | E2E + 4 件套 baseline + ship | 0.5 天 | ✓ ship |
 
 **B2 hook 预留**：副图高亮 logic 接 B2 实施期实现（B1 期间 dom event 触发 / B2 时 listener 接收）。
@@ -546,6 +546,8 @@ Stage 1 prototype checkpoint：
 | DR-079 | 2026-05-20 | B1 搜索美观度 polish 留 Stage 3 实施期 + ship 前 | 现在 brainstorm 设计方向 / 高保真 mockup v2 | PM 反馈"真正用用之后才能找到更合理的方案" / 不凭空想象 / 实施期 frontend-design + ui-ux-pro-max skill 主动调用（AGENTS.md 三件套硬约束） |
 | DR-080 | 2026-05-20 | B1 概念命中识别 = 精确匹配 8 chip / 模糊只走 claim 文本 | 部分匹配 / Levenshtein 也算 | PM 接受建议 / 模糊匹配交给 claim text fuzzy / 概念是 curate 名词不应模糊 |
 | DR-081 | 2026-05-20 | B1 普鲁东 数据库实存繁体「皮埃爾-約瑟夫·普魯東」/「圣西门」缺 → 替换为「施蒂纳」（麥克斯·施蒂納 / 3 条 claim）| 自建圣西门数据 / 中繁体 normalize | 数据真实优先 / 不为 curate list 自建数据 / 中繁体差异留 V2 normalize backlog |
+| DR-082 | 2026-05-21 | B1 outside click listener 用 capture phase（非 bubble）| bubble phase / 拆 main.ts stopPropagation | 主画布 obs/arc click handler 已 stopPropagation 防关详情卡（main.ts line 273/754/816）/ bubble 收不到 / capture 在 target 阶段前不受影响 / 100% 命中 |
+| DR-083 | 2026-05-21 | B1 V2 filter chip dropdown（T4.2）砍 / 留 V2 专题设计 backlog | 按 plan 完整做（节点类型 + 关系类型 + 人名）/ 简化版 1-2 chip | (1) 探索形态 chip + § author_id 分组 + § 概念命中段已覆盖筛选场景；(2) B1 数据维度只有「主张 + 作者 + 年份」/ 节点类型 + 关系类型 chip 等 B2 副图数据足才有意义；(3) header 36px 已挤 / 浮窗加 chip 一行视觉吵 / DR-079 polish 留 ship 前；(4) PM "如有更合适筛选方案后面专题设计"|
 
 ---
 
