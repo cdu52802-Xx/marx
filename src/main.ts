@@ -1426,12 +1426,18 @@ popoverApi = mountResultPopover({
   },
 });
 
-// 搜索框 focus → 统一走 handleSearch（PM bug 修 2026-05-21 · Esc 关后再 focus 显示之前搜的内容）
+// 搜索框 focus + click → 统一走 handleSearch（PM bug 修 2026-05-21 R2）
+//   - 用 click 而非 focus / 因为关闭浮窗时 input 仍保持 focus state / 再次 click 不触发 focus event
+//   - focus event 仍监听 / 兼顾键盘 tab 切到 input 场景
+//   - reopen guard · 已 open 不重复 mount（避免 1 帧 flicker）
 //   - empty value → handleSearch 内自动 showExplore
 //   - 非 empty value → handleSearch 内自动 showGrouped
-searchApi.input.addEventListener('focus', () => {
+function reopenSearchPopover(): void {
+  if (popoverApi?.isOpen()) return;
   handleSearch(searchApi.input.value);
-});
+}
+searchApi.input.addEventListener('focus', reopenSearchPopover);
+searchApi.input.addEventListener('click', reopenSearchPopover);
 
 console.log(
   '[Marx M-B1] render complete · timeline + sidebar + header-controls + search + popover mounted',
