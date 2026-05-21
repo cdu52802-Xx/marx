@@ -398,6 +398,60 @@ em.search-result-highlight {
   padding: 0 1px;
 }
 
+/* ============= B3 polish · button 类 hover scale + glow（DR-092）============= */
+/* PM 2026-05-21 反馈 "细节用心" · 4 处按钮 hover 加 transform + glow
+ * GPU 合成 transform + filter / 不触发 layout reflow
+ */
+
+/* D5 · zoom-control 3 button (+/−/⌂) hover scale */
+.zoom-control-btn {
+  transition:
+    background 0.15s ease,
+    transform 0.15s ease;
+}
+.zoom-control-btn:hover {
+  transform: scale(1.08);
+}
+
+/* D6 · sidebar 5 filter icon (●/👤/↝/⇋/⋯) + ⟩ toggle hover scale + currentColor glow */
+.sidebar [data-filter-icon],
+.sidebar .toggle-btn {
+  transition:
+    transform 0.15s ease,
+    filter 0.15s ease;
+}
+.sidebar [data-filter-icon]:hover,
+.sidebar .toggle-btn:hover {
+  transform: scale(1.18);
+  filter: drop-shadow(0 0 4px currentColor);
+}
+
+/* D8 · timeline ▶ play button hover bg 反相 + scale + 紫光晕 */
+#tl-play {
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+#tl-play:hover {
+  background: #5b3a8c !important;
+  color: #fcfaf6 !important;
+  transform: scale(1.05);
+  box-shadow: 0 0 8px rgba(91, 58, 140, 0.4);
+}
+
+/* D10 · 详情卡 × close button hover 90deg 旋转 + 紫色 */
+.claim-popover .popover-close {
+  transition:
+    transform 0.2s ease,
+    color 0.15s ease;
+}
+.claim-popover .popover-close:hover {
+  transform: rotate(90deg);
+  color: #5b3a8c !important;
+}
+
 /* ============= B5 polish D16 · 全局 :focus-visible 键盘 a11y（DR-090）============= */
 /* 键盘 Tab 导航时 focus ring 用紫色 halo（box-shadow）/ editorial-academic 友好
  * 鼠标 click 不显示 ring（:focus 但非 :focus-visible / Chrome 默认）
