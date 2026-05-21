@@ -1261,6 +1261,40 @@ function restoreArcOpacity(): void {
   d3.selectAll<SVGCircleElement, unknown>('circle.obs-dot').attr('r', 2.3).attr('stroke', null);
 }
 
+// ============================================================
+// B1 T4.1 · 搜索结果高亮 API（spec § 3.3.3）
+//   highlightObs(claimId)：紫圈高亮选中 obs + opacity fade 其他 obs/arc
+//   clearSearchHighlight()：复原 obs-dot + 恢复 timeline filtering state
+//   视觉沿用既有 highlightArcAndDots pattern（米白 #fcfaf6 stroke / r=5 / width=2）
+//   tradeoff：focus mode 同时搜索是 corner case · clearSearchHighlight 不主动恢复 focus state
+// ============================================================
+function highlightObs(claimId: string): void {
+  // 1. 复原所有 obs-dot · 防多次调累积 stroke
+  d3.selectAll<SVGCircleElement, unknown>('circle.obs-dot').attr('r', 2.3).attr('stroke', null);
+  // 2. 紫圈高亮选中 obs-dot
+  document
+    .querySelectorAll<SVGCircleElement>(`g.obs[data-claim-id="${claimId}"] circle.obs-dot`)
+    .forEach((el) => {
+      d3.select(el).attr('r', 5).attr('stroke', '#fcfaf6').attr('stroke-width', 2);
+    });
+  // 3. fade 其他 obs · 选中 obs 保持 normal
+  d3.selectAll<SVGGElement, ClaimWithCoords>('g.obs').attr('opacity', (c) =>
+    c.id === claimId ? NORMAL_OPACITY : FADED_OPACITY,
+  );
+  // 4. fade arc · 跟选中 obs 关联的 arc 保持 normal
+  d3.selectAll<SVGPathElement, ClaimRelation>('path.arc').attr('opacity', (r) =>
+    r.source === claimId || r.target === claimId ? NORMAL_OPACITY : FADED_OPACITY,
+  );
+}
+
+function clearSearchHighlight(): void {
+  // 1. 复原 obs-dot 默认 r + 无 stroke
+  d3.selectAll<SVGCircleElement, unknown>('circle.obs-dot').attr('r', 2.3).attr('stroke', null);
+  // 2. opacity 恢复到当前 timeline state
+  const cy = timelineApi?.getCurrentYear() ?? INITIAL_CURSOR_YEAR;
+  applyTimelineFiltering(cy);
+}
+
 // DR-058 · zoom-fit 接受紧凑后的新坐标 Map（不再用原 claimIdToCoords）
 // Stage 5 R2 polish · bbox center 飞到 visCenterVB 而非 viewBox center
 //   原 bug：bbox center 飞到 canvasWidth/2,canvasHeight/2 (viewBox 中心) / 焦点元素显示在屏幕中
@@ -1421,9 +1455,18 @@ const searchApi = mountSearchInput({
 popoverApi = mountResultPopover({
   anchor: searchApi.input,
   onSelect: (item) => {
-    // T4.1 接真主图 highlight · 现 placeholder console.log（关浮窗已由 popover 内部处理）
-    console.log('[Marx M-B1 T3.3] selected:', item.type, item.id, '·', item.label);
+    // T4.1 · 主图高亮联动（spec § 3.3.3）
+    //   claim type（非 concept 占位 id）→ highlightObs(id) 紫圈+fade
+    //   person / event / location / concept → T4.3 dispatch event（B1 期间无 listener / B2 接收）
+    if (item.type === 'claim' && !item.id.startsWith('concept-')) {
+      highlightObs(item.id);
+    } else {
+      // T4.3 hook placeholder · concept / person / event / location
+      console.log('[Marx M-B1 T4.1] non-claim selected (B2 hook):', item.type, item.id);
+    }
   },
+  // T4.1 · Esc / 点空白关浮窗时清搜索高亮（选中 candidate 后 hide 不走 onClose · 高亮保留）
+  onClose: clearSearchHighlight,
 });
 
 // 搜索框 focus + click → 统一走 handleSearch（PM bug 修 2026-05-21 R2）
