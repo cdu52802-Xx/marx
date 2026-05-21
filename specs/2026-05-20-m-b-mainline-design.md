@@ -1,6 +1,9 @@
 # Marx M-B 主线设计文档 · 页面框架 + 副窗地理图 + mobile
 
-> **状态**：草案 v1（2026-05-20）/ Phase 1 spec / 等 PM review
+> **状态**：
+> - B1 部分 ✅ **已 ship**（2026-05-21 tag `m-b1-final` → fd8b545 · Stage 1-5 + polish 7 batch · DR-078~096）
+> - B2 部分 ✅ **PM approved (A+) 路径**（2026-05-21 · 第一性原理推荐 / 直接进 writing-plans + 加 Stage 0 数据可达性验证 / DR-097）
+> - B3 部分 ⏸ 待启（Phase 4 · B2 ship 后）
 > **关联**（SSOT 引用 / 不重复内容）：
 > - [PRD V1 § 4 B+2 双主视图](../docs/PRD.md)
 > - [M-B brainstorm decisions doc](../docs/2026-05-20-b-mainline-brainstorm-decisions.md) ⭐（17 元素 catalog / 视觉设计 / 缩放谱系等 brainstorm 决策 SSOT）
@@ -350,18 +353,20 @@ PM 2026-05-20 mockup 反馈："形式认可 / 美观度差点 / 设计感没有�
 - paper 风格（border + paper-shadow + 米白）
 - 2 分组：§ 关系类型 / § 迁徙轨迹
 
-### 4.10 Stage 划分（7 stage）
+### 4.10 Stage 划分（8 stage · 加 Stage 0 风险前置 · DR-097）
 
 | Stage | 内容 | 估时 | PM checkpoint |
 |---|---|---|---|
+| **0** ⭐⭐ | **数据可达性验证**（DR-097 / 中国大陆网络硬约束）· 验 D3 geo 库本地可用 + 1818-1883 历史国界 GeoJSON 4 候选源（Euratlas / HGIS / OSM Historical / Naturalearthdata）可达性 / 不通列 fallback（代理/离线缓存/跨机抓/Codex 主力机代跑）/ 输出可达性矩阵 + 选定数据源 + 预估 GeoJSON 体积 | 0.5 天 | ✓ 必拍板（数据源选定）|
 | **1** ⭐ | **prototype** · 球面+平面+great circle 投影切换试水（最大技术风险先攻） | 1-2 周 | ✓ 必拍板 |
 | 2 | 86 节点完整渲染 + 关系连线 V1 核心 3-5 类（PM 从 6 候选拍板）| 1 周 | ✓ |
 | 3 | 详情卡 + 主副联动 + 互换 + 状态切换动画 | 1 周 | ✓ |
-| 4 | 时间轴动态国界（GeoJSON 找/自建）+ 迁徙轨迹 | 1-1.5 周 | ✓ |
+| 4 | 时间轴动态国界（GeoJSON 应用 Stage 0 选定）+ 迁徙轨迹 | 1-1.5 周 | ✓ |
 | 5 | 副窗（地理图当副 380×214 16:9 信息密度低版）| 0.5-1 周 | ✓ |
 | 6 | 图例 panel + tooltip + 球面旋转手势 + polish | 0.5 周 | ✓ |
 | 7 | E2E + benchmark + 4 件套 baseline + ship | 0.5 周 | ✓ ship |
 
+**Stage 0 优先级**（DR-097 新增）：网络风险先验 / 国外 endpoint 中国大陆经常不通（user_environment_china_network memory）/ 5 周后才发现 GeoJSON 拉不下来 = 灾难性 / 0.5 天前置验证 = 高 ROI 风险前置。
 **Stage 1 优先级**：技术风险先攻 / 跑不通可能影响整 B2 设计 / PM 实测 prototype 后才进 Stage 2-7。
 
 ### 4.11 文件结构（B2 新增）
@@ -552,6 +557,8 @@ Stage 1 prototype checkpoint：
 | DR-085 | 2026-05-21 | B1 polish · search commit + hover transient 双层状态机 + 3 关联修 | 单层（search 跟 hover 互斥）/ search 不复用 focusSet（不亮 person）/ hover 也不亮 person | PM 反馈 3 issue 一波修：(1) 搜索浮窗 z:20→1100 高于详情卡；(2) obs hover 双层（state 0/1/1+/0+ 状态机 · searchFocusClaimId state · combinedSet 并集 · A1 紫圈+B1 无圈视觉区分）；(3) restoreArcOpacity 内追加 applyTimelineFiltering 清 search obs opacity 残留（M5 timeline filter 是 g.obs opacity 唯一源头不变量被 B1 highlightObs 破了 / 现 systematic 恢复）；派生：clearHoverPreviewFiltering 加 searchFocus guard（详情卡 hover button leave 不丢 search）+ 全局 Esc keydown listener（state1 时 popover 已关 Esc 监听 detach / 补全局）；focus mode + search 同存 corner case 留 backlog 不本次解 |
 | DR-086 | 2026-05-21 | B1 polish · search onSelect 直达详情卡（dispatch obs click + re-apply highlightObs） | inline 复制 obs click 流程（duplicate ~60 行 + computeFlyTransform 是 sectionG.each 闭包局部不可外部用 / ReferenceError 被吞）/ 抽 helper 重构 obs click（risk 中 / 改既有逻辑） | PM 反馈：搜索栏点击具体主张时应同时展开详情卡（已经算用户想看 detail）；方案：dispatch obs click event 复用既有 obs click handler 完整流程（hideArcPopover+restoreArcOpacity+flyTo+showClaimPopover）+ 立即 highlightObs re-apply（obs click 内 restoreArcOpacity 清的 search state）；视觉无闪（同帧 paint 取 highlightObs final state）；改动 ~10 行 / 0 risk · 0 duplicate code |
 | DR-087 | 2026-05-21 | B1 polish · obs click 选中 visual indicator = 紫圈 stroke + **obs-text 加粗**（不淡显其他） | X2 紫圈+全 fade（跟 search 完全一样 / 太重）/ X3 紫色 ring 区分 search（用户记两套规则）/ X4 caret 指示器（跟 paper editorial 风不符）/ 仅加粗不变色（深灰）vs 加粗+变紫 | PM 反馈：obs click 后画布无 visual indicator / 用户视线回画布找不到选中的；资深 UIUX = commit selection 标准做法；方案 X1：紫圈（米白 #fcfaf6 sw=2 r=5）+ obs-text font-weight:700 加粗（保深灰 #2a2a2a · PM 选 A 仅加粗不变色 / 克制 editorial 风）·不淡显其他（跟 search 区分：search 还 fade）；视觉一致 = 搜索选定 + obs click 选定共用紫圈+加粗（用户大脑只记一个规则"紫圈+粗 = 当前选中"）；何时清：详情卡关 5 路径（A 点空白 + B × 按钮 + C Esc + D 点另一 obs 切换 + E 搜索栏选另一条）/ 派生：claim-popover.ts ClaimPopoverContext 加 onClose callback · hideClaimPopover 调 _onCloseCallback / main.ts 传 onClose=restoreArcOpacity wire 关详情卡时清 visual / restoreArcOpacity 内追加清 obs-text font-weight · highlightObs 同步加粗（DR-086 一致性）；hover 时紫圈+加粗保留（PM Q2 A · transient 跟 commit 解耦） |
+| DR-088~096 | 2026-05-21 | B1 polish 阶段 9 决策（DR-088 revert / D1+B5+B3+B4+D9+B6+D2 全 PM 留 / B2 letter-spacing 撤改 B6）| 详见 [docs/2026-05-21-m-b1-takeaway.md § 8](../docs/2026-05-21-m-b1-takeaway.md#8-polish-阶段-7-batch-收尾dr-088096--2026-05-21-晚) | M-B1 polish 7 batch 全 ship · Bundle 34.58 KB / Tests 276+4 E2E / Design A · tag `m-b1-final` |
+| **DR-097** | **2026-05-21** | **B2 启动 (A+) 路径 · 直接进 writing-plans + 加 Stage 0 数据可达性验证**（0.5 天 · 中国大陆网络硬约束）| (A) 纯直接进 plan / (B) re-validate spec / (C) brainstorm placeholder / (D) 重审 V1 | **第一性原理**：B2 真风险是技术 #1（球面+平面+great circle）+ 数据 #2（国外 GeoJSON 可达）/ brainstorm 解不了 / 必须 prototype + 数据测试；设计 #3 已 95% brainstorm done（spec § 4）/ § 7 placeholder 留 Stage PM checkpoint 实测决（M5 lesson 实测必要 vs 凭空想）；避免 vision drift（M4 lesson · 离 PRD/spec 越远越易 drift）；早 ship 早 feedback（PRD 敏捷精神 · B2 5-6 周已长）；(+) Stage 0 来自 user_environment_china_network memory · 国外 endpoint 5 周后才发现拉不下来 = 灾难性 / 0.5 天前置 = 高 ROI |
 
 ---
 
