@@ -1,5 +1,6 @@
 // M-B2 T1.3 · geographic-canvas.ts prototype scaffold unit test
 // 3 case · graticule mount / 5 test node / setMode 重算
+// M-B2 T1.4 加 · 2 case · d3.zoom attach / setMode 切换后节点重算（间接验 zoom → render 通路）
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { mountGeographicCanvas } from '../../src/components/geographic-canvas.ts';
@@ -53,5 +54,33 @@ describe('mountGeographicCanvas · M-B2 T1.3', () => {
       container.querySelector('circle.test-node') as SVGCircleElement
     ).getAttribute('cx');
     expect(firstDotSphere).not.toBe(firstDotPlane);
+  });
+
+  // === M-B2 T1.4 · zoom 整合 ===
+  it('注册 d3.zoom 后 svg 上有 zoom behavior（__zoom internal state）', () => {
+    mountGeographicCanvas({
+      container,
+      width: 600,
+      height: 400,
+      marxCurrentLocation: [10, 50],
+    });
+    // d3.zoom 注册后 svg 有 __zoom 属性（d3 internal state · ZoomTransform identity）
+    expect((container as unknown as { __zoom?: unknown }).__zoom).toBeTruthy();
+  });
+
+  it('zoom k 触发 mode 切换 → 节点重 render（plane mode cx > 0 · paris 在视口内）', () => {
+    const api = mountGeographicCanvas({
+      container,
+      width: 600,
+      height: 400,
+      marxCurrentLocation: [10, 50],
+    });
+    // jsdom 不易模拟 d3.zoom wheel event · 间接验：setMode 切换后 render 走通路
+    // 同时 paris (2.35°E / 48.86°N) 在中心 [10°E / 50°N] 视口内 / plane mode cx 必 > 0
+    api.setMode('plane');
+    const node = container.querySelector('circle.test-node[data-id="paris"]') as SVGCircleElement;
+    expect(node).toBeTruthy();
+    const cx = parseFloat(node.getAttribute('cx')!);
+    expect(cx).toBeGreaterThan(0);
   });
 });
