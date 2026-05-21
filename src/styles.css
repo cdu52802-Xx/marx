@@ -157,7 +157,8 @@ body::before {
   color: #888;
   text-decoration: none;
   border-bottom: 1px dotted #aaa;
-  padding: 0 2px;
+  /* B5 D13 · padding 0 2px → 2px 4px / 上下不再紧贴 link 文字（基础 UIUX 透气）*/
+  padding: 2px 4px;
 }
 .header-controls .header-about:hover,
 .header-controls .header-credit:hover {
@@ -307,7 +308,8 @@ body::before {
   letter-spacing: 0.02em;
   cursor: pointer;
   border-bottom: 1px dotted #c8baa0;
-  padding: 1px 0;
+  /* B5 D14 · padding 1px 0 → 3px 4px / chip 不再紧贴 + click 区扩大（基础 UIUX 透气 + 触屏更友好）*/
+  padding: 3px 4px;
   line-height: 1.5;
   transition:
     color 0.12s ease,
@@ -374,6 +376,24 @@ em.search-result-highlight {
   font-weight: 600;
   background: rgba(91, 58, 140, 0.1);
   padding: 0 1px;
+}
+
+/* ============= B5 polish D16 · 全局 :focus-visible 键盘 a11y（DR-090）============= */
+/* 键盘 Tab 导航时 focus ring 用紫色 halo（box-shadow）/ editorial-academic 友好
+ * 鼠标 click 不显示 ring（:focus 但非 :focus-visible / Chrome 默认）
+ * 不破 .search-input 已有 :focus { border-color: #5b3a8c }（保留 input 自有 focus 样式）
+ */
+*:focus {
+  outline: none;
+}
+*:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(91, 58, 140, 0.35);
+  border-radius: 1px;
+}
+.search-input:focus-visible {
+  /* search-input 已用 border-color 紫表示 focus / 不叠加 halo（防双 focus 视觉吵）*/
+  box-shadow: none;
 }
 
 /* ============= B1 polish D1 · search popover 入场动效（DR-089）============= */
