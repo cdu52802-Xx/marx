@@ -1515,9 +1515,17 @@ const searchApi = mountSearchInput({
 popoverApi = mountResultPopover({
   anchor: searchApi.input,
   onSelect: (item) => {
-    // T4.1 · 主图高亮联动（spec § 3.3.3）
-    //   claim type（非 concept 占位 id）→ highlightObs(id) 紫圈+fade
+    // T4.1 + DR-086 · 主图高亮 + 详情卡直达
+    //   claim type（非 concept 占位 id）→
+    //     1. dispatch obs click event 复用既有 obs click handler 完整流程（flyTo + showClaimPopover）
+    //     2. 既有 obs click 内调 restoreArcOpacity 会清 search 状态 → 立即 highlightObs 重新设
+    //   注：computeFlyTransform 是 obsG sectionG.each 闭包局部 / 外部不可用 / dispatch event 复用最干净
     if (item.type === 'claim' && !item.id.startsWith('concept-')) {
+      const obsElement = document.querySelector<SVGGElement>(`g.obs[data-claim-id="${item.id}"]`);
+      if (obsElement) {
+        obsElement.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+      }
+      // obs click 内 restoreArcOpacity 清了 search state · 立即 re-apply 紫圈 + fade
       highlightObs(item.id);
     }
     // T4.3 · 副图高亮 hook（B1 期间无 listener / B2 副图按 type 选择性 listen）

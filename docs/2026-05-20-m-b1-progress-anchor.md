@@ -1,7 +1,7 @@
 # Marx M-B 主线进展 · 新窗口续接锚点（2026-05-20 ~ 2026-05-21）
 
-> **状态**：B1 Stage 1-4 全 ship + 2 轮 PM bug/polish 修（DR-084 详情卡让出 header / DR-085 双层 hover 状态机）/ **Stage 5 待启动**（E2E + 4 件套 baseline + ship）
-> **当前 HEAD**：见 `git log -1 --oneline`（最新含 DR-085 polish · 2026-05-21）
+> **状态**：B1 Stage 1-4 全 ship + 3 轮 PM bug/polish 修（DR-084 详情卡让出 header / DR-085 双层 hover 状态机 / DR-086 search 直达详情卡）/ **Stage 5 待启动**（E2E + 4 件套 baseline + ship）
+> **当前 HEAD**：见 `git log -1 --oneline`（最新含 DR-086 polish · 2026-05-21）
 > **Git**：clean / origin/main 同步
 > **Prod**：https://cdu52802-xx.github.io/marx/
 > **Mockup**：https://cdu52802-xx.github.io/marx/m-b1-search-ux-mockup.html
@@ -52,6 +52,29 @@
 - **T4.3** `522b04b`：window dispatch `marx:search-highlight` { type, id } · B2 副图 listener 接收
 - 浏览器实测 ✓：搜"异化"→ 选 claim-marx-013 → obs 紫圈 + 其他全 fade + dispatch event listener 收到 detail
 - Bundle 34.13 KB gzip（+0.12 from baseline · ≤35 预算 / 剩 0.87 KB）
+
+### B1 polish · search onSelect 直达详情卡（DR-086 / 2026-05-21）
+
+PM 反馈：搜索栏点击具体主张时 / 已算用户想看 detail / 应同时展开详情卡。
+
+**方案选型**（trade-off）：
+- A · inline 复制 obs click 流程到 onSelect（~60 行 duplicate · 且 computeFlyTransform 是 sectionG.each 闭包局部 / 外部 ReferenceError 被吞）
+- B · 抽 helper showClaimDetail · obs click + onSelect 复用（refactor 既有 obs click · risk 中）
+- **C · dispatch obs click event 复用 + 立即 re-apply highlightObs**（推荐 · 10 行 · 0 risk · 0 duplicate）✅
+
+**C 方案视觉无闪**：
+- dispatch click → obs click handler 同步跑（restoreArcOpacity 清 search · hideArcPopover · flyTo · showClaimPopover 创建 aside）
+- 立即 highlightObs(id) 同步 re-apply 紫圈 + applyHoverPreviewFiltering
+- 浏览器 paint 是 next frame · 取 highlightObs final state → 用户察觉不到中间 reset 帧
+
+**实测 ✓**：
+- 搜"异化" + click claim-marx-013 → claim popover open (dataId=claim-marx-013 / top=54) · a1 紫圈 + 89 fade · search popover 自动 hide
+- 回归 obs click 不破：另一 obs click → 弹自己详情卡 · 主图全 normal
+- Esc → 详情卡关 + 清 search 双重效果 ✓
+
+**baseline**: Lint 0 / Tests 270/273 / Bundle 34.33 KB gzip（+0.04 from DR-085 · ≤35 / 剩 0.67 KB）
+
+---
 
 ### B1 polish · search commit + hover transient 双层状态机（DR-085 / 2026-05-21）
 
