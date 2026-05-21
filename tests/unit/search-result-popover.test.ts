@@ -728,4 +728,31 @@ describe('mountResultPopover · click outside 关闭（PM A）', () => {
       vi.useRealTimers();
     }
   });
+
+  it('capture phase · click 即使 child stopPropagation 也能关闭（PM bug 修 2026-05-21）', () => {
+    vi.useFakeTimers();
+    try {
+      // 模拟主画布 svg obs click handler stopPropagation 场景
+      // src/main.ts line 273/754/816 实际就是这样
+      const stopChild = document.createElement('div');
+      stopChild.className = 'mock-canvas-obs';
+      stopChild.addEventListener('click', (e) => {
+        e.stopPropagation(); // 模拟 obs / arc click handler
+      });
+      document.body.appendChild(stopChild);
+
+      const api = mountResultPopover({ anchor, onSelect: () => {} });
+      api.show([mkItemLocal('a', '马克思')]);
+      vi.advanceTimersByTime(1);
+
+      // 点 child / child 自己 stopPropagation / 不 bubble 到 document
+      // 但是 capture phase listener 在 target phase 之前 / 先收到 / popover 关
+      dispatchClick(stopChild);
+      expect(api.isOpen()).toBe(false);
+
+      stopChild.remove();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });

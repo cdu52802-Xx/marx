@@ -126,8 +126,13 @@ export function mountResultPopover({
    * PM checkpoint feedback · 点空白关闭（PM A · 2026-05-21）
    * 不关：popover 自己 + anchor 输入框自己
    * 关：其他任意 click（含工具栏 sidebar / zoom-control / timeline · 不豁免）
-   * 用 click event（mousedown 被 d3.zoom 在 svg 上 stopImmediatePropagation 拦截 / 参考 claim-popover line 388）
-   * setTimeout(0) trick 防"打开本次 click"立即被识别为外部关闭
+   *
+   * ⚠ 用 capture phase 而非 bubble phase 监听（DR-082 / 2026-05-21 修）
+   *   原因：主画布 obs / arc click handler 都 stopPropagation（src/main.ts line 273/754/816 防关详情卡）
+   *   bubble phase 的 listener 收不到这些 click event / popover 不关。
+   *   capture phase 在 target 阶段之前 / 不受 stopPropagation 影响 / 100% 命中。
+   *
+   * setTimeout(0) trick 防"打开本次 click"立即被识别为外部关闭。
    */
   function _attachOutsideClick(): void {
     outsideClickHandler = (e: MouseEvent) => {
@@ -139,7 +144,8 @@ export function mountResultPopover({
     };
     outsideClickTimer = setTimeout(() => {
       if (outsideClickHandler) {
-        document.addEventListener('click', outsideClickHandler);
+        // capture phase = true · 不受主画布 stopPropagation 影响
+        document.addEventListener('click', outsideClickHandler, true);
       }
     }, 0);
   }
@@ -154,7 +160,8 @@ export function mountResultPopover({
       keyHandler = null;
     }
     if (outsideClickHandler) {
-      document.removeEventListener('click', outsideClickHandler);
+      // capture phase 同步 attach 时 / 移除也要 capture=true
+      document.removeEventListener('click', outsideClickHandler, true);
       outsideClickHandler = null;
     }
     if (outsideClickTimer) {

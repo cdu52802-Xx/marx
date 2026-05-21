@@ -1426,11 +1426,11 @@ popoverApi = mountResultPopover({
   },
 });
 
-// 搜索框 focus + empty → 自动显示探索形态（PM mockup 流程）
+// 搜索框 focus → 统一走 handleSearch（PM bug 修 2026-05-21 · Esc 关后再 focus 显示之前搜的内容）
+//   - empty value → handleSearch 内自动 showExplore
+//   - 非 empty value → handleSearch 内自动 showGrouped
 searchApi.input.addEventListener('focus', () => {
-  if (!searchApi.input.value.trim()) {
-    popoverApi?.showExplore(exploreLists, handleChipClick);
-  }
+  handleSearch(searchApi.input.value);
 });
 
 console.log(
