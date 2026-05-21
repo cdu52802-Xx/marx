@@ -159,18 +159,35 @@ body::before {
   border-bottom: 1px dotted #aaa;
   /* B5 D13 · padding 0 2px → 2px 4px / 上下不再紧贴 link 文字（基础 UIUX 透气）*/
   padding: 2px 4px;
-  /* B2 D7 · letter-spacing transition · hover 文字微舒展（精致细节 / editorial 杂志风）*/
   letter-spacing: 0.02em;
+  /* B6 DR-095 · 撤 letter-spacing hover（PM 反馈 low + layout 抖）/ 保留 color + border transition */
+  position: relative;
   transition:
     color 0.18s ease,
-    border-color 0.18s ease,
-    letter-spacing 0.18s ease;
+    border-color 0.18s ease;
 }
 .header-controls .header-about:hover,
 .header-controls .header-credit:hover {
   color: #5b3a8c;
-  border-bottom-color: #5b3a8c;
-  letter-spacing: 0.04em;
+  border-bottom-color: transparent;
+}
+/* B6 DR-095 · header link hover · 紫色 underline draw-in（替代 letter-spacing 展开）*/
+.header-controls .header-about::after,
+.header-controls .header-credit::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  bottom: 0;
+  height: 1px;
+  background: #5b3a8c;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.header-controls .header-about:hover::after,
+.header-controls .header-credit:hover::after {
+  transform: scaleX(1);
 }
 
 .header-controls .header-sep {
@@ -231,16 +248,14 @@ body::before {
   gap: 12px;
   font-size: 13px;
   cursor: pointer;
-  /* B2 D3 · letter-spacing transition · hover 文字微舒展 */
-  transition:
-    background 0.15s ease,
-    letter-spacing 0.18s ease;
   letter-spacing: 0.02em;
+  /* B6 DR-095 · 撤 letter-spacing hover · 仅 bg fade（layout 稳）*/
+  position: relative;
+  transition: background 0.15s ease;
 }
 .search-result-item:hover,
 .search-result-item[data-selected='true'] {
   background: rgba(91, 58, 140, 0.08);
-  letter-spacing: 0.04em;
 }
 .search-result-kicker {
   font-style: italic;
@@ -322,18 +337,36 @@ body::before {
   /* B5 D14 · padding 1px 0 → 3px 4px / chip 不再紧贴 + click 区扩大（基础 UIUX 透气 + 触屏更友好）*/
   padding: 3px 4px;
   line-height: 1.5;
-  /* B2 D4 · letter-spacing transition · hover chip 单字"舒展呼吸"（editorial 精致）*/
+  /* B6 DR-095 · 撤 letter-spacing hover（PM 反馈 low + popover layout 抖动）*/
+  position: relative;
   transition:
     color 0.18s ease,
     border-color 0.18s ease,
-    letter-spacing 0.22s ease,
     background 0.18s ease;
 }
 .search-result-chip:hover,
 .search-result-chip[data-selected='true'] {
   color: #5b3a8c;
-  border-bottom-color: #5b3a8c;
-  letter-spacing: 0.06em;
+  border-bottom-color: transparent;
+}
+/* B6 DR-095 · chip hover · 紫色 underline draw-in（杂志风 link hover 经典动效）
+ * scaleX 0 → 1 from left / 不影响 layout / 替代 letter-spacing 撑宽
+ */
+.search-result-chip::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 1px;
+  background: #5b3a8c;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.search-result-chip:hover::after,
+.search-result-chip[data-selected='true']::after {
+  transform: scaleX(1);
 }
 .search-result-chip-concept {
   color: #5b3a8c;
@@ -354,11 +387,9 @@ body::before {
   cursor: pointer;
   position: relative;
   font-family: 'EB Garamond', Georgia, serif;
-  /* B2 D3 · letter-spacing transition · hover claim 行微舒展 */
   letter-spacing: 0.02em;
-  transition:
-    background 0.15s ease,
-    letter-spacing 0.18s ease;
+  /* B6 DR-095 · 撤 letter-spacing hover · 仅 bg fade（layout 稳）*/
+  transition: background 0.15s ease;
 }
 .search-result-claim-item::before {
   content: '·';
@@ -371,7 +402,26 @@ body::before {
 .search-result-claim-item:hover,
 .search-result-claim-item[data-selected='true'] {
   background: rgba(91, 58, 140, 0.08);
-  letter-spacing: 0.04em;
+}
+/* B6 DR-095 · claim-item hover · 紫色 left border slide-in 2px（杂志风段落选中标记）
+ * ::before 已被 '·' bullet 占用 / 用 ::after 加 left border
+ * scaleY 0 → 1 from top / 跟 chip underline draw-in 一致风格族
+ */
+.search-result-claim-item::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 4px;
+  bottom: 4px;
+  width: 2px;
+  background: #5b3a8c;
+  transform: scaleY(0);
+  transform-origin: top;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.search-result-claim-item:hover::after,
+.search-result-claim-item[data-selected='true']::after {
+  transform: scaleY(1);
 }
 .search-result-claim-text {
   color: #2a2a2a;
