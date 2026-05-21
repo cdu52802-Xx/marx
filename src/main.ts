@@ -1457,13 +1457,16 @@ popoverApi = mountResultPopover({
   onSelect: (item) => {
     // T4.1 · 主图高亮联动（spec § 3.3.3）
     //   claim type（非 concept 占位 id）→ highlightObs(id) 紫圈+fade
-    //   person / event / location / concept → T4.3 dispatch event（B1 期间无 listener / B2 接收）
     if (item.type === 'claim' && !item.id.startsWith('concept-')) {
       highlightObs(item.id);
-    } else {
-      // T4.3 hook placeholder · concept / person / event / location
-      console.log('[Marx M-B1 T4.1] non-claim selected (B2 hook):', item.type, item.id);
     }
+    // T4.3 · 副图高亮 hook（B1 期间无 listener / B2 副图按 type 选择性 listen）
+    //   所有 type 都 dispatch（含 claim · 让 B2 副图地理图也能高亮选中 obs 对应的地理位置）
+    window.dispatchEvent(
+      new CustomEvent('marx:search-highlight', {
+        detail: { type: item.type, id: item.id },
+      }),
+    );
   },
   // T4.1 · Esc / 点空白关浮窗时清搜索高亮（选中 candidate 后 hide 不走 onClose · 高亮保留）
   onClose: clearSearchHighlight,
