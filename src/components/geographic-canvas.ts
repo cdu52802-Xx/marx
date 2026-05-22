@@ -70,6 +70,8 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
   let currentMode: ProjectionMode = opts.initialMode ?? 'sphere';
   let currentLoc: [number, number] = opts.marxCurrentLocation ?? [10, 50];
   let currentRotate: [number, number, number] | undefined;
+  // T1.6+ B · 真线性内插 · k 从 zoom event 拿 / interpolateProjection 内按 k 算 scale
+  let currentZoomK = 1;
 
   const svg = select(container);
   const g = svg.append('g').attr('class', 'geographic-root');
@@ -89,14 +91,12 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
     })
     .on('zoom', (event) => {
       const k = event.transform.k as number;
-      let nextMode: ProjectionMode;
-      if (k <= ZOOM_THRESHOLDS.sphereMax) nextMode = 'sphere';
-      else if (k >= ZOOM_THRESHOLDS.planeMin) nextMode = 'plane';
-      else nextMode = 'transition';
-      if (nextMode !== currentMode) {
-        currentMode = nextMode;
-        render();
-      }
+      currentZoomK = k;
+      // T1.6+ B · 任何 k 变化都 re-render（不止 mode 切换）/ scale 跟 k 线性走 → 视觉连续
+      if (k <= ZOOM_THRESHOLDS.sphereMax) currentMode = 'sphere';
+      else if (k >= ZOOM_THRESHOLDS.planeMin) currentMode = 'plane';
+      else currentMode = 'transition';
+      render();
     });
   svg.call(zoomBehavior);
 
@@ -129,18 +129,29 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
   window.addEventListener('marx:time-change', timeHandler);
 
   function render(): void {
-    // mode → k 反推（interpolateProjection 内分支按 k）
-    //   sphere = 1 / transition = 3.5 / plane = 8 · 见 lib/projection.ts ZOOM_THRESHOLDS
-    const k = currentMode === 'sphere' ? 1 : currentMode === 'plane' ? 8 : 3.5;
-    // T1.4 · scale 三段 hardcode（200 sphere / 400 transition / 800 plane）
-    // 真按 k 平滑内插（k 区间内 scale 渐变 + sphere↔plane rotate 渐变）留 Step 1.5
-    const scale = currentMode === 'sphere' ? 200 : currentMode === 'plane' ? 800 : 400;
+    // T1.6+ B · 真线性内插 · currentZoomK 直接传 / interpolateProjection 内按 k 算 scale
+    //   k=1 sphere scale=200 / k=4.5 transition scale=500 / k=8 plane scale=800（lib/projection.ts scaleAtZoom）
+    // setMode 手动切换时（无 zoom event）按 mode 默认 k 推（sphere=1 · transition=3.5 · plane=8）
+    const k =
+      currentMode === 'sphere' && currentZoomK <= ZOOM_THRESHOLDS.sphereMax
+        ? currentZoomK
+        : currentMode === 'plane' && currentZoomK >= ZOOM_THRESHOLDS.planeMin
+          ? currentZoomK
+          : currentMode === 'transition' &&
+              currentZoomK > ZOOM_THRESHOLDS.sphereMax &&
+              currentZoomK < ZOOM_THRESHOLDS.planeMin
+            ? currentZoomK
+            : currentMode === 'sphere'
+              ? 1
+              : currentMode === 'plane'
+                ? 8
+                : 3.5;
 
     const { projection } = interpolateProjection(k, {
       width,
       height,
       center: currentLoc,
-      scale,
+      scale: 200, // placeholder · interpolateProjection 内被 scaleAtZoom(k) 覆盖
       rotate: currentRotate,
     });
     const pathGen = geoPath(projection);
