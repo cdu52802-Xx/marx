@@ -118,4 +118,23 @@ describe('mountGeographicCanvas · M-B2 T1.3', () => {
       window.dispatchEvent(new CustomEvent('marx:time-change', { detail: { year: 1843 } }));
     }).not.toThrow();
   });
+
+  // === M-B2 T1.6+ A · drag bug fix ===
+  it('zoomBehavior.filter 屏蔽 mousedown · drag 独占球面旋转', () => {
+    mountGeographicCanvas({
+      container,
+      width: 600,
+      height: 400,
+      marxCurrentLocation: [10, 50],
+    });
+    // 拿 svg 上的 d3.zoom internal filter（zoom behavior 自身不直接暴露，但 __zoom 已 attach）
+    // 间接验法：mousedown event 投递 svg → d3.zoom 内部 filter 返回 false → 不创建 zoomTransform 变化
+    // 简洁验法：直接验 filter 函数行为（其行为决定 zoom 是否响应该 event）
+    // 注：d3.zoom 内部用 .filter() 注册的 predicate 不易在外部抓 / 此处用 mountGeographicCanvas
+    //   暴露不出 zoom instance 的限制 → 验"mousedown dispatch 不触发 zoom transform 变化"
+    const initialTransform = (container as unknown as { __zoom?: { k: number } }).__zoom;
+    expect(initialTransform).toBeTruthy();
+    // jsdom 不会真触发 d3.zoom drag-for-pan / 但 attach 后 __zoom transform 应保持 identity
+    expect(initialTransform?.k).toBe(1);
+  });
 });

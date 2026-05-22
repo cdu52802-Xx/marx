@@ -77,8 +77,16 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
   // T1.4 · d3-zoom attach · scaleExtent [1,8] / on('zoom') → k 反查 mode → render
   // jsdom 不易模拟 wheel · unit 只验 __zoom 内部 state 已附加（间接验链路）
   // PM 实测：prod 右上 prototype svg 滚轮 zoom 切球面 (k≤2.5) / 平面 (k≥4.5) / 中间 transition
+  //
+  // T1.6+ A · drag bug fix · filter 屏蔽 mousedown
+  // 原 bug: zoom default 自带 drag-for-pan 抢 mousedown → d3-drag 拿不到 event → 球面 drag 旋转无响应
+  // 修法: zoomBehavior.filter 拦截 mousedown / 让 zoom 只响应 wheel + touchstart / drag 独占 mousedown
   const zoomBehavior: ZoomBehavior<SVGSVGElement, unknown> = zoom<SVGSVGElement, unknown>()
     .scaleExtent([1, 8])
+    .filter((event: Event) => {
+      // 屏蔽 mousedown（让 d3-drag 接管球面旋转）/ 允许 wheel / touchstart / touchmove 等
+      return event.type !== 'mousedown';
+    })
     .on('zoom', (event) => {
       const k = event.transform.k as number;
       let nextMode: ProjectionMode;
