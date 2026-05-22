@@ -317,22 +317,25 @@ PM 2026-05-20 mockup 反馈："形式认可 / 美观度差点 / 设计感没有�
 
 按 [brainstorm decisions § 8](../docs/2026-05-20-b-mainline-brainstorm-decisions.md#8-缩放谱系球面平面v5-mockup-approved--q8-pm-反馈-ack)：
 
-- **球面 view**（小 zoom · D3 `geoOrthographic()`）：欧洲微观 / 整地球可见
-- **平面 view**（大 zoom · D3 `geoMercator()` 或 `geoAlbers()`）：详细国界
-- **半球过渡**（中 zoom）：可停留中间状态（PM 拍板保留 / 不仅过渡）
-- **临界 zoom 阈值**：实施 Stage 1 prototype 跑出来 + PM 实测微调（不预先拍）
-- **关系连线在球面** = great circle 大圆弧（贴球面）/ 不是直线
+- **球面 view**（小 zoom · k ≤ 2.5）：欧洲微观 / 整地球可见
+- **平面 view**（大 zoom · k ≥ 4.5）：详细国界 / 视觉接近平面（仍带轻微透视 · 见 DR-103/105）
+- **半球过渡**（中 zoom · 2.5 < k < 4.5）：可停留中间状态（PM 拍板保留 / 不仅过渡）
+- **临界 zoom 阈值** ⭐：sphereMax=2.5 / planeMin=4.5（**DR-100 Stage 1 lock** · PM 实测无微调需求 · `src/lib/projection.ts:38 ZOOM_THRESHOLDS`）
+- **projection 实施** ⭐：**全程 `geoSatellite`** distance 单参数内插（**DR-103 Stage 1 final** · 拒 mercator 切换 · mercator vs satellite 跨界 jump 不可解 · 见 takeaway § 4.3 lesson）· distance 50 (k=1) → **2** (k=8 · **DR-105** PM 妥协接受球面感稍强 · distance=1.5 引入"放大不能拖" bug 已 revert)· clipAngle = acos(1/distance) 自适应（88.85°→60°）· `ProjectionMode` 概念保留给 component 层 dispatch drag 行为（sphere rotate vs transition/plane pan）
+- **关系连线在球面** = great circle 大圆弧（贴球面）/ 不是直线（`src/lib/great-circle.ts` T1.2 已 ship）
 - **关系连线在平面** = 投影曲线（仍非直线 / 跟随经纬度）
-- **球面默认中心** ⭐ = **Marx 当前时间所在地点**（时间游标变 → 球面 reorient / 球面跟随 Marx 行迹）
-- **球面可旋转** ⭐（D3 drag 标准能力 / 用户自由探索）
+- **球面默认中心** ⭐ = **Marx 当前时间所在地点**（时间游标变 → 球面 reorient / 球面跟随 Marx 行迹 · **DR-101 Stage 1 final**）
+- **球面可旋转** ⭐（D3 drag 标准能力 / 用户自由探索 / dx*0.5 灵敏度 · **DR-102 Stage 1 final**）
+- **wheel zoom 实施** ⭐：detach d3-zoom 默认 wheel + 自挂 custom wheel（`zoomBehavior.transform(svg, scale(newK))`）· 完全跳过 d3-zoom anchor 算法 · transform.x/y 永远 0 · 杜绝 race + 偏移（**DR-104 Stage 1 final**）
+- **transition / plane mode pan** ⭐：drag 改 `projection.center` · `projection.invert([cx-dx, cy-dy]) - invert([cx, cy])` 反算精确 Δlon/Δlat（D3 标准做法）· 不动 g.transform（**Stage 1 修法 B** · 见 takeaway § 4.1）
 
 ### 4.7 动态历史国界（V1 真历史切片 · DR-099 final · 2026-05-22）
 
 - V1 = **CShapes-Europe.geojson**（CC BY-NC-SA 4.0 · ETH Zurich · 1816-2023 · 322 features / 70 Marx-era states · 含 1871 德意志统一 + 1867 奥匈二元制 etc）
 - 数据源 Stage 0+ spike 拍板（DR-099 / 国内可达 / `tmp/cshapes/CShapes-Europe.geojson` 已下载备用）
 - 实施路径：
-  - **Stage 1**：build-time 过滤 Marx 1818-1883 子集（~480 KB · -45%）+ `public/geo/cshapes-marx-era.geojson` 走 vite ?url asset 不嵌 bundle
-  - **Stage 2 / Stage 4**：mapshaper simplify（geometry 简化 · 目标 200-300 KB gzip · -67%）
+  - **Stage 1（已 ship）** ⭐：`src/lib/historical-borders.ts` loader + `filterBordersAtYear(1843)` 静态 sample · `public/geo/cshapes-europe.geojson` 全集 4.5 MB 走 vite ?url asset 不嵌 bundle（Stage 4 接 timeline 后真动态切换）
+  - **Stage 2 / Stage 4**：mapshaper simplify（geometry 简化 · 目标 200-300 KB gzip · -67%）+ build-time 过滤 Marx 1818-1883 子集（~480 KB · -45%）
   - **Stage 1+**：i18n 中文国名映射表（70 states · 含 "Germany" 1816-1870 → "普鲁士" / 1871+ → "德意志帝国" / "Saxe-Weimar" → "萨克森-魏玛" 等 · +1-2h 工程）
 - 时间游标拖动 → CShapes 时段切片选择 + d3 transition 平滑过渡（不是 frame-by-frame 连续 · 是 state-snapshot transition）
 - License 合规：网站底部加 "地理国界数据 © Schvitz et al. 2022 · CC BY-NC-SA 4.0" 署名
@@ -566,6 +569,7 @@ Stage 1 prototype checkpoint：
 | **DR-097** | **2026-05-21** | **B2 启动 (A+) 路径 · 直接进 writing-plans + 加 Stage 0 数据可达性验证**（0.5 天 · 中国大陆网络硬约束）| (A) 纯直接进 plan / (B) re-validate spec / (C) brainstorm placeholder / (D) 重审 V1 | **第一性原理**：B2 真风险是技术 #1（球面+平面+great circle）+ 数据 #2（国外 GeoJSON 可达）/ brainstorm 解不了 / 必须 prototype + 数据测试；设计 #3 已 95% brainstorm done（spec § 4）/ § 7 placeholder 留 Stage PM checkpoint 实测决（M5 lesson 实测必要 vs 凭空想）；避免 vision drift（M4 lesson · 离 PRD/spec 越远越易 drift）；早 ship 早 feedback（PRD 敏捷精神 · B2 5-6 周已长）；(+) Stage 0 来自 user_environment_china_network memory · 国外 endpoint 5 周后才发现拉不下来 = 灾难性 / 0.5 天前置 = 高 ROI |
 | **DR-098** | 2026-05-21 | Stage 0 数据可达性验证完成 · 推荐 V1 用 jsdelivr world-atlas TopoJSON（38 KB 当代国界占位）| Euratlas 子页 404 / HGIS 探索高 / OSM Historical DNS fail / Naturalearthdata 当代 | 4 主源全 fail 1818-1883 真历史 / world-atlas jsdelivr 国内 0.57s 极稳定 / 38 KB safe Bundle · **被 DR-099 升级取代** |
 | **DR-099** | **2026-05-22** | **B2 历史国界 V1 = CShapes-Europe**（1816-2023 / 322 features / 70 Marx-era states · CC BY-NC-SA 4.0）· **升级取代 DR-098** | (1) cshapes 升级 / (2) 谈 concerns 后定 / (3) 退 world-atlas 当代 / (4) 重审 spec § 4.7 | PM 2026-05-22 拍 (B) Stage 0+ cshapes spike · 100% 成功（预期 5% Branch A 命中）/ ETH Zurich 同站有 CShapes-Europe 欧洲专版 1816-2023 / 完全覆盖 Marx 时代 / 国内直连可达 / 180/322 features overlap Marx 1818-1883 (56%) / 含 1871 德意志统一精准捕捉（56→23 states）/ 体积 4.36 MB raw / 891 KB gzip · 按需 fetch 不进 main bundle / Stage 1+ build-time 过滤 ~480 KB / Stage 2 mapshaper simplify ~200-300 KB / 3 concerns 可控（License ShareAlike 加 1 句署名 / 891 KB 首屏 V1+ 优化 / i18n 70 states 映射 +1-2h Stage 1）/ 守 spec § 4.7 原 vision · 第一性原理：spike 大赢 deserve commitment |
+| **DR-100~105** | **2026-05-22** | **B2 Stage 1 prototype 收尾 6 决策** lock：临界 zoom sphereMax=2.5/planeMin=4.5 (DR-100) / 球面默认中心 = Marx follow (DR-101 复用 DR-074) / drag 旋转手势 = 0.5°/px (DR-102) / **全程 geoSatellite distance 50→2 单参数内插** (DR-103 · 拒 mercator 切换 · 跨界 jump 不可解) / 拦 wheel 不累加 x/y (DR-104 · `svg.on('wheel.zoom', null)` + 自挂 + `zoomBehavior.transform(svg, scale(newK))`) / distance plane 端值 = 2 (DR-105 · PM 妥协接受球面感稍强 · distance=1.5 引入"放大不能拖" bug 已 revert) | 详见 [docs/2026-05-22-b2-stage1-takeaway.md § 2](../docs/2026-05-22-b2-stage1-takeaway.md#2-决策清单dr-097099--stage-1-期间新增-dr-100105) | B2 Stage 0+1 完成 · 19 commit · 6 轮 PM hotfix + 1 revert · 9 lessons · Bundle 46.08 KB safe / Tests 331/334 / Lint 0/0 / Deploy success · tag 候选 m-b2-stage1-final |
 
 ---
 
