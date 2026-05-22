@@ -95,19 +95,48 @@ function clipAngleForDistance(distance: number): number {
 }
 
 /**
- * T2.1.hotfix2-B · dot/stroke 反比 zoom（治本 PM "圆点比国家大" 痛点）
+ * T2.1.hotfix2-B · dot radius 反比 zoom（治本 PM "圆点比国家大" 痛点）
  *   第一性：用户视觉 "圆点占地图百分比" 不能随 zoom 暴涨
- *     k=1 时 dot=5px 是基准 / k=32 时 viewport 显示 1/32 / dot pixel 不变 = 占地图百分比 32 倍 → 喧宾夺主
  *   选根号公式 baseR / sqrt(max(2, k) / 2):
  *     - clamp k<2 plateau（球面 mode 节点是主角 / 保持醒目）
  *     - k>=2 后缩小（plane mode 让位国家细节）
- *     - k=1: 5px（plateau）/ k=2: 5px（基准）/ k=4: 3.54px / k=8: 2.5px / k=32: 1.25px
+ *   T2.1.hotfix3-2A · 加 ratio clamp baseR*0.6（PM polish R1 拍板）
+ *     第一性反思：plane mode 节点仍是用户主角（看哪些哲学家在哪国）· 不该缩到看不见
+ *     min clamp 保 visibility · 同时不破"防 cover 整个小国"原意（min 仍小于 baseR）
+ *     k=1/2: 5px（plateau）/ k=4: 3.54px / k=8: max(3, 2.5)=3 / k=32: max(3, 1.25)=3
+ *     person baseR=5 → min 3px / event baseR=4 → min 2.4px / location baseR=3 → min 1.8px
  *   拒线性 1/k（朋友 philosophy_vis K=8 OK · 我们 K=32 用线性 = 0.156px 不可见）
- *   拒不动（PM 实测痛点已 lock）
  */
 export function dotRadiusAtZoom(k: number, baseR: number): number {
   const effectiveK = Math.max(2, k);
-  return baseR / Math.sqrt(effectiveK / 2);
+  return Math.max(baseR * 0.6, baseR / Math.sqrt(effectiveK / 2));
+}
+
+/**
+ * T2.1.hotfix3-1A · stroke width 反比 zoom 加绝对值 min clamp（防 sub-pixel rendering 稀释）
+ *   第一性：SVG sub-pixel stroke (< 1px) antialiasing alpha 严重稀释 · 视觉颜色 ≈ alpha=stroke-width
+ *     k=32 时原 baseR/sqrt(16)=0.125px → 视觉 alpha 0.125 → "看不见边界"（PM polish R1 反馈）
+ *   修法：加绝对值 minAbs 参数 · 不同视觉权重场景用不同 min
+ *     border path：minAbs=0.6（用户当下信息焦点 · 必须 visible）
+ *     graticule：minAbs=0.6（视觉风格跟 border 一致）
+ *     dot outline：minAbs=0.3（米白底 separation 作用 · 不喧宾夺主）
+ *   公式跟 dotRadius 同根号 · 但 clamp 用绝对值不是 ratio（stroke 是绝对像素值 / 不像 dot 跟 baseR 线性）
+ */
+export function strokeWidthAtZoom(k: number, baseW: number, minAbs: number): number {
+  const effectiveK = Math.max(2, k);
+  return Math.max(minAbs, baseW / Math.sqrt(effectiveK / 2));
+}
+
+/**
+ * T2.1.hotfix3-1A · border stroke 颜色 zoom-adaptive（dual lever 跟 strokeWidth 同步上）
+ *   第一性：底图（border + graticule）在不同 zoom 阶段承担不同视觉角色
+ *     - sphere mode (k<4 整地球 view)：节点是主角 / 国界淡淡 → 保 #d8cab0 沙石灰金（spec § 6）
+ *     - plane mode (k>=4 看国家细节)：国界是用户当下信息焦点 → 加深 #b8a880 沙石深一档
+ *   spec § 6 描述了底色风格 · 未规定 zoom-adaptive 视觉权重 · 本修法是 spec 补充不是违背
+ *   PM polish R1 反馈 "国境/分区边界线颜色太浅了" / 跟 strokeWidth clamp 是 dual lever
+ */
+export function borderStrokeColor(k: number): string {
+  return k >= 4 ? '#b8a880' : '#d8cab0';
 }
 
 /**

@@ -474,7 +474,7 @@ describe('mountGeographicCanvas · M-B2 T1.3 + T2.1', () => {
     expect(parseFloat(paris.getAttribute('r')!)).toBeCloseTo(5, 1);
   });
 
-  it('T2.1.hotfix2-B · plane mode (effectiveK=8) → person r=2.5（5/sqrt(8/2)=5/2）', () => {
+  it('T2.1.hotfix3-2A · plane mode (effectiveK=8) → person r=3（ratio clamp · 公式值 2.5 < min 3）', () => {
     const api = mountGeographicCanvas({
       container,
       width: 600,
@@ -483,10 +483,74 @@ describe('mountGeographicCanvas · M-B2 T1.3 + T2.1', () => {
       marxCurrentLocation: [10, 50],
       nodes: FIXTURE_NODES,
     });
-    // setMode('plane') → computeEffectiveK 返 8 → dotRadius 5/sqrt(4) = 2.5
+    // setMode('plane') → computeEffectiveK 返 8 → dotRadius max(3, 5/sqrt(4)) = max(3, 2.5) = 3
     api.setMode('plane');
     const paris = container.querySelector('circle.geo-node[data-id="paris"]') as SVGCircleElement;
-    expect(parseFloat(paris.getAttribute('r')!)).toBeCloseTo(2.5, 1);
+    expect(parseFloat(paris.getAttribute('r')!)).toBeCloseTo(3, 1);
+  });
+
+  it('T2.1.hotfix3-2A · dot 加米白 outline stroke（separation 跟米白底图 contrast）', () => {
+    mountGeographicCanvas({
+      container,
+      width: 600,
+      height: 400,
+      initialMode: 'sphere',
+      marxCurrentLocation: [10, 50],
+      nodes: FIXTURE_NODES,
+    });
+    const paris = container.querySelector('circle.geo-node[data-id="paris"]') as SVGCircleElement;
+    expect(paris.getAttribute('stroke')).toBe('#fcfaf6');
+    // sphere mode k=1 → outline stroke-width = max(0.3, 0.5/sqrt(1)) = 0.5
+    expect(parseFloat(paris.getAttribute('stroke-width')!)).toBeCloseTo(0.5, 1);
+  });
+
+  it('T2.1.hotfix3-2A · plane mode (k=8) outline stroke-width clamp min 0.3（公式值 0.25 < min）', () => {
+    const api = mountGeographicCanvas({
+      container,
+      width: 600,
+      height: 400,
+      initialMode: 'sphere',
+      marxCurrentLocation: [10, 50],
+      nodes: FIXTURE_NODES,
+    });
+    api.setMode('plane');
+    const paris = container.querySelector('circle.geo-node[data-id="paris"]') as SVGCircleElement;
+    // plane mode k=8 → outline stroke-width = max(0.3, 0.5/sqrt(4)) = max(0.3, 0.25) = 0.3
+    expect(parseFloat(paris.getAttribute('stroke-width')!)).toBeCloseTo(0.3, 2);
+  });
+
+  // === M-B2 T2.1.hotfix3-1A · 边界 stroke 视觉权重 dual lever（PM polish R1）===
+
+  it('T2.1.hotfix3-1A · sphere mode (k=1) graticule stroke = #d8cab0 + sw=0.6（min clamp）', () => {
+    mountGeographicCanvas({
+      container,
+      width: 600,
+      height: 400,
+      initialMode: 'sphere',
+      marxCurrentLocation: [10, 50],
+      nodes: FIXTURE_NODES,
+    });
+    const graticule = container.querySelector('path.graticule') as SVGPathElement;
+    expect(graticule).toBeTruthy();
+    expect(graticule.getAttribute('stroke')).toBe('#d8cab0');
+    // sphere mode k=1 → stroke-width = max(0.6, 0.5/sqrt(1)) = max(0.6, 0.5) = 0.6 clamp 起
+    expect(parseFloat(graticule.getAttribute('stroke-width')!)).toBeCloseTo(0.6, 2);
+  });
+
+  it('T2.1.hotfix3-1A · plane mode (k=8) graticule stroke = #b8a880（zoom-adaptive 加深）', () => {
+    const api = mountGeographicCanvas({
+      container,
+      width: 600,
+      height: 400,
+      initialMode: 'sphere',
+      marxCurrentLocation: [10, 50],
+      nodes: FIXTURE_NODES,
+    });
+    api.setMode('plane');
+    const graticule = container.querySelector('path.graticule') as SVGPathElement;
+    expect(graticule.getAttribute('stroke')).toBe('#b8a880');
+    // plane mode k=8 → stroke-width clamp min 0.6（公式值 0.25 << min）
+    expect(parseFloat(graticule.getAttribute('stroke-width')!)).toBeCloseTo(0.6, 2);
   });
 
   // === M-B2 T2.1.hotfix2-C · 国名标签（k>=4 trigger / sphere mode 不显）===

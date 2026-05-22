@@ -46,6 +46,8 @@ import {
   ZOOM_THRESHOLDS,
   K_MAX,
   dotRadiusAtZoom,
+  strokeWidthAtZoom,
+  borderStrokeColor,
   shouldShowBorderLabels,
   borderLabelFontSize,
   type ProjectionMode,
@@ -286,13 +288,17 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
     const currentDistance = satelliteDistanceAtZoom(k);
     const clipAngleRad = Math.acos(1 / currentDistance);
 
-    // T2.1.hotfix2-B · stroke-width 反比 zoom（border + graticule · 高 zoom 不模糊）
-    //   公式 dotRadiusAtZoom(k, baseW) · 同根号公式 / clamp k<2 plateau
-    const strokeW = dotRadiusAtZoom(k, 0.5);
+    // T2.1.hotfix3-1A · stroke 视觉权重 dual lever（PM polish R1 反馈 "边界线颜色太浅"）
+    //   lever A · stroke-width 绝对值 min clamp 0.6（防 sub-pixel rendering antialiasing 稀释）
+    //   lever B · 颜色 zoom-adaptive（sphere 保 #d8cab0 spec § 6 / plane k>=4 加深 #b8a880）
+    //   dot outline 用更小 min 0.3（米白底 separation 作用 · 不喧宾夺主）
+    const borderStrokeW = strokeWidthAtZoom(k, 0.5, 0.6);
+    const borderColor = borderStrokeColor(k);
+    const dotOutlineW = strokeWidthAtZoom(k, 0.5, 0.3);
 
     // T1.6+ C · borders 底图层（最底 / 在 graticule + nodes 之前 / 防遮节点）
-    // spec § 6 视觉：米白 fill (#fcfaf6) + 沙石灰金 stroke (#d8cab0)
-    // T2.1.hotfix2-B · stroke-width 反比 zoom（高 zoom 时国界线不会太粗）
+    // spec § 6 视觉：米白 fill (#fcfaf6) + 沙石灰金 stroke
+    // T2.1.hotfix3-1A · stroke-width clamp min 0.6 + 颜色 zoom-adaptive（PM polish R1）
     g.selectAll('path.border').remove();
     if (bordersGeojson) {
       const borderSel = g
@@ -304,19 +310,19 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
         .attr('class', 'border')
         .attr('d', (d) => pathGen(d as GeoJSON.GeoJsonObject) ?? '')
         .attr('fill', '#fcfaf6') // 米白底 · spec § 6
-        .attr('stroke', '#d8cab0') // 沙石灰金 border · spec § 6
-        .attr('stroke-width', strokeW);
+        .attr('stroke', borderColor) // T2.1.hotfix3-1A · sphere #d8cab0 / plane #b8a880
+        .attr('stroke-width', borderStrokeW);
     }
 
     // graticule 经纬网（每 10° 一条 / d3 默认 step）
-    // T2.1.hotfix2-B · stroke-width 反比 zoom（视觉风格跟 border 一致）
+    // T2.1.hotfix3-1A · 跟 border 同步 dual lever（视觉风格一致）
     g.selectAll('path.graticule').remove();
     g.append('path')
       .attr('class', 'graticule')
       .attr('d', pathGen(geoGraticule()()) ?? '')
       .attr('fill', 'none')
-      .attr('stroke', '#d8cab0') // 沙石灰金 · spec § 6
-      .attr('stroke-width', strokeW);
+      .attr('stroke', borderColor) // T2.1.hotfix3-1A · 跟 border 同色
+      .attr('stroke-width', borderStrokeW);
 
     // T2.1.hotfix2-C · 国名英文标签（k>=4 trigger / 字体跟 zoom 走 / 背面 hide）
     //   位置：d3.geoCentroid 算每国地理中心 → projection 推 pixel
@@ -358,6 +364,8 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
     //   location → 灰 #9b8b6f · r=3（V1 数据缺口 · 留 code path · V1+ wire up）
     // T2.1.hotfix · Issue 1 · 背面节点 display:none（great-circle 距离 > clipAngle 隐藏）
     // T2.1.hotfix2-B · dot radius 反比 zoom（治本 PM "圆点比国家大" 痛点）
+    // T2.1.hotfix3-2A · dot radius ratio clamp baseR*0.6（PM polish R1 · 防过小看不见）
+    //   + 米白 outline stroke（separation 跟底图 · contrast 增）
     g.selectAll('circle.geo-node').remove();
     g.selectAll('circle.geo-node')
       .data(nodes)
@@ -371,6 +379,8 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
       .attr('fill', (d) =>
         d.type === 'person' ? '#5b3a8c' : d.type === 'event' ? '#cc6633' : '#9b8b6f',
       )
+      .attr('stroke', '#fcfaf6') // T2.1.hotfix3-2A · 米白 outline · 跟底图 #fcfaf6 separation
+      .attr('stroke-width', dotOutlineW)
       .attr('display', (d) => (geoDistance(center, d.lonLat) > clipAngleRad ? 'none' : null));
   }
 

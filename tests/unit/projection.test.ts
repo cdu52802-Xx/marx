@@ -11,6 +11,8 @@ import {
   SCALE_AT_K_MAX,
   K_DISTANCE_PLATEAU,
   dotRadiusAtZoom,
+  strokeWidthAtZoom,
+  borderStrokeColor,
   shouldShowBorderLabels,
   borderLabelFontSize,
 } from '../../src/lib/projection.ts';
@@ -178,7 +180,7 @@ describe('satelliteDistanceAtZoom · M-B2 T1.6+++++（全程线性内插 50→2 
   });
 });
 
-describe('dotRadiusAtZoom · M-B2 T2.1.hotfix2-B（反比 zoom · 治本 PM "圆点比国家大" 痛点）', () => {
+describe('dotRadiusAtZoom · M-B2 T2.1.hotfix2-B + hotfix3-2A（反比 + ratio clamp）', () => {
   it('k=1 → r=5（plateau · clamp k<2 / 球面 mode 节点醒目）', () => {
     expect(dotRadiusAtZoom(1, 5)).toBe(5);
   });
@@ -187,32 +189,88 @@ describe('dotRadiusAtZoom · M-B2 T2.1.hotfix2-B（反比 zoom · 治本 PM "圆
     expect(dotRadiusAtZoom(2, 5)).toBe(5);
   });
 
-  it('k=4 → r ≈ 3.54（中段缩小 · 5/sqrt(4/2)=5/sqrt(2)）', () => {
+  it('k=4 → r ≈ 3.54（中段缩小 · 5/sqrt(4/2)=5/sqrt(2) · 仍 > min 3）', () => {
     expect(dotRadiusAtZoom(4, 5)).toBeCloseTo(3.5355, 3);
   });
 
-  it('k=8 → r=2.5（plane mode · 5/sqrt(8/2)=5/2）', () => {
-    expect(dotRadiusAtZoom(8, 5)).toBe(2.5);
+  it('T2.1.hotfix3-2A · k=8 baseR=5 → r=3（ratio clamp baseR*0.6 · 公式值 2.5 被 clamp）', () => {
+    // 公式：5 / sqrt(4) = 2.5 · ratio min: 5 * 0.6 = 3 · max(3, 2.5) = 3
+    expect(dotRadiusAtZoom(8, 5)).toBe(3);
   });
 
-  it('k=16 → r ≈ 1.77（中深 zoom · 5/sqrt(16/2)=5/sqrt(8)）', () => {
-    expect(dotRadiusAtZoom(16, 5)).toBeCloseTo(1.7678, 3);
+  it('T2.1.hotfix3-2A · k=16 baseR=5 → r=3（ratio clamp · 公式值 1.77 被 clamp）', () => {
+    // 公式：5 / sqrt(8) ≈ 1.77 · ratio min: 3 · max(3, 1.77) = 3
+    expect(dotRadiusAtZoom(16, 5)).toBe(3);
   });
 
-  it('k=32 → r=1.25（极深 · 5/sqrt(32/2)=5/4）', () => {
-    expect(dotRadiusAtZoom(32, 5)).toBe(1.25);
+  it('T2.1.hotfix3-2A · k=32 baseR=5 → r=3（ratio clamp · 公式值 1.25 被 clamp）', () => {
+    // 公式：5 / sqrt(16) = 1.25 · ratio min: 3 · max(3, 1.25) = 3
+    expect(dotRadiusAtZoom(32, 5)).toBe(3);
   });
 
-  it('baseR=4 (event 节点) k=8 → r=2（公式与 baseR 线性）', () => {
-    expect(dotRadiusAtZoom(8, 4)).toBe(2);
+  it('T2.1.hotfix3-2A · baseR=4 (event) k=8 → r=2.4（ratio clamp 4*0.6=2.4 · 公式值 2 被 clamp）', () => {
+    expect(dotRadiusAtZoom(8, 4)).toBe(2.4);
   });
 
-  it('baseR=3 (location 节点) k=8 → r=1.5', () => {
-    expect(dotRadiusAtZoom(8, 3)).toBe(1.5);
+  it('T2.1.hotfix3-2A · baseR=3 (location) k=8 → r=1.8（ratio clamp 3*0.6=1.8 · 公式值 1.5 被 clamp）', () => {
+    expect(dotRadiusAtZoom(8, 3)).toBeCloseTo(1.8, 5);
   });
 
-  it('baseR=0.5 (border stroke-width) k=8 → 0.25（同公式 / stroke 反比 zoom）', () => {
-    expect(dotRadiusAtZoom(8, 0.5)).toBe(0.25);
+  it('T2.1.hotfix3-2A · baseR=4 (event) k=4 → r ≈ 2.83（公式值 4/sqrt(2)=2.83 > min 2.4 · clamp 不起）', () => {
+    expect(dotRadiusAtZoom(4, 4)).toBeCloseTo(2.8284, 3);
+  });
+});
+
+describe('strokeWidthAtZoom · M-B2 T2.1.hotfix3-1A（绝对值 min clamp · 防 sub-pixel 稀释）', () => {
+  it('k=1 baseW=0.5 minAbs=0.6 → 0.6（plateau · k<2 clamp · 公式值 0.5 < min）', () => {
+    // 公式：0.5 / sqrt(2/2) = 0.5 · max(0.6, 0.5) = 0.6
+    expect(strokeWidthAtZoom(1, 0.5, 0.6)).toBe(0.6);
+  });
+
+  it('k=2 baseW=0.5 minAbs=0.6 → 0.6（基准 · 公式值 0.5 仍 < min 0.6 · clamp 起作用）', () => {
+    expect(strokeWidthAtZoom(2, 0.5, 0.6)).toBe(0.6);
+  });
+
+  it('k=8 baseW=0.5 minAbs=0.6 → 0.6（公式值 0.25 << min · clamp 起作用）', () => {
+    expect(strokeWidthAtZoom(8, 0.5, 0.6)).toBe(0.6);
+  });
+
+  it('k=32 baseW=0.5 minAbs=0.6 → 0.6（公式值 0.125 << min · clamp 极限）', () => {
+    expect(strokeWidthAtZoom(32, 0.5, 0.6)).toBe(0.6);
+  });
+
+  it('k=1 baseW=0.5 minAbs=0.3 (dot outline) → 0.5（公式值 > min · 公式生效）', () => {
+    expect(strokeWidthAtZoom(1, 0.5, 0.3)).toBe(0.5);
+  });
+
+  it('k=8 baseW=0.5 minAbs=0.3 (dot outline) → 0.3（公式值 0.25 < min · clamp）', () => {
+    expect(strokeWidthAtZoom(8, 0.5, 0.3)).toBe(0.3);
+  });
+
+  it('k=32 baseW=0.5 minAbs=0.3 (dot outline) → 0.3（公式值 0.125 << min）', () => {
+    expect(strokeWidthAtZoom(32, 0.5, 0.3)).toBe(0.3);
+  });
+});
+
+describe('borderStrokeColor · M-B2 T2.1.hotfix3-1A（zoom-adaptive 颜色 dual lever）', () => {
+  it('k=1 (sphere) → #d8cab0（淡 · spec § 6 风格 · 节点是主角）', () => {
+    expect(borderStrokeColor(1)).toBe('#d8cab0');
+  });
+
+  it('k=3.99 → #d8cab0（threshold 边界下侧 · 仍球面阶段）', () => {
+    expect(borderStrokeColor(3.99)).toBe('#d8cab0');
+  });
+
+  it('k=4 → #b8a880（threshold 起点 · plane mode 国界变信息焦点）', () => {
+    expect(borderStrokeColor(4)).toBe('#b8a880');
+  });
+
+  it('k=8 → #b8a880（plane mode · 沙石深一档）', () => {
+    expect(borderStrokeColor(8)).toBe('#b8a880');
+  });
+
+  it('k=32 → #b8a880（极深 zoom · 仍 plane）', () => {
+    expect(borderStrokeColor(32)).toBe('#b8a880');
   });
 });
 
