@@ -20,6 +20,7 @@ import { geoPath, geoGraticule } from 'd3-geo';
 import { zoom, type ZoomBehavior } from 'd3-zoom';
 import { drag } from 'd3-drag';
 import { interpolateProjection, ZOOM_THRESHOLDS, type ProjectionMode } from '../lib/projection.ts';
+import { loadBorders, filterBordersAtYear } from '../lib/historical-borders.ts';
 
 // Stage 1 prototype 测试节点（5 个 / 真数据 Stage 2 接）
 // 选址逻辑：Marx 生平相关欧洲城市 / 跨经度 (-0.13 to 13.40) + 跨纬度 (48.86 to 52.52)
@@ -128,6 +129,19 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
   };
   window.addEventListener('marx:time-change', timeHandler);
 
+  // T1.6+ C · cshapes 底图临时上（Stage 1 静态 1843 sample）
+  // Stage 4 真接 timeline year 动态切换 + build-time filter Marx subset (~480 KB)
+  // async load · 失败兜底（L1 留 V1+ world-atlas fallback / 现在只 console.error）
+  let bordersGeojson: GeoJSON.FeatureCollection | null = null;
+  loadBorders()
+    .then((g) => {
+      bordersGeojson = filterBordersAtYear(g, 1843);
+      render();
+    })
+    .catch((err) => {
+      console.error('[geographic-canvas] borders load fail · L1 fallback world-atlas 留 V1+', err);
+    });
+
   function render(): void {
     // T1.6+ B · 真线性内插 · currentZoomK 直接传 / interpolateProjection 内按 k 算 scale
     //   k=1 sphere scale=200 / k=4.5 transition scale=500 / k=8 plane scale=800（lib/projection.ts scaleAtZoom）
@@ -155,6 +169,23 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
       rotate: currentRotate,
     });
     const pathGen = geoPath(projection);
+
+    // T1.6+ C · borders 底图层（最底 / 在 graticule + nodes 之前 / 防遮节点）
+    // spec § 6 视觉：米白 fill (#fcfaf6) + 沙石灰金 stroke (#d8cab0)
+    g.selectAll('path.border').remove();
+    if (bordersGeojson) {
+      const borderSel = g
+        .selectAll<SVGPathElement, GeoJSON.Feature>('path.border')
+        .data(bordersGeojson.features);
+      borderSel
+        .enter()
+        .append('path')
+        .attr('class', 'border')
+        .attr('d', (d) => pathGen(d as GeoJSON.GeoJsonObject) ?? '')
+        .attr('fill', '#fcfaf6') // 米白底 · spec § 6
+        .attr('stroke', '#d8cab0') // 沙石灰金 border · spec § 6
+        .attr('stroke-width', 0.5);
+    }
 
     // graticule 经纬网（每 10° 一条 / d3 默认 step）
     g.selectAll('path.graticule').remove();
