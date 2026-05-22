@@ -137,4 +137,24 @@ describe('mountGeographicCanvas · M-B2 T1.3', () => {
     // jsdom 不会真触发 d3.zoom drag-for-pan / 但 attach 后 __zoom transform 应保持 identity
     expect(initialTransform?.k).toBe(1);
   });
+
+  // === M-B2 T1.6++ A · plane mode drag pan（mode-aware filter）===
+  it('zoomBehavior.filter · sphere mode 屏蔽 mousedown / plane mode 放行（mode 切换后 __zoom 仍可用）', () => {
+    const api = mountGeographicCanvas({
+      container,
+      width: 600,
+      height: 400,
+      marxCurrentLocation: [10, 50],
+    });
+    // 不直接 inspect filter function (zoom internal · 不暴露)
+    // 间接验：mode 切换后 __zoom transform state 仍存在 / 切到 plane mode 后 zoom 行为完整
+    // 真 mousedown event 测留 E2E (jsdom 限制)
+    api.setMode('plane');
+    const transformAfterPlane = (container as unknown as { __zoom?: { k: number } }).__zoom;
+    expect(transformAfterPlane).toBeTruthy();
+    // 切回 sphere mode 验对仗
+    api.setMode('sphere');
+    const transformAfterSphere = (container as unknown as { __zoom?: { k: number } }).__zoom;
+    expect(transformAfterSphere).toBeTruthy();
+  });
 });

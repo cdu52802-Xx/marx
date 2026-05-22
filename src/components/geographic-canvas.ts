@@ -84,11 +84,18 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
   // T1.6+ A · drag bug fix · filter 屏蔽 mousedown
   // 原 bug: zoom default 自带 drag-for-pan 抢 mousedown → d3-drag 拿不到 event → 球面 drag 旋转无响应
   // 修法: zoomBehavior.filter 拦截 mousedown / 让 zoom 只响应 wheel + touchstart / drag 独占 mousedown
+  //
+  // T1.6++ A · mode-aware filter（PM 实测反馈：第一轮 hotfix 后平面 mode 完全不能拖动）
+  // 球面 mode：屏蔽 mousedown · d3-drag 接管旋转
+  // 平面 / transition mode：放行 mousedown · zoom 自带 pan 接管平移
+  // wheel / touchstart 等总是放行
   const zoomBehavior: ZoomBehavior<SVGSVGElement, unknown> = zoom<SVGSVGElement, unknown>()
     .scaleExtent([1, 8])
     .filter((event: Event) => {
-      // 屏蔽 mousedown（让 d3-drag 接管球面旋转）/ 允许 wheel / touchstart / touchmove 等
-      return event.type !== 'mousedown';
+      if (event.type === 'mousedown') {
+        return currentMode !== 'sphere';
+      }
+      return true;
     })
     .on('zoom', (event) => {
       const k = event.transform.k as number;
