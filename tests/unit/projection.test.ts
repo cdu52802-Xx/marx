@@ -86,31 +86,36 @@ describe('ZOOM_THRESHOLDS · M-B2 T1.1', () => {
   });
 });
 
-describe('scaleAtZoom · M-B2 T1.6+ B（真线性内插）', () => {
-  it('k=1 → scale 200（球面 base）', () => {
+describe('scaleAtZoom · M-B2 T2.1.hotfix（K_MAX 8→16 · Issue 3 PM 看清欧洲国家）', () => {
+  it('k=1 → scale 200（球面 base · 起点）', () => {
     expect(scaleAtZoom(1)).toBeCloseTo(200, 5);
   });
 
-  it('k=8 → scale 800（平面 base）', () => {
-    expect(scaleAtZoom(8)).toBeCloseTo(800, 5);
+  it('k=16 → scale 1600（细节 max · 新 K_MAX）', () => {
+    expect(scaleAtZoom(16)).toBeCloseTo(1600, 5);
   });
 
-  it('k=4.5 → scale ≈ 500（中点附近线性内插）', () => {
-    // (4.5 - 1) / (8 - 1) = 0.5 → 200 + 600 * 0.5 = 500
-    expect(scaleAtZoom(4.5)).toBeCloseTo(500, 5);
+  it('k=8 → scale ≈ 853.33（distance plateau 起点 · linear lerp(200,1600,(8-1)/15)）', () => {
+    // (8 - 1) / 15 = 0.4667 → 200 + 1400 * 0.4667 ≈ 853.33
+    expect(scaleAtZoom(8)).toBeCloseTo(853.33, 1);
   });
 
-  it('k=2.5 → scale ≈ 328.57（sphere→transition 阈值线性内插）', () => {
-    // (2.5 - 1) / 7 = 0.2143 → 200 + 600 * 0.2143 ≈ 328.57
-    expect(scaleAtZoom(2.5)).toBeCloseTo(328.57, 1);
+  it('k=4.5 → scale ≈ 526.67（中段线性内插）', () => {
+    // (4.5 - 1) / 15 = 0.2333 → 200 + 1400 * 0.2333 ≈ 526.67
+    expect(scaleAtZoom(4.5)).toBeCloseTo(526.67, 1);
+  });
+
+  it('k=2.5 → scale = 340（sphere→transition 边界）', () => {
+    // (2.5 - 1) / 15 = 0.1 → 200 + 1400 * 0.1 = 340
+    expect(scaleAtZoom(2.5)).toBeCloseTo(340, 1);
   });
 
   it('k < 1 → clamp 到 200（防越界）', () => {
     expect(scaleAtZoom(0.5)).toBe(200);
   });
 
-  it('k > 8 → clamp 到 800（防越界）', () => {
-    expect(scaleAtZoom(10)).toBe(800);
+  it('k > 16 → clamp 到 1600（防越界）', () => {
+    expect(scaleAtZoom(20)).toBe(1600);
   });
 });
 

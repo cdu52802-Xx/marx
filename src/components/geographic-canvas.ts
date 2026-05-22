@@ -37,10 +37,16 @@
 //   - time-change event：reset panCenter（让 Marx follow reorient 重新生效）
 
 import { select } from 'd3-selection';
-import { geoPath, geoGraticule, type GeoProjection } from 'd3-geo';
+import { geoPath, geoGraticule, geoDistance, type GeoProjection } from 'd3-geo';
 import { zoom, zoomIdentity, type ZoomBehavior } from 'd3-zoom';
 import { drag } from 'd3-drag';
-import { interpolateProjection, ZOOM_THRESHOLDS, type ProjectionMode } from '../lib/projection.ts';
+import {
+  interpolateProjection,
+  satelliteDistanceAtZoom,
+  ZOOM_THRESHOLDS,
+  K_MAX,
+  type ProjectionMode,
+} from '../lib/projection.ts';
 import { loadBorders, filterBordersAtYear } from '../lib/historical-borders.ts';
 import type { GeoNode } from '../lib/geographic-data.ts';
 
@@ -91,13 +97,15 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
   const { container, width, height } = opts;
   let currentMode: ProjectionMode = opts.initialMode ?? 'sphere';
   let currentLoc: [number, number] = opts.marxCurrentLocation ?? [10, 50];
-  let currentRotate: [number, number, number] | undefined;
   // M-B2 T2.1 · 渲染节点 · default [] 兼容 Stage 1 prototype unit test 不传 nodes 场景
   const nodes: GeoNode[] = opts.nodes ?? [];
   // T1.6+ B · 真线性内插 · k 从 zoom event 拿 / interpolateProjection 内按 k 算 scale
   let currentZoomK = 1;
-  // T1.6++++ · drag pan 累积的 projection.center 偏移（transition + plane mode 用）
-  // null 表示 follow currentLoc（Marx 当年地点）· 非 null 时 drag 改写 / time-change reset 回 null
+  // T1.6++++ → T2.1.hotfix Issue 2 · 统一 drag state · drag 全程改 panCenter（删 currentRotate）
+  //   第一性：satellite projection .center([lng,lat]) 数学等价 .rotate([-lng,-lat,0])
+  //   用户不需要 roll（地球不扭脖子）/ sphere mode drag 跟 transition+plane mode drag 数学+用户体验都等价
+  //   两套 state 切 mode 不同步是上轮 race 根因 / 统一 state 杜绝
+  //   null 表示 follow currentLoc（Marx 当年地点）· 非 null 时 drag 改写 / time-change reset 回 null
   let panCenter: [number, number] | null = null;
 
   const svg = select(container);
@@ -124,8 +132,9 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
   //         → 完全跳过 d3-zoom 内部 wheel anchor 算法 · transform.x/y 永远 0 · 无 race
   //   保留：filter 屏蔽 mousedown（所有 mode 都让 d3-drag 接管 pan/rotate）·
   //         g.attr('transform') 防御性设 null（应永远是 null · 因 x/y 不再累加）
+  // T2.1.hotfix · Issue 3 · scaleExtent 上限从 8 扩到 K_MAX (16) · PM 要看清欧洲国家细节
   const zoomBehavior: ZoomBehavior<SVGSVGElement, unknown> = zoom<SVGSVGElement, unknown>()
-    .scaleExtent([1, 8])
+    .scaleExtent([1, K_MAX])
     .filter((event: Event) => {
       // mousedown 一律屏蔽 / 交 d3-drag 处理（sphere rotate · transition/plane pan）
       // wheel 由自挂 wheel listener 接管（svg.on('wheel.zoom', null) 后 d3-zoom 不再处理 wheel）
@@ -154,34 +163,24 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
     // 沿用 d3-zoom 默认 wheelDelta 公式（保持手感一致）
     // d3-zoom source: -event.deltaY * (event.deltaMode === 1 ? 0.05 : event.deltaMode ? 1 : 0.002)
     const wheelDelta = -event.deltaY * (event.deltaMode === 1 ? 0.05 : event.deltaMode ? 1 : 0.002);
-    const newK = Math.max(1, Math.min(8, currentZoomK * Math.pow(2, wheelDelta)));
+    const newK = Math.max(1, Math.min(K_MAX, currentZoomK * Math.pow(2, wheelDelta)));
     if (newK === currentZoomK) return;
     // 直接 set transform = (newK, 0, 0) · 完全跳过 d3-zoom anchor 算法 · x/y 永远 0
     zoomBehavior.transform(svg, zoomIdentity.scale(newK));
   };
   svg.on('wheel', wheelHandler);
 
-  // T1.5 / T1.6++++ · d3-drag mode-aware
-  //   - sphere mode：dx/dy → currentRotate 累加（既有 · 球面视角旋转）
-  //   - transition / plane mode：dx/dy → projection.invert 反算 Δlon/Δlat → panCenter 累加（修法 B · 修 Bug 2）
-  //     反算逻辑：取 viewport 中心点 [cx, cy] 跟偏移点 [cx-dx, cy-dy] 在地球上对应经纬度差
-  //     drag 拖屏幕向右 = projection.center 向左移（看左边 / 用户视角向右 pan）→ 故 invert 用 [cx - dx, cy - dy]
-  // 0.5 系数：1px 拖动 = 0.5° 旋转（sphere · 手感经验值 / 见 https://observablehq.com/@d3/versor-dragging）
+  // T2.1.hotfix · Issue 2 · 统一 drag handler · 全 mode 改 panCenter（删 currentRotate path）
+  //   数学：dx/dy 像素 → projection.invert 反算 viewport 中心 vs 偏移点 Δlon/Δlat → panCenter 累加
+  //   drag 拖屏幕向右 = projection.center 向左移（看左边 / 用户视角向右 pan）→ 故 invert 用 [cx - dx, cy - dy]
+  //   sphere mode 视觉表现仍是"旋转地球"（panCenter 改 = projection.rotate 自动跟着改 / 视觉等价）
+  //   transition/plane mode 视觉表现是"拖动地图"（同一 state · 同一公式 · 一致体验）
   const dragBehavior = drag<SVGSVGElement, unknown>().on('drag', (event) => {
     const dx = event.dx as number;
     const dy = event.dy as number;
-    if (currentMode === 'sphere') {
-      // sphere · 累加 rotate
-      const rotate = currentRotate ?? [-currentLoc[0], -currentLoc[1], 0];
-      currentRotate = [rotate[0] + dx * 0.5, rotate[1] - dy * 0.5, rotate[2]];
-      render();
-      return;
-    }
-    // transition / plane · 改 panCenter（用当前 projection.invert 反算精确 Δlon/Δlat）
-    // 调 createProjectionForCurrentState 拿当前 projection 实例 / invert 反算 viewport 中心 vs 偏移点经纬度差
     const proj = createProjectionForCurrentState();
     if (!proj.invert) {
-      // d3-zoom mercator/satellite/orthographic 都支持 invert · 兜底防御
+      // d3 satellite/mercator/orthographic 都支持 invert · 兜底防御
       return;
     }
     const cx = width / 2;
@@ -200,13 +199,12 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
   // T1.5 · window 'marx:time-change' event listener · year → Marx 当年地点 → reorient
   // timeline T4.x dispatch 此 event · 现在只 listen（dispatch 由后续 task 加）
   // listener 必须 destroy 时 detach（不然组件卸载后 stale closure 持续累加）
-  // T1.6++++ · reset panCenter（让 Marx follow reorient 重新生效 / 防 stale drag offset）
+  // T2.1.hotfix · Issue 2 · 统一 state · 只 reset panCenter（删 currentRotate path）
   const timeHandler = (e: Event): void => {
     const detail = (e as CustomEvent).detail as { year?: number } | undefined;
     if (typeof detail?.year === 'number') {
       currentLoc = marxLocationAtYear(detail.year);
-      currentRotate = undefined; // reset drag · 让 currentLoc 重新 drive projection center
-      panCenter = null; // reset pan · 让 currentLoc 重新作 projection.center（transition/plane mode）
+      panCenter = null; // reset pan · 让 currentLoc 重新作 projection.center · render 重算 rotate
       render();
     }
   };
@@ -232,12 +230,12 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
   function createProjectionForCurrentState(): GeoProjection {
     const k = computeEffectiveK();
     const center: [number, number] = panCenter ?? currentLoc;
+    // T2.1.hotfix · Issue 2 · 不传 rotate · interpolateProjection else 分支自动 rotate([-center[0], -center[1], 0])
     const { projection } = interpolateProjection(k, {
       width,
       height,
       center,
       scale: 200,
-      rotate: currentRotate,
     });
     return projection;
   }
@@ -264,20 +262,26 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
 
   function render(): void {
     // T1.6+ B · 真线性内插 · currentZoomK 直接传 / interpolateProjection 内按 k 算 scale
-    //   k=1 sphere scale=200 / k=4.5 transition scale=500 / k=8 plane scale=800（lib/projection.ts scaleAtZoom）
+    //   k=1 scale=200（sphere 视觉）/ k=8 scale=853（plateau 起点）/ k=16 scale=1600（细节最大）
     const k = computeEffectiveK();
 
-    // T1.6++++ · transition / plane mode 拖动累加的 panCenter 优先 · 否则 follow currentLoc
-    //   sphere mode 也走该 path · 但 sphere drag 走 currentRotate / panCenter 在 sphere 不被 drag 改 · 等同 currentLoc
+    // T2.1.hotfix · Issue 2 · 统一 state · panCenter 优先 / 否则 follow currentLoc
+    //   sphere/transition/plane 都用同一 center / projection.rotate 自动跟着 center 走
     const center: [number, number] = panCenter ?? currentLoc;
     const { projection } = interpolateProjection(k, {
       width,
       height,
       center,
       scale: 200, // placeholder · interpolateProjection 内被 scaleAtZoom(k) 覆盖
-      rotate: currentRotate,
     });
     const pathGen = geoPath(projection);
+
+    // T2.1.hotfix · Issue 1 · 球面背后节点 hide
+    //   D3 projection.clipAngle 只 clip path / 不 clip SVG circle · 背面 circle 仍 render（透过球面）
+    //   修法：每节点算 great-circle 角距离到视野中心 · > 当前 distance 对应 clipAngle 就 display:none
+    //   clipAngle = acos(1 / distance)（弧度）· 跟 projection.ts clipAngleForDistance 一致
+    const currentDistance = satelliteDistanceAtZoom(k);
+    const clipAngleRad = Math.acos(1 / currentDistance);
 
     // T1.6+ C · borders 底图层（最底 / 在 graticule + nodes 之前 / 防遮节点）
     // spec § 6 视觉：米白 fill (#fcfaf6) + 沙石灰金 stroke (#d8cab0)
@@ -310,6 +314,7 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
     //   person → 紫 #5b3a8c · r=5（M5 主图同色）
     //   event  → 橙 #cc6633 · r=4（V1 数据缺口 · 留 code path · V1+ wire up）
     //   location → 灰 #9b8b6f · r=3（V1 数据缺口 · 留 code path · V1+ wire up）
+    // T2.1.hotfix · Issue 1 · 背面节点 display:none（great-circle 距离 > clipAngle 隐藏）
     g.selectAll('circle.geo-node').remove();
     g.selectAll('circle.geo-node')
       .data(nodes)
@@ -322,7 +327,8 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
       .attr('r', (d) => (d.type === 'person' ? 5 : d.type === 'event' ? 4 : 3))
       .attr('fill', (d) =>
         d.type === 'person' ? '#5b3a8c' : d.type === 'event' ? '#cc6633' : '#9b8b6f',
-      );
+      )
+      .attr('display', (d) => (geoDistance(center, d.lonLat) > clipAngleRad ? 'none' : null));
   }
 
   render();
@@ -337,9 +343,12 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
       panCenter = null; // T1.6++++ · 外部 setMarxLocation 也 reset pan（跟 time-change handler 对仗）
       render();
     },
-    rotate(deg: [number, number, number]): void {
-      currentRotate = deg;
-      render();
+    rotate(_deg: [number, number, number]): void {
+      // T2.1.hotfix · Issue 2 · 统一 drag state · rotate API deprecated
+      //   保留接口防 console 调用方破裂 · 实际无副作用（推荐用 setMarxLocation 改 center）
+      console.warn(
+        '[geographic-canvas] rotate(deg) deprecated · 用 setMarxLocation(loc) 改 projection.center',
+      );
     },
     destroy(): void {
       window.removeEventListener('marx:time-change', timeHandler);

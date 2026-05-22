@@ -38,17 +38,25 @@ export interface ProjectionOptions {
 export const ZOOM_THRESHOLDS = { sphereMax: 2.5, planeMin: 4.5 };
 
 // T1.6+ B · 真线性内插 scale 范围
+// T2.1.hotfix · Issue 3 · 扩 K_MAX 8→16 / scale 800→1600 让 PM 看清欧洲国家细节
 export const SCALE_AT_K_MIN = 200;
-export const SCALE_AT_K_MAX = 800;
+export const SCALE_AT_K_MAX = 1600;
 export const K_MIN = 1;
-export const K_MAX = 8;
+export const K_MAX = 16;
+
+// T2.1.hotfix · Issue 3 · distance plateau 起点（k >= K_DISTANCE_PLATEAU 时 distance 固定 SAT_DISTANCE_AT_K_MAX）
+//   第一性原理：相机距地球已"接近平面" (distance=2) / 用户继续放大 = 看地面细节 (scale 翻倍)
+//   不需要镜头更近 (distance < 2 会撞 fisheye + 既往 "放大不能拖" bug)
+//   k=[1, 8] 区间：sphere → plane 视觉过渡（distance 50→2）
+//   k=[8, 16] 区间：plane plateau · distance 保持 2 · scale 继续放大（看地面细节）
+export const K_DISTANCE_PLATEAU = 8;
 
 // T1.6+++++ · 全程 satellite distance 范围（Issue 1 修法 B · PM 拍板 B 全程不切 mercator）
 //   k=1 → 50（≈ orthographic 球面视觉 / 数学 ≈ 远距 satellite）
-//   k=8 → 2 （≈ mercator look / fisheye 极弱）
+//   k=K_DISTANCE_PLATEAU (8) → 2 （≈ mercator look · plateau 起点 · 不再继续变小）
 //   跨任意 k 同一 projection · 真丝滑 · 无 jump
 export const SAT_DISTANCE_AT_K_MIN = 50; // at k=1
-export const SAT_DISTANCE_AT_K_MAX = 2; // at k=8
+export const SAT_DISTANCE_AT_K_MAX = 2; // at k >= K_DISTANCE_PLATEAU (plateau)
 
 /**
  * 按 d3.zoom k 线性算 scale（200 at k=1 → 800 at k=8）
@@ -60,11 +68,13 @@ export function scaleAtZoom(k: number): number {
 }
 
 /**
- * T1.6+++++ · Issue 1 修法 B · 全程线性内插 distance（50 at k=1 → 2 at k=8）
- *   k<1 clamp 50 · k>8 clamp 2
+ * T2.1.hotfix · Issue 3 修法 · distance plateau · k>=K_DISTANCE_PLATEAU 时固定 SAT_DISTANCE_AT_K_MAX
+ *   k=1 → 50（球面视觉）· k=8 (K_DISTANCE_PLATEAU) → 2（近平面视觉 · plateau 起点）· k>8 → 2 (plateau)
+ *   k<1 clamp 50（防越界）
+ *   第一性：相机距离已"接近平面" / 用户继续放大 = scale 放大看地面细节 / 不需要镜头更近
  */
 export function satelliteDistanceAtZoom(k: number): number {
-  const t = (k - K_MIN) / (K_MAX - K_MIN); // 0 at k=1 / 1 at k=8
+  const t = (k - K_MIN) / (K_DISTANCE_PLATEAU - K_MIN); // 0 at k=1 / 1 at k=K_DISTANCE_PLATEAU
   const clamped = Math.max(0, Math.min(1, t));
   return SAT_DISTANCE_AT_K_MIN - (SAT_DISTANCE_AT_K_MIN - SAT_DISTANCE_AT_K_MAX) * clamped;
 }

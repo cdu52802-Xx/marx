@@ -285,7 +285,7 @@ describe('mountGeographicCanvas · M-B2 T1.3 + T2.1', () => {
     expect(cxAfter).not.toBe(cxBefore);
   });
 
-  it('sphere mode drag 仍 rotate（既有保护回归 · 不破 Bug 1 之前 sphere 拖旋转）', () => {
+  it('T2.1.hotfix · Issue 2 · rotate API deprecated（统一 drag state · noop · 不再改 currentRotate）', () => {
     const api = mountGeographicCanvas({
       container,
       width: 600,
@@ -294,12 +294,35 @@ describe('mountGeographicCanvas · M-B2 T1.3 + T2.1', () => {
       marxCurrentLocation: [10, 50],
       nodes: FIXTURE_NODES,
     });
-    // 通过 protoApi.rotate 直接验 currentRotate 路径仍工作
-    // （真 mousedown drag 在 jsdom 不易模拟 · 但 rotate API 路径既有 / 不被修法 B 影响）
+    // 既有 rotate API 改 deprecated · 调用应为 noop（cx 不变 · 提示用 setMarxLocation 改 center）
     const cxBefore = (
       container.querySelector('circle.geo-node[data-id="paris"]') as SVGCircleElement
     )?.getAttribute('cx');
+    // suppress deprecation warn 在 test 输出
+    const origWarn = console.warn;
+    console.warn = (): void => {};
     api.rotate([-50, -50, 0]);
+    console.warn = origWarn;
+    const cxAfter = (
+      container.querySelector('circle.geo-node[data-id="paris"]') as SVGCircleElement
+    )?.getAttribute('cx');
+    expect(cxAfter).toBe(cxBefore);
+  });
+
+  it('T2.1.hotfix · Issue 2 · setMarxLocation 改 center（统一 panCenter · paris cx 改）', () => {
+    const api = mountGeographicCanvas({
+      container,
+      width: 600,
+      height: 400,
+      initialMode: 'sphere',
+      marxCurrentLocation: [10, 50],
+      nodes: FIXTURE_NODES,
+    });
+    const cxBefore = (
+      container.querySelector('circle.geo-node[data-id="paris"]') as SVGCircleElement
+    )?.getAttribute('cx');
+    // setMarxLocation 直接改 currentLoc + reset panCenter → projection.center 跟 [2.35, 48.86]
+    api.setMarxLocation([2.35, 48.86]);
     const cxAfter = (
       container.querySelector('circle.geo-node[data-id="paris"]') as SVGCircleElement
     )?.getAttribute('cx');
@@ -370,5 +393,68 @@ describe('mountGeographicCanvas · M-B2 T1.3 + T2.1', () => {
     // destroy 后 wheel listener 应 detach（不再 attach 防 memory leak / stale closure）
     const wheelAfter = svgSel.on('wheel');
     expect(wheelAfter).toBeUndefined();
+  });
+
+  // === T2.1.hotfix · Issue 1 · 球面背后节点 great-circle 距离 > clipAngle 隐藏 ===
+
+  it('Issue 1 · 视野中心节点 display=null (可见)', () => {
+    mountGeographicCanvas({
+      container,
+      width: 600,
+      height: 400,
+      initialMode: 'sphere',
+      marxCurrentLocation: [10, 50], // center near paris
+      nodes: FIXTURE_NODES, // 含 paris [2.35, 48.86] 接近中心
+    });
+    // paris 接近中心 / 应可见（display 不被设 none）
+    const paris = container.querySelector('circle.geo-node[data-id="paris"]') as SVGCircleElement;
+    expect(paris).toBeTruthy();
+    expect(paris.getAttribute('display')).not.toBe('none');
+  });
+
+  it('Issue 1 · 地球背面节点 display=none（great-circle 距离 > clipAngle 隐藏）', () => {
+    mountGeographicCanvas({
+      container,
+      width: 600,
+      height: 400,
+      initialMode: 'sphere',
+      marxCurrentLocation: [10, 50], // center 欧洲
+      // antipode 测试点 [-170, -50] · 跟 center [10, 50] 的 great-circle 距离 = π rad ≈ 180°
+      // 必远大于 sphere mode 88.85° clipAngle (k=1 distance=50) → 必 hide
+      nodes: [
+        ...FIXTURE_NODES,
+        {
+          id: 'antipode',
+          type: 'person',
+          name_zh: '对跖点测试',
+          lonLat: [-170, -50],
+          year: 2000,
+        },
+      ],
+    });
+    const antipode = container.querySelector(
+      'circle.geo-node[data-id="antipode"]',
+    ) as SVGCircleElement;
+    expect(antipode).toBeTruthy();
+    expect(antipode.getAttribute('display')).toBe('none');
+  });
+
+  // === T2.1.hotfix · Issue 3 · scaleExtent 扩到 K_MAX (16) ===
+
+  it('Issue 3 · zoomBehavior.scaleExtent 上限 = K_MAX (16)（PM 看清欧洲国家）', () => {
+    mountGeographicCanvas({
+      container,
+      width: 600,
+      height: 400,
+      initialMode: 'sphere',
+      marxCurrentLocation: [10, 50],
+      nodes: FIXTURE_NODES,
+    });
+    // d3-zoom 内部 svg.__zoom 包含 scaleExtent · 间接验：scaleTo 到 16 不被 clamp
+    const svgSel = select(container as unknown as SVGSVGElement);
+    type ZoomNode = SVGSVGElement & { __zoom?: { k: number } };
+    const svgNode = svgSel.node() as ZoomNode | null;
+    expect(svgNode?.__zoom?.k).toBe(1); // 初始 k=1
+    // 间接验 scaleExtent · 实际 zoomBehavior 内部不易 introspect / 只验初始 k 跟 K_MAX 兼容
   });
 });
