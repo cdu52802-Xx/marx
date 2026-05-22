@@ -20,7 +20,7 @@ describe('createProjection · M-B2 T1.1', () => {
     expect(proj([2.35, 48.86])).toBeTruthy();
   });
 
-  it('mode=plane → satellite distance=1.5 ≈ 近平面（巴黎在 plane 上有 pixel）', () => {
+  it('mode=plane → satellite distance=2 ≈ mercator-like（巴黎在 plane 上有 pixel）', () => {
     const proj = createProjection('plane', {
       width: 600,
       height: 400,
@@ -30,7 +30,7 @@ describe('createProjection · M-B2 T1.1', () => {
     expect(proj([2.35, 48.86])).toBeTruthy();
   });
 
-  it('mode=plane (T1.6++++++) · satellite distance=1.5 · center 投到 viewport 中心附近', () => {
+  it('mode=plane (T1.6+++++) · satellite distance=2 · center 投到 viewport 中心附近', () => {
     const proj = createProjection('plane', {
       width: 600,
       height: 400,
@@ -114,33 +114,33 @@ describe('scaleAtZoom · M-B2 T1.6+ B（真线性内插）', () => {
   });
 });
 
-describe('satelliteDistanceAtZoom · M-B2 T1.6++++++（全程线性内插 50→1.5 · PM 实测 plane 端调更近）', () => {
+describe('satelliteDistanceAtZoom · M-B2 T1.6+++++（全程线性内插 50→2 · Issue 1 拍板）', () => {
   it('k=1 (sphere 视觉起点) → distance 50（≈ orthographic / clipAngle ≈ 88.85°）', () => {
     expect(satelliteDistanceAtZoom(1)).toBeCloseTo(SAT_DISTANCE_AT_K_MIN, 5);
     expect(SAT_DISTANCE_AT_K_MIN).toBe(50);
   });
 
-  it('k=8 (plane 视觉终点) → distance 1.5（更近视角 · 球面感弱 · clipAngle ≈ 48°）', () => {
+  it('k=8 (plane 视觉终点) → distance 2（≈ mercator-like / clipAngle = 60°）', () => {
     expect(satelliteDistanceAtZoom(8)).toBeCloseTo(SAT_DISTANCE_AT_K_MAX, 5);
-    expect(SAT_DISTANCE_AT_K_MAX).toBe(1.5);
+    expect(SAT_DISTANCE_AT_K_MAX).toBe(2);
   });
 
-  it('k=4.5 (中间值) → distance ≈ 25.75（线性 lerp(50, 1.5, (4.5-1)/7)）', () => {
-    // (4.5 - 1) / 7 = 0.5 → 50 - 48.5 * 0.5 = 25.75
-    expect(satelliteDistanceAtZoom(4.5)).toBeCloseTo(25.75, 5);
+  it('k=4.5 (中间值) → distance ≈ 26（线性 lerp(50,2,(4.5-1)/7)）', () => {
+    // (4.5 - 1) / 7 = 0.5 → 50 - 48 * 0.5 = 26
+    expect(satelliteDistanceAtZoom(4.5)).toBeCloseTo(26, 5);
   });
 
-  it('k=2.5 → distance ≈ 39.61（sphere/transition 边界）', () => {
-    // (2.5 - 1) / 7 = 0.2143 → 50 - 48.5 * 0.2143 ≈ 39.61
-    expect(satelliteDistanceAtZoom(2.5)).toBeCloseTo(39.61, 1);
+  it('k=2.5 → distance ≈ 39.71（sphere/transition 边界）', () => {
+    // (2.5 - 1) / 7 = 0.2143 → 50 - 48 * 0.2143 ≈ 39.71
+    expect(satelliteDistanceAtZoom(2.5)).toBeCloseTo(39.71, 1);
   });
 
   it('k < 1 → clamp 到 50', () => {
     expect(satelliteDistanceAtZoom(0.5)).toBe(50);
   });
 
-  it('k > 8 → clamp 到 1.5', () => {
-    expect(satelliteDistanceAtZoom(10)).toBe(1.5);
+  it('k > 8 → clamp 到 2', () => {
+    expect(satelliteDistanceAtZoom(10)).toBe(2);
   });
 });
 
@@ -153,7 +153,7 @@ describe('全程 satellite projection · M-B2 T1.6+++++（Issue 1 修法 B · �
     expect(projection([2.35, 48.86])).toBeTruthy();
   });
 
-  it('k=8 plane mode · 巴黎 pixel 非 null（distance=1.5 · 近平面视角）', () => {
+  it('k=8 plane mode · 巴黎 pixel 非 null（distance=2 ≈ mercator-like）', () => {
     const { mode, projection } = interpolateProjection(8, baseOpts);
     expect(mode).toBe('plane');
     expect(projection([2.35, 48.86])).toBeTruthy();
