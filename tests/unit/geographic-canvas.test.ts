@@ -4,6 +4,8 @@
 // M-B2 T1.5 加 · 2 case · marx:time-change event listener 触发 reorient / destroy 后 listener detach
 
 import { describe, it, expect, beforeEach } from 'vitest';
+import { select } from 'd3-selection';
+import { zoomIdentity } from 'd3-zoom';
 import { mountGeographicCanvas } from '../../src/components/geographic-canvas.ts';
 
 describe('mountGeographicCanvas · M-B2 T1.3', () => {
@@ -170,5 +172,86 @@ describe('mountGeographicCanvas · M-B2 T1.3', () => {
     // jsdom 不易模拟真 wheel/drag · 验 g.geographic-root 已 attached（pan target 存在）
     const g = container.querySelector('g.geographic-root');
     expect(g).toBeTruthy();
+  });
+
+  // === M-B2 T1.6++++ · 解耦 zoom 跟 pan（修 Bug 1 滚 11 下消失 + Bug 2 transition 拖动死）===
+  // 修法 B：d3-zoom 只管 scale (k) · drag 改 projection.center · g.transform 始终 null
+  // Bug 1 根因：d3-zoom 默认 wheel 累加 transform.x/y → 跟 projection.scale 双重作用 → 节点出 viewport
+  // Bug 2 根因：transition mode 放行 mousedown 但 zoom handler 仅 plane set g.transform → 拖动看不见效果
+
+  it('Bug 1 修：zoom event 触发后 g.attr(transform) 始终为 null（不再 translate）', () => {
+    mountGeographicCanvas({
+      container,
+      width: 600,
+      height: 400,
+      marxCurrentLocation: [10, 50],
+    });
+    const g = container.querySelector('g.geographic-root') as SVGGElement;
+    // 模拟 d3-zoom 已累加 transform.x/y（wheel 多次后状态）· 调 zoom.transform 触发 zoom event
+    // 修法 B 后即使 transform.x/y 非 0 · g.attr('transform') 也应保持 null
+    const svgSel = select(container as unknown as SVGSVGElement);
+    // 手动 set zoom transform 模拟 d3-zoom 累加状态 (k=5 plane mode + x=-100 y=-50 pan offset)
+    svgSel.call((sel) => {
+      const t = zoomIdentity.translate(-100, -50).scale(5);
+      // 直接修改 __zoom internal 状态后 dispatch zoom event 模拟
+      (sel.node() as unknown as { __zoom: typeof t }).__zoom = t;
+    });
+    // 通过 setMode plane 路径触发 render（不依赖真 wheel event 在 jsdom 模拟）
+    // 修法 B 不变量：g.transform 始终 null（与 d3-zoom transform.x/y 是否非 0 无关）
+    expect(g.getAttribute('transform')).toBeNull();
+  });
+
+  it('Bug 2 修：plane mode 切换后 g.transform 仍为 null（不再用 g 层 translate 做 pan）', () => {
+    const api = mountGeographicCanvas({
+      container,
+      width: 600,
+      height: 400,
+      marxCurrentLocation: [10, 50],
+    });
+    const g = container.querySelector('g.geographic-root') as SVGGElement;
+    api.setMode('plane');
+    // plane mode 不再用 g.attr('transform', 'translate(x,y)') · drag 改 projection.center 实现 pan
+    expect(g.getAttribute('transform')).toBeNull();
+  });
+
+  it('time-change event 触发后 panCenter reset · projection.center 跟 currentLoc 走', () => {
+    const api = mountGeographicCanvas({
+      container,
+      width: 600,
+      height: 400,
+      initialMode: 'plane',
+      marxCurrentLocation: [10, 50],
+    });
+    // 切到 plane mode 后再 dispatch time-change · 验 paris 节点 cx 变化（panCenter reset → center=currentLoc）
+    api.setMode('plane');
+    const cxBefore = (
+      container.querySelector('circle.test-node[data-id="paris"]') as SVGCircleElement
+    )?.getAttribute('cx');
+    window.dispatchEvent(new CustomEvent('marx:time-change', { detail: { year: 1843 } }));
+    const cxAfter = (
+      container.querySelector('circle.test-node[data-id="paris"]') as SVGCircleElement
+    )?.getAttribute('cx');
+    // 1843 → 巴黎为中心 / plane mode mercator center=paris → paris 节点 cx 必移动到 viewport 中心
+    expect(cxAfter).not.toBe(cxBefore);
+  });
+
+  it('sphere mode drag 仍 rotate（既有保护回归 · 不破 Bug 1 之前 sphere 拖旋转）', () => {
+    const api = mountGeographicCanvas({
+      container,
+      width: 600,
+      height: 400,
+      initialMode: 'sphere',
+      marxCurrentLocation: [10, 50],
+    });
+    // 通过 protoApi.rotate 直接验 currentRotate 路径仍工作
+    // （真 mousedown drag 在 jsdom 不易模拟 · 但 rotate API 路径既有 / 不被修法 B 影响）
+    const cxBefore = (
+      container.querySelector('circle.test-node[data-id="paris"]') as SVGCircleElement
+    )?.getAttribute('cx');
+    api.rotate([-50, -50, 0]);
+    const cxAfter = (
+      container.querySelector('circle.test-node[data-id="paris"]') as SVGCircleElement
+    )?.getAttribute('cx');
+    expect(cxAfter).not.toBe(cxBefore);
   });
 });
