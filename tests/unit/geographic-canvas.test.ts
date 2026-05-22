@@ -2,13 +2,28 @@
 // 3 case · graticule mount / 5 test node / setMode 重算
 // M-B2 T1.4 加 · 2 case · d3.zoom attach / setMode 切换后节点重算（间接验 zoom → render 通路）
 // M-B2 T1.5 加 · 2 case · marx:time-change event listener 触发 reorient / destroy 后 listener detach
+//
+// M-B2 T2.1 改：删 TEST_NODES hardcode · 改接 nodes 入参
+//   既有 test 改用 5 个 demo GeoNode fixture 传入 · 验链路不变（render 链 / setMode 重算 / time-change）
+//   `circle.test-node` → `circle.geo-node` + class `geo-node-${type}` + `data-id` 不变
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { select } from 'd3-selection';
 import { zoomIdentity } from 'd3-zoom';
 import { mountGeographicCanvas } from '../../src/components/geographic-canvas.ts';
+import type { GeoNode } from '../../src/lib/geographic-data.ts';
 
-describe('mountGeographicCanvas · M-B2 T1.3', () => {
+// M-B2 T2.1 · 5 demo GeoNode fixture（替代 deleted TEST_NODES · 既有 test 用）
+// 选址保持 Marx 生平相关欧洲城市 · 跨经度 + 跨纬度 · sphere↔plane 切换 cx/cy 变化明显
+const FIXTURE_NODES: GeoNode[] = [
+  { id: 'trier', type: 'person', name_zh: '特里尔', lonLat: [6.64, 49.75] },
+  { id: 'bonn', type: 'person', name_zh: '波恩', lonLat: [7.1, 50.74] },
+  { id: 'berlin', type: 'person', name_zh: '柏林', lonLat: [13.4, 52.52] },
+  { id: 'paris', type: 'person', name_zh: '巴黎', lonLat: [2.35, 48.86] },
+  { id: 'london', type: 'person', name_zh: '伦敦', lonLat: [-0.13, 51.51] },
+];
+
+describe('mountGeographicCanvas · M-B2 T1.3 + T2.1', () => {
   let container: SVGSVGElement;
 
   beforeEach(() => {
@@ -29,15 +44,16 @@ describe('mountGeographicCanvas · M-B2 T1.3', () => {
     expect(container.querySelector('path.graticule')).toBeTruthy();
   });
 
-  it('mount 后 svg 内有 5 个测试节点（dot circles）', () => {
+  it('mount 后 svg 内有 5 个 geo-node circle（传 5 GeoNode fixture）', () => {
     mountGeographicCanvas({
       container,
       width: 600,
       height: 400,
       initialMode: 'sphere',
       marxCurrentLocation: [10, 50],
+      nodes: FIXTURE_NODES,
     });
-    const dots = container.querySelectorAll('circle.test-node');
+    const dots = container.querySelectorAll('circle.geo-node');
     expect(dots.length).toBe(5);
   });
 
@@ -48,15 +64,46 @@ describe('mountGeographicCanvas · M-B2 T1.3', () => {
       height: 400,
       initialMode: 'sphere',
       marxCurrentLocation: [10, 50],
+      nodes: FIXTURE_NODES,
     });
     const firstDotSphere = (
-      container.querySelector('circle.test-node') as SVGCircleElement
+      container.querySelector('circle.geo-node') as SVGCircleElement
     ).getAttribute('cx');
     api.setMode('plane');
     const firstDotPlane = (
-      container.querySelector('circle.test-node') as SVGCircleElement
+      container.querySelector('circle.geo-node') as SVGCircleElement
     ).getAttribute('cx');
     expect(firstDotSphere).not.toBe(firstDotPlane);
+  });
+
+  it('T2.1 · person 节点 fill = 紫 #5b3a8c · r=5', () => {
+    mountGeographicCanvas({
+      container,
+      width: 600,
+      height: 400,
+      initialMode: 'sphere',
+      marxCurrentLocation: [10, 50],
+      nodes: [{ id: 'p1', type: 'person', name_zh: '测试人', lonLat: [10, 50] }],
+    });
+    const dot = container.querySelector('circle.geo-node') as SVGCircleElement;
+    expect(dot.getAttribute('fill')).toBe('#5b3a8c');
+    expect(dot.getAttribute('r')).toBe('5');
+    expect(dot.getAttribute('class')).toContain('geo-node-person');
+    expect(dot.getAttribute('data-id')).toBe('p1');
+  });
+
+  it('T2.1 · 不传 nodes 入参（Stage 1 兼容）→ svg 内无 geo-node circle（仅 graticule）', () => {
+    mountGeographicCanvas({
+      container,
+      width: 600,
+      height: 400,
+      initialMode: 'sphere',
+      marxCurrentLocation: [10, 50],
+      // 故意不传 nodes · 验默认空数组
+    });
+    expect(container.querySelectorAll('circle.geo-node').length).toBe(0);
+    // graticule 仍渲染
+    expect(container.querySelector('path.graticule')).toBeTruthy();
   });
 
   // === M-B2 T1.4 · zoom 整合 ===
@@ -77,11 +124,12 @@ describe('mountGeographicCanvas · M-B2 T1.3', () => {
       width: 600,
       height: 400,
       marxCurrentLocation: [10, 50],
+      nodes: FIXTURE_NODES,
     });
     // jsdom 不易模拟 d3.zoom wheel event · 间接验：setMode 切换后 render 走通路
     // 同时 paris (2.35°E / 48.86°N) 在中心 [10°E / 50°N] 视口内 / plane mode cx 必 > 0
     api.setMode('plane');
-    const node = container.querySelector('circle.test-node[data-id="paris"]') as SVGCircleElement;
+    const node = container.querySelector('circle.geo-node[data-id="paris"]') as SVGCircleElement;
     expect(node).toBeTruthy();
     const cx = parseFloat(node.getAttribute('cx')!);
     expect(cx).toBeGreaterThan(0);
@@ -95,14 +143,15 @@ describe('mountGeographicCanvas · M-B2 T1.3', () => {
       height: 400,
       initialMode: 'sphere',
       marxCurrentLocation: [10, 50],
+      nodes: FIXTURE_NODES,
     });
     const initialCx = (
-      container.querySelector('circle.test-node[data-id="paris"]') as SVGCircleElement
+      container.querySelector('circle.geo-node[data-id="paris"]') as SVGCircleElement
     )?.getAttribute('cx');
     window.dispatchEvent(new CustomEvent('marx:time-change', { detail: { year: 1843 } }));
     // 1843 → 巴黎 [2.35, 48.86] / 球面 reorient → 巴黎在中心 / paris 节点 cx 变化
     const newCx = (
-      container.querySelector('circle.test-node[data-id="paris"]') as SVGCircleElement
+      container.querySelector('circle.geo-node[data-id="paris"]') as SVGCircleElement
     )?.getAttribute('cx');
     expect(newCx).not.toBe(initialCx);
   });
@@ -221,15 +270,16 @@ describe('mountGeographicCanvas · M-B2 T1.3', () => {
       height: 400,
       initialMode: 'plane',
       marxCurrentLocation: [10, 50],
+      nodes: FIXTURE_NODES,
     });
     // 切到 plane mode 后再 dispatch time-change · 验 paris 节点 cx 变化（panCenter reset → center=currentLoc）
     api.setMode('plane');
     const cxBefore = (
-      container.querySelector('circle.test-node[data-id="paris"]') as SVGCircleElement
+      container.querySelector('circle.geo-node[data-id="paris"]') as SVGCircleElement
     )?.getAttribute('cx');
     window.dispatchEvent(new CustomEvent('marx:time-change', { detail: { year: 1843 } }));
     const cxAfter = (
-      container.querySelector('circle.test-node[data-id="paris"]') as SVGCircleElement
+      container.querySelector('circle.geo-node[data-id="paris"]') as SVGCircleElement
     )?.getAttribute('cx');
     // 1843 → 巴黎为中心 / plane mode satellite distance=2 center=paris → paris 节点 cx 必移动到 viewport 中心
     expect(cxAfter).not.toBe(cxBefore);
@@ -242,15 +292,16 @@ describe('mountGeographicCanvas · M-B2 T1.3', () => {
       height: 400,
       initialMode: 'sphere',
       marxCurrentLocation: [10, 50],
+      nodes: FIXTURE_NODES,
     });
     // 通过 protoApi.rotate 直接验 currentRotate 路径仍工作
     // （真 mousedown drag 在 jsdom 不易模拟 · 但 rotate API 路径既有 / 不被修法 B 影响）
     const cxBefore = (
-      container.querySelector('circle.test-node[data-id="paris"]') as SVGCircleElement
+      container.querySelector('circle.geo-node[data-id="paris"]') as SVGCircleElement
     )?.getAttribute('cx');
     api.rotate([-50, -50, 0]);
     const cxAfter = (
-      container.querySelector('circle.test-node[data-id="paris"]') as SVGCircleElement
+      container.querySelector('circle.geo-node[data-id="paris"]') as SVGCircleElement
     )?.getAttribute('cx');
     expect(cxAfter).not.toBe(cxBefore);
   });

@@ -42,17 +42,11 @@ import { zoom, zoomIdentity, type ZoomBehavior } from 'd3-zoom';
 import { drag } from 'd3-drag';
 import { interpolateProjection, ZOOM_THRESHOLDS, type ProjectionMode } from '../lib/projection.ts';
 import { loadBorders, filterBordersAtYear } from '../lib/historical-borders.ts';
+import type { GeoNode } from '../lib/geographic-data.ts';
 
-// Stage 1 prototype 测试节点（5 个 / 真数据 Stage 2 接）
-// 选址逻辑：Marx 生平相关欧洲城市 / 跨经度 (-0.13 to 13.40) + 跨纬度 (48.86 to 52.52)
-//   → sphere ↔ plane 切换时 cx/cy 变化明显 / PM 视觉验证好辨认
-const TEST_NODES: { id: string; lonLat: [number, number] }[] = [
-  { id: 'trier', lonLat: [6.64, 49.75] },
-  { id: 'bonn', lonLat: [7.1, 50.74] },
-  { id: 'berlin', lonLat: [13.4, 52.52] },
-  { id: 'paris', lonLat: [2.35, 48.86] },
-  { id: 'london', lonLat: [-0.13, 51.51] },
-];
+// M-B2 T2.1 · 删 TEST_NODES（Stage 1 prototype 5 hardcode）· 改接外部 nodes 入参
+// V1 PM 拍板 A · 真数据先 ship · 当前 34 person 中 31 个有效（3 个 [0,0] 占位 filter）
+// event + location 数据缺口落 backlog · 入参签名预留
 
 // M-B2 T1.5 · Marx 行迹 6 段 (spec § 4.3)
 // yearEnd 是 exclusive (年区间 [yearStart, yearEnd))
@@ -78,6 +72,12 @@ export interface GeographicCanvasOptions {
   height: number;
   initialMode?: ProjectionMode;
   marxCurrentLocation?: [number, number]; // [lon, lat] · Stage 1.5 接 timeline
+  /**
+   * M-B2 T2.1 · 渲染的地理节点
+   *   V1 数据现状 (PM 拍板 A)：31 person (34 - 3 个 [0,0] 占位 filter) / 0 event / 0 location
+   *   入参为空数组时仅渲染 graticule + borders（兼容 Stage 1 prototype 测试 + 调用方未传场景）
+   */
+  nodes?: GeoNode[];
 }
 
 export interface GeographicCanvasApi {
@@ -92,6 +92,8 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
   let currentMode: ProjectionMode = opts.initialMode ?? 'sphere';
   let currentLoc: [number, number] = opts.marxCurrentLocation ?? [10, 50];
   let currentRotate: [number, number, number] | undefined;
+  // M-B2 T2.1 · 渲染节点 · default [] 兼容 Stage 1 prototype unit test 不传 nodes 场景
+  const nodes: GeoNode[] = opts.nodes ?? [];
   // T1.6+ B · 真线性内插 · k 从 zoom event 拿 / interpolateProjection 内按 k 算 scale
   let currentZoomK = 1;
   // T1.6++++ · drag pan 累积的 projection.center 偏移（transition + plane mode 用）
@@ -303,18 +305,24 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
       .attr('stroke', '#d8cab0') // 沙石灰金 · spec § 6
       .attr('stroke-width', 0.5);
 
-    // 5 个测试节点
-    g.selectAll('circle.test-node').remove();
-    g.selectAll('circle.test-node')
-      .data(TEST_NODES)
+    // M-B2 T2.1 · 86 节点完整渲染（V1 = 31 person · event + location backlog）
+    // spec § 4.4 5 类节点视觉：
+    //   person → 紫 #5b3a8c · r=5（M5 主图同色）
+    //   event  → 橙 #cc6633 · r=4（V1 数据缺口 · 留 code path · V1+ wire up）
+    //   location → 灰 #9b8b6f · r=3（V1 数据缺口 · 留 code path · V1+ wire up）
+    g.selectAll('circle.geo-node').remove();
+    g.selectAll('circle.geo-node')
+      .data(nodes)
       .enter()
       .append('circle')
-      .attr('class', 'test-node')
+      .attr('class', (d) => `geo-node geo-node-${d.type}`)
       .attr('data-id', (d) => d.id)
       .attr('cx', (d) => projection(d.lonLat)?.[0] ?? 0)
       .attr('cy', (d) => projection(d.lonLat)?.[1] ?? 0)
-      .attr('r', 4)
-      .attr('fill', '#5b3a8c'); // 紫 · spec § 6
+      .attr('r', (d) => (d.type === 'person' ? 5 : d.type === 'event' ? 4 : 3))
+      .attr('fill', (d) =>
+        d.type === 'person' ? '#5b3a8c' : d.type === 'event' ? '#cc6633' : '#9b8b6f',
+      );
   }
 
   render();

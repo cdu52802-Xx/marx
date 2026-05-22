@@ -55,6 +55,7 @@ import { showClaimPopover } from './components/claim-popover.ts';
 import { showArcPopover, hideArcPopover } from './components/arc-popover.ts';
 import { applyClaimFilters } from './components/apply-claim-filters.ts';
 import { mountGeographicCanvas } from './components/geographic-canvas.ts';
+import { extractGeoNodes } from './lib/geographic-data.ts';
 import type { ClaimNode, ClaimRelation } from './types/Claim.ts';
 import type { PersonNode } from './types/Node.ts';
 
@@ -1609,7 +1610,14 @@ console.log(
 
 // === M-B2 T1.3 · Stage 1 prototype 临时挂载（主画面右上 300×200 浮窗） ===
 // 不删 M5 主图 / 不动 B1 header + claim-popover 主流程
-// Stage 2 接真 obs 数据 + great circle 关系连线 + timeline 联动后下线临时浮窗
+// Stage 5 真副窗实施时下线临时浮窗 · 保留至少到 T5.1
+//
+// M-B2 T2.1 升级：删 5 个 hardcode TEST_NODES · 接真 persons 数据
+//   V1 PM 拍板 A 路径：34 person · 3 [0,0] 占位 filter · 31 GeoNode 渲染
+//   event + location 数据缺口落 backlog · V1+ enrich 后扩展（入参签名预留）
+const geoNodes = extractGeoNodes(persons);
+console.log(`[Marx M-B2 T2.1] geo nodes: ${geoNodes.length} / ${persons.length} person`);
+
 const protoSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
 protoSvg.setAttribute('width', '300');
 protoSvg.setAttribute('height', '200');
@@ -1622,5 +1630,6 @@ const protoApi = mountGeographicCanvas({
   height: 200,
   initialMode: 'sphere',
   marxCurrentLocation: [10, 50],
+  nodes: geoNodes,
 });
 (window as unknown as { protoApi: typeof protoApi }).protoApi = protoApi; // PM console 调
