@@ -188,25 +188,35 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
   //   drag 拖屏幕向右 = projection.center 向左移（看左边 / 用户视角向右 pan）→ 故 invert 用 [cx - dx, cy - dy]
   //   sphere mode 视觉表现仍是"旋转地球"（panCenter 改 = projection.rotate 自动跟着改 / 视觉等价）
   //   transition/plane mode 视觉表现是"拖动地图"（同一 state · 同一公式 · 一致体验）
-  const dragBehavior = drag<SVGSVGElement, unknown>().on('drag', (event) => {
-    const dx = event.dx as number;
-    const dy = event.dy as number;
-    const proj = createProjectionForCurrentState();
-    if (!proj.invert) {
-      // d3 satellite/mercator/orthographic 都支持 invert · 兜底防御
-      return;
-    }
-    const cx = width / 2;
-    const cy = height / 2;
-    const centerLngLat = proj.invert([cx, cy]);
-    const offsetLngLat = proj.invert([cx - dx, cy - dy]);
-    if (!centerLngLat || !offsetLngLat) return;
-    const dLon = offsetLngLat[0] - centerLngLat[0];
-    const dLat = offsetLngLat[1] - centerLngLat[1];
-    const base = panCenter ?? currentLoc;
-    panCenter = [base[0] + dLon, base[1] + dLat];
-    render();
-  });
+  //
+  // T2.2-F click-bug fix · clickDistance(5) 防 d3-drag 拦截 dot click
+  //   根因（第一性）：d3-drag clickDistance default=0 · 任何 sub-pixel 鼠标抖动算 drag
+  //     mouseup 后 d3-drag attach `click.drag` listener on window {capture: true}
+  //     capture phase 先于 circle bubble · 调 stopImmediatePropagation 拦截 native click
+  //     → dot 上的 click handler 永远收不到 (PM polish R2 2026-05-22 实测 click 无反应)
+  //   修法：clickDistance(5) · 5px 内 mousedown→mouseup 不算 drag · click.drag listener 不 attach
+  //   trade-off：用户拖动 < 5px 时算 click 不算 drag · 5px 在 300×200 浮窗上是合理 threshold
+  const dragBehavior = drag<SVGSVGElement, unknown>()
+    .clickDistance(5)
+    .on('drag', (event) => {
+      const dx = event.dx as number;
+      const dy = event.dy as number;
+      const proj = createProjectionForCurrentState();
+      if (!proj.invert) {
+        // d3 satellite/mercator/orthographic 都支持 invert · 兜底防御
+        return;
+      }
+      const cx = width / 2;
+      const cy = height / 2;
+      const centerLngLat = proj.invert([cx, cy]);
+      const offsetLngLat = proj.invert([cx - dx, cy - dy]);
+      if (!centerLngLat || !offsetLngLat) return;
+      const dLon = offsetLngLat[0] - centerLngLat[0];
+      const dLat = offsetLngLat[1] - centerLngLat[1];
+      const base = panCenter ?? currentLoc;
+      panCenter = [base[0] + dLon, base[1] + dLat];
+      render();
+    });
   svg.call(dragBehavior);
 
   // T1.5 · window 'marx:time-change' event listener · year → Marx 当年地点 → reorient

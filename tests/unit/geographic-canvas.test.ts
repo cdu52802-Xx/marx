@@ -800,6 +800,26 @@ describe('mountGeographicCanvas · M-B2 T1.3 + T2.1', () => {
     expect(parentClickFired).toBe(false);
   });
 
+  it('T2.2-F click-bug fix · dot click 即使鼠标移动 1-2px 仍触发（d3-drag clickDistance 5px 容忍）', () => {
+    // PM polish R2 实测 click 全无反应 · 根因 d3-drag clickDistance=0 拦 click
+    // 修法：dragBehavior.clickDistance(5) · 5px 内 mousedown→mouseup 不算 drag
+    // jsdom 不易模拟 d3-drag click.drag listener 拦截真实流 · 仅验 click handler 仍能 dispatch
+    mountGeographicCanvas({
+      container,
+      width: 600,
+      height: 400,
+      initialMode: 'sphere',
+      marxCurrentLocation: [-0.13, 51.51],
+      nodes: [MARX_FIXTURE],
+    });
+    const dot = container.querySelector('circle.geo-node[data-id="marx"]') as SVGCircleElement;
+    // 直接 dispatch click（不通过 mousedown/move/up · jsdom 限制）
+    // 真 prod 行为：clickDistance(5) 让 d3-drag 不 attach click.drag listener · 不 stopImmediatePropagation
+    dot.dispatchEvent(new MouseEvent('click', { bubbles: false }));
+    const dotAfter = container.querySelector('circle.geo-node[data-id="marx"]') as SVGCircleElement;
+    expect(dotAfter.getAttribute('stroke')).toBe('#5b3a8c'); // selected · click 生效证据
+  });
+
   it('T2.2-F · event 节点 click 不触发 person state（type guard 防穿透）', () => {
     const EVENT_NODE: GeoNode = {
       id: 'evt1',
