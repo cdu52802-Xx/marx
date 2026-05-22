@@ -56,6 +56,7 @@ import { showArcPopover, hideArcPopover } from './components/arc-popover.ts';
 import { applyClaimFilters } from './components/apply-claim-filters.ts';
 import { mountGeographicCanvas } from './components/geographic-canvas.ts';
 import { extractGeoNodes } from './lib/geographic-data.ts';
+import { extractGeoRelations, type RawRelation } from './lib/geographic-relations.ts';
 import type { ClaimNode, ClaimRelation } from './types/Claim.ts';
 import type { PersonNode } from './types/Node.ts';
 
@@ -68,11 +69,16 @@ const [claimsData, nodesData] = (await Promise.all([
   fetch(nodesUrl).then((r) => r.json()),
 ])) as [
   { claims: ClaimNode[]; relations: ClaimRelation[] },
-  { nodes: Array<{ id: string; type: string; [key: string]: unknown }> },
+  {
+    nodes: Array<{ id: string; type: string; [key: string]: unknown }>;
+    relations: RawRelation[]; // M-B2 T2.3 · person-person 关系（influences / mentor / friend_collaborator / author）
+  },
 ];
 
 const claims = claimsData.claims;
 const relations = claimsData.relations;
+// M-B2 T2.3 · nodes_skeleton.json relations (41 个 · 跟 claimsData.relations 不同族)
+const nodeRelations = nodesData.relations ?? [];
 const persons = nodesData.nodes.filter((n) => n.type === 'person') as unknown as PersonNode[];
 
 console.log(
@@ -1618,6 +1624,11 @@ console.log(
 const geoNodes = extractGeoNodes(persons);
 console.log(`[Marx M-B2 T2.1] geo nodes: ${geoNodes.length} / ${persons.length} person`);
 
+// M-B2 T2.3 · 抽取 person-person GeoRelation[]（PM 拍 ζ · DR-107）
+//   V1 数据 reality 41 raw / extract 后约 37 条（filter author + 双端有效）
+const geoRelations = extractGeoRelations(geoNodes, nodeRelations);
+console.log(`[Marx M-B2 T2.3] geo relations: ${geoRelations.length} / ${nodeRelations.length} raw`);
+
 const protoSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
 protoSvg.setAttribute('width', '300');
 protoSvg.setAttribute('height', '200');
@@ -1631,5 +1642,6 @@ const protoApi = mountGeographicCanvas({
   initialMode: 'sphere',
   marxCurrentLocation: [10, 50],
   nodes: geoNodes,
+  relations: geoRelations,
 });
 (window as unknown as { protoApi: typeof protoApi }).protoApi = protoApi; // PM console 调

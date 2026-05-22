@@ -12,6 +12,7 @@ import { select } from 'd3-selection';
 import { zoomIdentity } from 'd3-zoom';
 import { mountGeographicCanvas } from '../../src/components/geographic-canvas.ts';
 import type { GeoNode } from '../../src/lib/geographic-data.ts';
+import type { GeoRelation } from '../../src/lib/geographic-relations.ts';
 
 // M-B2 T2.1 · 5 demo GeoNode fixture（替代 deleted TEST_NODES · 既有 test 用）
 // 选址保持 Marx 生平相关欧洲城市 · 跨经度 + 跨纬度 · sphere↔plane 切换 cx/cy 变化明显
@@ -844,5 +845,198 @@ describe('mountGeographicCanvas · M-B2 T1.3 + T2.1', () => {
         'stroke',
       ),
     ).toBe('#fcfaf6');
+  });
+
+  // === M-B2 T2.3 ζ · 关系连线 arc 渲染 + hover/click 联动（PM 拍 ζ · DR-107 · Q5a+Q6a+Q7a+Q8a）===
+
+  const HEGEL_FIXTURE: GeoNode = {
+    id: 'hegel',
+    type: 'person',
+    name_zh: '黑格尔',
+    lonLat: [13.4, 52.52],
+    year: 1770,
+    deathYear: 1831,
+  };
+
+  const RELATION_HEGEL_MARX: GeoRelation = {
+    fromId: 'hegel',
+    toId: 'marx',
+    type: 'influences',
+    fromLonLat: [13.4, 52.52],
+    toLonLat: [-0.13, 51.51],
+  };
+
+  it('T2.3 ζ · 默认（无 hover/click）arc stroke #9b8b6f gray + opacity 0.25 + sw 0.5', () => {
+    mountGeographicCanvas({
+      container,
+      width: 600,
+      height: 400,
+      initialMode: 'sphere',
+      marxCurrentLocation: [-0.13, 51.51],
+      nodes: [MARX_FIXTURE, HEGEL_FIXTURE],
+      relations: [RELATION_HEGEL_MARX],
+    });
+    const arc = container.querySelector(
+      'path.geo-relation[data-from="hegel"][data-to="marx"]',
+    ) as SVGPathElement;
+    expect(arc).toBeTruthy();
+    expect(arc.getAttribute('stroke')).toBe('#9b8b6f');
+    expect(parseFloat(arc.getAttribute('opacity')!)).toBeCloseTo(0.25, 2);
+    expect(parseFloat(arc.getAttribute('stroke-width')!)).toBeCloseTo(0.5, 2);
+    expect(arc.getAttribute('pointer-events')).toBe('none');
+  });
+
+  it('T2.3 ζ · 不传 relations 入参（default []）→ 无 path.geo-relation', () => {
+    mountGeographicCanvas({
+      container,
+      width: 600,
+      height: 400,
+      initialMode: 'sphere',
+      marxCurrentLocation: [-0.13, 51.51],
+      nodes: [MARX_FIXTURE],
+    });
+    expect(container.querySelectorAll('path.geo-relation').length).toBe(0);
+  });
+
+  it('T2.3 ζ · hover person → 涉及 arc 临时高亮紫 opacity 0.7 sw 1 (Q7 a)', () => {
+    mountGeographicCanvas({
+      container,
+      width: 600,
+      height: 400,
+      initialMode: 'sphere',
+      marxCurrentLocation: [-0.13, 51.51],
+      nodes: [MARX_FIXTURE, HEGEL_FIXTURE],
+      relations: [RELATION_HEGEL_MARX],
+    });
+    const marxDot = container.querySelector('circle.geo-node[data-id="marx"]') as SVGCircleElement;
+    marxDot.dispatchEvent(new MouseEvent('mouseenter', { bubbles: false }));
+
+    const arc = container.querySelector(
+      'path.geo-relation[data-from="hegel"][data-to="marx"]',
+    ) as SVGPathElement;
+    expect(arc.getAttribute('stroke')).toBe('#5b3a8c'); // 紫
+    expect(parseFloat(arc.getAttribute('opacity')!)).toBeCloseTo(0.7, 2);
+    expect(parseFloat(arc.getAttribute('stroke-width')!)).toBeCloseTo(1, 2);
+  });
+
+  it('T2.3 ζ · click person → 涉及 arc 持久高亮紫 opacity 0.85 sw 1.2 (Q7 a · 持久比临时更显)', () => {
+    mountGeographicCanvas({
+      container,
+      width: 600,
+      height: 400,
+      initialMode: 'sphere',
+      marxCurrentLocation: [-0.13, 51.51],
+      nodes: [MARX_FIXTURE, HEGEL_FIXTURE],
+      relations: [RELATION_HEGEL_MARX],
+    });
+    const marxDot = container.querySelector('circle.geo-node[data-id="marx"]') as SVGCircleElement;
+    marxDot.dispatchEvent(new MouseEvent('click', { bubbles: false }));
+
+    const arc = container.querySelector(
+      'path.geo-relation[data-from="hegel"][data-to="marx"]',
+    ) as SVGPathElement;
+    expect(arc.getAttribute('stroke')).toBe('#5b3a8c');
+    expect(parseFloat(arc.getAttribute('opacity')!)).toBeCloseTo(0.85, 2);
+    expect(parseFloat(arc.getAttribute('stroke-width')!)).toBeCloseTo(1.2, 2);
+  });
+
+  it('T2.3 ζ · focus 时不涉及的 arc fade opacity 0.1（让位 focus 突出叙事）', () => {
+    const FEUERBACH: GeoNode = {
+      id: 'feuerbach',
+      type: 'person',
+      name_zh: '费尔巴哈',
+      lonLat: [11.07, 49.45],
+      year: 1804,
+      deathYear: 1872,
+    };
+    // hegel→marx + feuerbach→marx · click feuerbach → hegel→marx fade
+    const REL_FEUERBACH_MARX: GeoRelation = {
+      fromId: 'feuerbach',
+      toId: 'marx',
+      type: 'influences',
+      fromLonLat: [11.07, 49.45],
+      toLonLat: [-0.13, 51.51],
+    };
+    mountGeographicCanvas({
+      container,
+      width: 600,
+      height: 400,
+      initialMode: 'sphere',
+      marxCurrentLocation: [-0.13, 51.51],
+      nodes: [MARX_FIXTURE, HEGEL_FIXTURE, FEUERBACH],
+      relations: [RELATION_HEGEL_MARX, REL_FEUERBACH_MARX],
+    });
+    // click feuerbach → feuerbach 是 selectedPersonId · hegel→marx 不涉及 feuerbach · fade
+    const feuerbachDot = container.querySelector(
+      'circle.geo-node[data-id="feuerbach"]',
+    ) as SVGCircleElement;
+    feuerbachDot.dispatchEvent(new MouseEvent('click', { bubbles: false }));
+
+    const hegelArc = container.querySelector(
+      'path.geo-relation[data-from="hegel"][data-to="marx"]',
+    ) as SVGPathElement;
+    expect(parseFloat(hegelArc.getAttribute('opacity')!)).toBeCloseTo(0.1, 2);
+
+    // feuerbach→marx 涉及 selected · 持久高亮
+    const feuerbachArc = container.querySelector(
+      'path.geo-relation[data-from="feuerbach"][data-to="marx"]',
+    ) as SVGPathElement;
+    expect(parseFloat(feuerbachArc.getAttribute('opacity')!)).toBeCloseTo(0.85, 2);
+  });
+
+  it('T2.3 ζ · selected 优先 hover · click 后再 hover 其他 person 不抢 focus', () => {
+    const FEUERBACH: GeoNode = {
+      id: 'feuerbach',
+      type: 'person',
+      name_zh: '费尔巴哈',
+      lonLat: [11.07, 49.45],
+      year: 1804,
+      deathYear: 1872,
+    };
+    const REL_FEUERBACH_MARX: GeoRelation = {
+      fromId: 'feuerbach',
+      toId: 'marx',
+      type: 'influences',
+      fromLonLat: [11.07, 49.45],
+      toLonLat: [-0.13, 51.51],
+    };
+    mountGeographicCanvas({
+      container,
+      width: 600,
+      height: 400,
+      initialMode: 'sphere',
+      marxCurrentLocation: [-0.13, 51.51],
+      nodes: [MARX_FIXTURE, HEGEL_FIXTURE, FEUERBACH],
+      relations: [RELATION_HEGEL_MARX, REL_FEUERBACH_MARX],
+    });
+    // click marx · selected = marx
+    const marxDot = container.querySelector('circle.geo-node[data-id="marx"]') as SVGCircleElement;
+    marxDot.dispatchEvent(new MouseEvent('click', { bubbles: false }));
+
+    // 再 hover feuerbach · hovered = feuerbach · 但 focusPersonId = selected (marx) 优先
+    const feuerbachDot = container.querySelector(
+      'circle.geo-node[data-id="feuerbach"]',
+    ) as SVGCircleElement;
+    feuerbachDot.dispatchEvent(new MouseEvent('mouseenter', { bubbles: false }));
+
+    // hegel→marx 涉及 selected marx · 持久高亮 0.85（selected 优先 hover）
+    const hegelArc = container.querySelector(
+      'path.geo-relation[data-from="hegel"][data-to="marx"]',
+    ) as SVGPathElement;
+    expect(parseFloat(hegelArc.getAttribute('opacity')!)).toBeCloseTo(0.85, 2);
+  });
+
+  it('T2.3 ζ · arc 不抢 dot pointer-events（pointer-events: none）', () => {
+    mountGeographicCanvas({
+      container,
+      width: 600,
+      height: 400,
+      initialMode: 'sphere',
+      marxCurrentLocation: [-0.13, 51.51],
+      nodes: [MARX_FIXTURE, HEGEL_FIXTURE],
+      relations: [RELATION_HEGEL_MARX],
+    });
+    const arc = container.querySelector('path.geo-relation') as SVGPathElement;
+    expect(arc.getAttribute('pointer-events')).toBe('none');
   });
 });

@@ -55,6 +55,8 @@ import {
 } from '../lib/projection.ts';
 import { loadBorders, filterBordersAtYear } from '../lib/historical-borders.ts';
 import type { GeoNode } from '../lib/geographic-data.ts';
+import { isRelationInvolved, type GeoRelation } from '../lib/geographic-relations.ts';
+import { greatCircleArc } from '../lib/great-circle.ts';
 
 // M-B2 T2.1 · 删 TEST_NODES（Stage 1 prototype 5 hardcode）· 改接外部 nodes 入参
 // V1 PM 拍板 A · 真数据先 ship · 当前 34 person 中 31 个有效（3 个 [0,0] 占位 filter）
@@ -90,6 +92,13 @@ export interface GeographicCanvasOptions {
    *   入参为空数组时仅渲染 graticule + borders（兼容 Stage 1 prototype 测试 + 调用方未传场景）
    */
   nodes?: GeoNode[];
+  /**
+   * M-B2 T2.3 · 渲染的地理关系连线（PM 拍 ζ · DR-107）
+   *   V1 数据 reality 37 条 person-person arc（35 influences + 1 mentor + 1 friend_collaborator）
+   *   默认 stroke #9b8b6f gray opacity 0.25 · hover/click person 涉及 arc 联动高亮紫
+   *   入参为空数组时不渲染 arc（兼容 Stage 1 prototype 测试场景）
+   */
+  relations?: GeoRelation[];
 }
 
 export interface GeographicCanvasApi {
@@ -105,6 +114,8 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
   let currentLoc: [number, number] = opts.marxCurrentLocation ?? [10, 50];
   // M-B2 T2.1 · 渲染节点 · default [] 兼容 Stage 1 prototype unit test 不传 nodes 场景
   const nodes: GeoNode[] = opts.nodes ?? [];
+  // M-B2 T2.3 · 渲染关系连线 · default [] 兼容
+  const relations: GeoRelation[] = opts.relations ?? [];
   // T1.6+ B · 真线性内插 · k 从 zoom event 拿 / interpolateProjection 内按 k 算 scale
   let currentZoomK = 1;
   // T1.6++++ → T2.1.hotfix Issue 2 · 统一 drag state · drag 全程改 panCenter（删 currentRotate）
@@ -374,6 +385,38 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
         })
         .text((d) => ((d as GeoJSON.Feature).properties as { Name?: string } | null)?.Name ?? '');
     }
+
+    // M-B2 T2.3 · 地理关系连线 arc 渲染（PM 拍 ζ · DR-107 · Q5a/Q6a/Q7a/Q8a）
+    //   V1 数据 reality 37 条 person-person arc（35 influences + 1 mentor + 1 friend_collaborator）
+    //   默认 #9b8b6f 灰 opacity 0.25 sw 0.5（淡而可见 · 不抢 dot 主角）
+    //   hover person → 涉及 arc 临时高亮紫 opacity 0.7 sw 1
+    //   click person → 涉及 arc 持久高亮紫 opacity 0.85 sw 1.2
+    //   其他 arc（有 focus 但本 arc 不涉及）fade opacity 0.1（让位 focus · 突出叙事）
+    //   z-order：在 border-label 之后 · dots 之前（arc 不遮 dots · dot pointer-events 优先）
+    const focusPersonId = selectedPersonId ?? hoveredPersonId;
+    const hasFocus = focusPersonId !== null;
+    const focusIsSelected = selectedPersonId !== null;
+    g.selectAll('path.geo-relation').remove();
+    g.selectAll<SVGPathElement, GeoRelation>('path.geo-relation')
+      .data(relations)
+      .enter()
+      .append('path')
+      .attr('class', 'geo-relation')
+      .attr('data-from', (d) => d.fromId)
+      .attr('data-to', (d) => d.toId)
+      .attr('d', (d) => greatCircleArc(d.fromLonLat, d.toLonLat, projection))
+      .attr('fill', 'none')
+      .attr('stroke', (d) => (isRelationInvolved(d, focusPersonId) ? '#5b3a8c' : '#9b8b6f'))
+      .attr('stroke-width', (d) => {
+        if (isRelationInvolved(d, focusPersonId)) return focusIsSelected ? 1.2 : 1;
+        return 0.5;
+      })
+      .attr('opacity', (d) => {
+        if (isRelationInvolved(d, focusPersonId)) return focusIsSelected ? 0.85 : 0.7;
+        if (hasFocus) return 0.1;
+        return 0.25;
+      })
+      .attr('pointer-events', 'none');
 
     // M-B2 T2.1 · 86 节点完整渲染（V1 = 31 person · event + location backlog）
     // spec § 4.4 5 类节点视觉：
