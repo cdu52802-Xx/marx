@@ -584,4 +584,245 @@ describe('mountGeographicCanvas · M-B2 T1.3 + T2.1', () => {
     expect(() => api.setMode('sphere')).not.toThrow();
     expect(container.querySelectorAll('text.border-label').length).toBe(0);
   });
+
+  // === M-B2 T2.2-F · person 节点名字标签策略（D+E 混合 · PM Q1a/Q2b/Q3a/Q4a 拍板）===
+
+  const MARX_FIXTURE: GeoNode = {
+    id: 'marx',
+    type: 'person',
+    name_zh: '马克思',
+    lonLat: [-0.13, 51.51],
+    year: 1818,
+    deathYear: 1883,
+  };
+
+  it('T2.2-F-D · sphere mode (k=1) → person label 默认 hide（无 text.person-label）', () => {
+    mountGeographicCanvas({
+      container,
+      width: 600,
+      height: 400,
+      initialMode: 'sphere',
+      marxCurrentLocation: [-0.13, 51.51],
+      nodes: [MARX_FIXTURE],
+    });
+    expect(container.querySelectorAll('text.person-label').length).toBe(0);
+  });
+
+  it('T2.2-F-D · plane mode (k=8) → person label 默认显 · 内容仅 name_zh（不含生卒年）', () => {
+    const api = mountGeographicCanvas({
+      container,
+      width: 600,
+      height: 400,
+      initialMode: 'sphere',
+      marxCurrentLocation: [-0.13, 51.51],
+      nodes: [MARX_FIXTURE],
+    });
+    api.setMode('plane');
+    const label = container.querySelector(
+      'text.person-label[data-id="marx"]',
+    ) as SVGTextElement | null;
+    expect(label).toBeTruthy();
+    expect(label!.textContent).toBe('马克思');
+  });
+
+  it('T2.2-F-Q1a/Q4a · label 紫 #5b3a8c + italic + text-anchor start + 紧贴 cx 右侧', () => {
+    const api = mountGeographicCanvas({
+      container,
+      width: 600,
+      height: 400,
+      initialMode: 'sphere',
+      marxCurrentLocation: [-0.13, 51.51],
+      nodes: [MARX_FIXTURE],
+    });
+    api.setMode('plane');
+    const label = container.querySelector('text.person-label[data-id="marx"]') as SVGTextElement;
+    const dot = container.querySelector('circle.geo-node[data-id="marx"]') as SVGCircleElement;
+    expect(label.getAttribute('fill')).toBe('#5b3a8c'); // Q1 a
+    expect(label.getAttribute('font-style')).toBe('italic'); // Q4 a
+    expect(label.getAttribute('text-anchor')).toBe('start'); // Q4 a
+    const dotCx = parseFloat(dot.getAttribute('cx')!);
+    const labelX = parseFloat(label.getAttribute('x')!);
+    expect(labelX).toBeGreaterThan(dotCx);
+  });
+
+  it('T2.2-F-E hover · sphere mode mouseenter dot → label 显含生卒年 (Q2 b)', () => {
+    mountGeographicCanvas({
+      container,
+      width: 600,
+      height: 400,
+      initialMode: 'sphere',
+      marxCurrentLocation: [-0.13, 51.51],
+      nodes: [MARX_FIXTURE],
+    });
+    expect(container.querySelectorAll('text.person-label').length).toBe(0);
+
+    const dot = container.querySelector('circle.geo-node[data-id="marx"]') as SVGCircleElement;
+    dot.dispatchEvent(new MouseEvent('mouseenter', { bubbles: false }));
+
+    const label = container.querySelector('text.person-label[data-id="marx"]') as SVGTextElement;
+    expect(label).toBeTruthy();
+    expect(label.textContent).toBe('马克思 1818-1883'); // Q2 b name + 生卒年
+  });
+
+  it('T2.2-F-E hover · mouseleave 后 sphere mode label 重新 hide', () => {
+    mountGeographicCanvas({
+      container,
+      width: 600,
+      height: 400,
+      initialMode: 'sphere',
+      marxCurrentLocation: [-0.13, 51.51],
+      nodes: [MARX_FIXTURE],
+    });
+    const dot = container.querySelector('circle.geo-node[data-id="marx"]') as SVGCircleElement;
+    dot.dispatchEvent(new MouseEvent('mouseenter', { bubbles: false }));
+    expect(container.querySelectorAll('text.person-label').length).toBe(1);
+
+    const dotAfter = container.querySelector('circle.geo-node[data-id="marx"]') as SVGCircleElement;
+    dotAfter.dispatchEvent(new MouseEvent('mouseleave', { bubbles: false }));
+    expect(container.querySelectorAll('text.person-label').length).toBe(0);
+  });
+
+  it('T2.2-F-Q3a click · selected dot stroke 切紫圈 #5b3a8c sw=2 (B1 DR-087 复用)', () => {
+    mountGeographicCanvas({
+      container,
+      width: 600,
+      height: 400,
+      initialMode: 'sphere',
+      marxCurrentLocation: [-0.13, 51.51],
+      nodes: [MARX_FIXTURE],
+    });
+    const dot = container.querySelector('circle.geo-node[data-id="marx"]') as SVGCircleElement;
+    expect(dot.getAttribute('stroke')).toBe('#fcfaf6'); // 初始米白 outline
+
+    dot.dispatchEvent(new MouseEvent('click', { bubbles: false }));
+
+    const dotAfter = container.querySelector('circle.geo-node[data-id="marx"]') as SVGCircleElement;
+    expect(dotAfter.getAttribute('stroke')).toBe('#5b3a8c'); // 紫圈
+    expect(parseFloat(dotAfter.getAttribute('stroke-width')!)).toBe(2);
+  });
+
+  it('T2.2-F-Q3a click · selected label 加粗 (font-weight 700) + 含生卒年', () => {
+    mountGeographicCanvas({
+      container,
+      width: 600,
+      height: 400,
+      initialMode: 'sphere',
+      marxCurrentLocation: [-0.13, 51.51],
+      nodes: [MARX_FIXTURE],
+    });
+    const dot = container.querySelector('circle.geo-node[data-id="marx"]') as SVGCircleElement;
+    dot.dispatchEvent(new MouseEvent('click', { bubbles: false }));
+
+    const label = container.querySelector('text.person-label[data-id="marx"]') as SVGTextElement;
+    expect(label).toBeTruthy();
+    expect(label.getAttribute('font-weight')).toBe('700');
+    expect(label.textContent).toBe('马克思 1818-1883');
+  });
+
+  it('T2.2-F-E click toggle · 点同一 person 取消 selected（stroke 回米白）', () => {
+    mountGeographicCanvas({
+      container,
+      width: 600,
+      height: 400,
+      initialMode: 'sphere',
+      marxCurrentLocation: [-0.13, 51.51],
+      nodes: [MARX_FIXTURE],
+    });
+    const dot = container.querySelector('circle.geo-node[data-id="marx"]') as SVGCircleElement;
+    dot.dispatchEvent(new MouseEvent('click', { bubbles: false }));
+    expect(
+      (container.querySelector('circle.geo-node[data-id="marx"]') as SVGCircleElement).getAttribute(
+        'stroke',
+      ),
+    ).toBe('#5b3a8c');
+
+    const dotAfter = container.querySelector('circle.geo-node[data-id="marx"]') as SVGCircleElement;
+    dotAfter.dispatchEvent(new MouseEvent('click', { bubbles: false }));
+    expect(
+      (container.querySelector('circle.geo-node[data-id="marx"]') as SVGCircleElement).getAttribute(
+        'stroke',
+      ),
+    ).toBe('#fcfaf6');
+  });
+
+  it('T2.2-F-E click 切换 · 点另一 person → 切到新 selected · 旧 deselected', () => {
+    const ENGELS: GeoNode = {
+      id: 'engels',
+      type: 'person',
+      name_zh: '恩格斯',
+      lonLat: [-0.13, 51.51],
+      year: 1820,
+      deathYear: 1895,
+    };
+    mountGeographicCanvas({
+      container,
+      width: 600,
+      height: 400,
+      initialMode: 'sphere',
+      marxCurrentLocation: [-0.13, 51.51],
+      nodes: [MARX_FIXTURE, ENGELS],
+    });
+    const marxDot = container.querySelector('circle.geo-node[data-id="marx"]') as SVGCircleElement;
+    marxDot.dispatchEvent(new MouseEvent('click', { bubbles: false }));
+
+    const engelsDot = container.querySelector(
+      'circle.geo-node[data-id="engels"]',
+    ) as SVGCircleElement;
+    engelsDot.dispatchEvent(new MouseEvent('click', { bubbles: false }));
+
+    expect(
+      (container.querySelector('circle.geo-node[data-id="marx"]') as SVGCircleElement).getAttribute(
+        'stroke',
+      ),
+    ).toBe('#fcfaf6');
+    expect(
+      (
+        container.querySelector('circle.geo-node[data-id="engels"]') as SVGCircleElement
+      ).getAttribute('stroke'),
+    ).toBe('#5b3a8c');
+  });
+
+  it('T2.2-F · click handler stopPropagation（不冒泡到 container 父级 click）', () => {
+    mountGeographicCanvas({
+      container,
+      width: 600,
+      height: 400,
+      initialMode: 'sphere',
+      marxCurrentLocation: [-0.13, 51.51],
+      nodes: [MARX_FIXTURE],
+    });
+    let parentClickFired = false;
+    document.body.addEventListener('click', () => {
+      parentClickFired = true;
+    });
+    const dot = container.querySelector('circle.geo-node[data-id="marx"]') as SVGCircleElement;
+    dot.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(parentClickFired).toBe(false);
+  });
+
+  it('T2.2-F · event 节点 click 不触发 person state（type guard 防穿透）', () => {
+    const EVENT_NODE: GeoNode = {
+      id: 'evt1',
+      type: 'event',
+      name_zh: '巴黎公社',
+      lonLat: [2.35, 48.86],
+      year: 1871,
+    };
+    mountGeographicCanvas({
+      container,
+      width: 600,
+      height: 400,
+      initialMode: 'plane',
+      marxCurrentLocation: [10, 50],
+      nodes: [MARX_FIXTURE, EVENT_NODE],
+    });
+    const evtDot = container.querySelector('circle.geo-node[data-id="evt1"]') as SVGCircleElement;
+    expect(evtDot).toBeTruthy();
+    evtDot.dispatchEvent(new MouseEvent('click', { bubbles: false }));
+    expect(
+      (container.querySelector('circle.geo-node[data-id="marx"]') as SVGCircleElement).getAttribute(
+        'stroke',
+      ),
+    ).toBe('#fcfaf6');
+  });
 });

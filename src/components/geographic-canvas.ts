@@ -50,6 +50,7 @@ import {
   borderStrokeColor,
   shouldShowBorderLabels,
   borderLabelFontSize,
+  personLabelFontSize,
   type ProjectionMode,
 } from '../lib/projection.ts';
 import { loadBorders, filterBordersAtYear } from '../lib/historical-borders.ts';
@@ -112,6 +113,13 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
   //   两套 state 切 mode 不同步是上轮 race 根因 / 统一 state 杜绝
   //   null 表示 follow currentLoc（Marx 当年地点）· 非 null 时 drag 改写 / time-change reset 回 null
   let panCenter: [number, number] | null = null;
+
+  // T2.2-F · person 节点 hover/click state（D+E 混合 · PM Q1a/Q2b/Q3a/Q4a 拍板）
+  //   球面 mode (k<4)：default label hide / hover 显含生卒年 / click 选中常驻
+  //   plane mode (k>=4)：default label 全显（仅 name_zh）/ hover 切到含生卒年 / click 选中常驻
+  //   selected 视觉：紫圈 indicator (B1 DR-087 复用 · stroke #5b3a8c sw=2) + label 加粗
+  let hoveredPersonId: string | null = null;
+  let selectedPersonId: string | null = null;
 
   const svg = select(container);
   const g = svg.append('g').attr('class', 'geographic-root');
@@ -366,8 +374,10 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
     // T2.1.hotfix2-B · dot radius 反比 zoom（治本 PM "圆点比国家大" 痛点）
     // T2.1.hotfix3-2A · dot radius ratio clamp baseR*0.6（PM polish R1 · 防过小看不见）
     //   + 米白 outline stroke（separation 跟底图 · contrast 增）
+    // T2.2-F-Q3a · selected person dot 紫圈 indicator（B1 DR-087 复用 · stroke #5b3a8c sw=2）
+    // T2.2-F · hover/click handler on dot · update hoveredPersonId/selectedPersonId + re-render
     g.selectAll('circle.geo-node').remove();
-    g.selectAll('circle.geo-node')
+    g.selectAll<SVGCircleElement, GeoNode>('circle.geo-node')
       .data(nodes)
       .enter()
       .append('circle')
@@ -379,9 +389,76 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
       .attr('fill', (d) =>
         d.type === 'person' ? '#5b3a8c' : d.type === 'event' ? '#cc6633' : '#9b8b6f',
       )
-      .attr('stroke', '#fcfaf6') // T2.1.hotfix3-2A · 米白 outline · 跟底图 #fcfaf6 separation
-      .attr('stroke-width', dotOutlineW)
-      .attr('display', (d) => (geoDistance(center, d.lonLat) > clipAngleRad ? 'none' : null));
+      // T2.2-F-Q3a · selected dot 用紫圈 stroke 替换米白 outline · sw=2 视觉跟 B1 DR-087 一致
+      .attr('stroke', (d) => (d.id === selectedPersonId ? '#5b3a8c' : '#fcfaf6'))
+      .attr('stroke-width', (d) => (d.id === selectedPersonId ? 2 : dotOutlineW))
+      .attr('display', (d) => (geoDistance(center, d.lonLat) > clipAngleRad ? 'none' : null))
+      .on('mouseenter', (_event, d) => {
+        if (d.type !== 'person') return;
+        hoveredPersonId = d.id;
+        render();
+      })
+      .on('mouseleave', (_event, d) => {
+        if (d.type !== 'person') return;
+        if (hoveredPersonId === d.id) {
+          hoveredPersonId = null;
+          render();
+        }
+      })
+      .on('click', (event: MouseEvent, d) => {
+        if (d.type !== 'person') return;
+        event.stopPropagation();
+        // toggle · 点同一个取消 / 点另一个切换
+        selectedPersonId = selectedPersonId === d.id ? null : d.id;
+        render();
+      });
+
+    // T2.2-F · person 节点名字标签（D+E 混合 · 数据 + zoom + hover/click 三维 visibility）
+    //   D zoom threshold：plane mode (k>=4) 默认全显 · 球面 mode (k<4) 默认 hide
+    //   E hover/click：任何 zoom 下 hover/selected 都显（且切到含生卒年 Q2 b 格式）
+    //   selected 加粗 (font-weight 700 · Q3 a 跟紫圈 dual indicator)
+    //   位置：cx + r + 2 紧贴右侧 / italic / 紫 #5b3a8c (Q1 a · Q4 a)
+    //   pointer-events none · 不抢 dot hover
+    g.selectAll('text.person-label').remove();
+    const personNodes = nodes.filter((d) => d.type === 'person');
+    const visiblePersonLabels = personNodes.filter((d) => {
+      if (d.id === selectedPersonId) return true;
+      if (d.id === hoveredPersonId) return true;
+      return k >= 4;
+    });
+    const defaultPersonFontSize = personLabelFontSize(k);
+    g.selectAll<SVGTextElement, GeoNode>('text.person-label')
+      .data(visiblePersonLabels, (d) => d.id)
+      .enter()
+      .append('text')
+      .attr('class', 'person-label')
+      .attr('data-id', (d) => d.id)
+      .attr('x', (d) => {
+        const dotR = dotRadiusAtZoom(k, 5); // person baseR=5
+        return (projection(d.lonLat)?.[0] ?? 0) + dotR + 2;
+      })
+      .attr('y', (d) => (projection(d.lonLat)?.[1] ?? 0) + 3)
+      .attr('text-anchor', 'start')
+      .attr('font-style', 'italic')
+      .attr('font-size', (d) => {
+        // hover/selected 时不论 zoom · clamp min 9px 保最小可读
+        const isExpanded = d.id === selectedPersonId || d.id === hoveredPersonId;
+        if (isExpanded) return Math.max(9, defaultPersonFontSize);
+        return defaultPersonFontSize;
+      })
+      .attr('font-weight', (d) => (d.id === selectedPersonId ? 700 : 400))
+      .attr('fill', '#5b3a8c') // Q1 a · 紫同 dot fill
+      .attr('opacity', 0.9)
+      .attr('pointer-events', 'none')
+      .attr('display', (d) => (geoDistance(center, d.lonLat) > clipAngleRad ? 'none' : null))
+      .text((d) => {
+        // Q2 b · hover/click 时显含生卒年 "name_zh 1818-1883"
+        const isExpanded = d.id === selectedPersonId || d.id === hoveredPersonId;
+        if (isExpanded && d.deathYear) {
+          return `${d.name_zh} ${d.year ?? ''}-${d.deathYear}`;
+        }
+        return d.name_zh;
+      });
   }
 
   render();

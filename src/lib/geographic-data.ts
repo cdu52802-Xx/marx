@@ -18,6 +18,8 @@ export interface GeoNode {
   name_zh: string;
   lonLat: [number, number]; // [lng, lat] · D3 标准顺序
   year?: number; // person 用 birth_year / event 用 year
+  // T2.2-F · person 节点 hover/click tooltip 显生卒年（Q2 b 拍板 · "name_zh 1818-1883" 格式）
+  deathYear?: number;
 }
 
 /**
@@ -61,6 +63,7 @@ export function extractGeoNodes(
       // 验证：Marx [51.5074, -0.1278]（伦敦 lat,lng）→ [-0.1278, 51.5074]（D3 lng,lat）
       lonLat: [p.main_location_lat_lng[1], p.main_location_lat_lng[0]],
       year: p.birth_year,
+      deathYear: p.death_year,
     });
   }
   return out;

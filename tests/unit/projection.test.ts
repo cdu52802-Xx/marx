@@ -15,6 +15,7 @@ import {
   borderStrokeColor,
   shouldShowBorderLabels,
   borderLabelFontSize,
+  personLabelFontSize,
 } from '../../src/lib/projection.ts';
 
 describe('createProjection · M-B2 T1.1', () => {
@@ -320,6 +321,40 @@ describe('borderLabelFontSize · M-B2 T2.1.hotfix2-C（字体跟 zoom 走 · 8�
 
   it('k=32 → 12（clamp · 极深 zoom 字体仍 12px）', () => {
     expect(borderLabelFontSize(32)).toBe(12);
+  });
+});
+
+describe('personLabelFontSize · M-B2 T2.2-F（person 名字标签字体跟 zoom 走 · Q4 a 拍板）', () => {
+  it('k<4 → 0（球面 mode 默认 hide · caller hover/click 时单独显含生卒年）', () => {
+    expect(personLabelFontSize(1)).toBe(0);
+    expect(personLabelFontSize(3.99)).toBe(0);
+  });
+
+  it('k=4 → 9px（threshold 起点 · 比国名 8px 大一档 · person 主角）', () => {
+    expect(personLabelFontSize(4)).toBe(9);
+  });
+
+  it('k=6 → 10px（中段 lerp · 9 + 2*0.5）', () => {
+    expect(personLabelFontSize(6)).toBe(10);
+  });
+
+  it('k=8 → 11px（plane mode max · 仍小于 dot radius 2-3x 视觉层级）', () => {
+    expect(personLabelFontSize(8)).toBe(11);
+  });
+
+  it('k=16 → 11px（clamp · 字体不再涨防视觉过载）', () => {
+    expect(personLabelFontSize(16)).toBe(11);
+  });
+
+  it('k=32 → 11px（clamp · 极深 zoom 字体仍 11px）', () => {
+    expect(personLabelFontSize(32)).toBe(11);
+  });
+
+  it('person 标签字体始终大于国名标签 1-2px（hierarchy · 主角 vs 辅助）', () => {
+    expect(personLabelFontSize(4)).toBeGreaterThan(borderLabelFontSize(4));
+    expect(personLabelFontSize(6)).toBeGreaterThanOrEqual(borderLabelFontSize(6));
+    // k>=8 person 11 < 国名 12 · 实际上 plane mode max 国名信息密度 priority 略高
+    // person label hover 时切到 "name 1818-1883" 含生卒年 / 信息密度自动追平
   });
 });
 

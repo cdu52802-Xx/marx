@@ -162,6 +162,20 @@ export function borderLabelFontSize(k: number): number {
 }
 
 /**
+ * T2.2-F · person 节点名字标签字体大小跟 zoom 走（PM 拍 F · Q1a/Q2b/Q3a/Q4a）
+ *   k=4: 9px（threshold 起点 · 比国名 8px 大一档 / person 是主角）
+ *   k>=8: 11px（plane mode max · 仍小于节点 dot radius+ stroke 视觉层级）
+ *   中间线性 lerp · k<4 返 0（球面 mode 默认 hide · 只 hover/click 时显）
+ *   设计原则：person 标签字体 ≥ 国名标签 1-2px（主角 vs 辅助 hierarchy）
+ *           · 但 ≤ dot radius 2-3x（不喧宾夺主）
+ */
+export function personLabelFontSize(k: number): number {
+  if (k < 4) return 0;
+  const t = Math.min(1, (k - 4) / 4);
+  return 9 + 2 * t;
+}
+
+/**
  * 创建当前 mode 的投影（兼容 setMode API · 全 satellite · mode 仅映射到默认 k）
  *   sphere → k=1 / plane → k=8 / transition → k=(1+8)/2=4.5
  */
