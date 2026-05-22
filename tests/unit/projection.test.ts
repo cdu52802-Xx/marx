@@ -5,7 +5,7 @@ import {
   scaleAtZoom,
   satelliteDistanceAtZoom,
   SAT_DISTANCE_AT_K_TRANSITION_START,
-  SAT_DISTANCE_AT_K_MAX,
+  SAT_DISTANCE_AT_K_TRANSITION_END,
   ZOOM_THRESHOLDS,
 } from '../../src/lib/projection.ts';
 
@@ -28,6 +28,22 @@ describe('createProjection · M-B2 T1.1', () => {
       scale: 800,
     });
     expect(proj([2.35, 48.86])).toBeTruthy();
+  });
+
+  it('mode=plane → 真 geoMercator · center 投到 viewport 中心（T1.6+++ 修复"球更鼓"）', () => {
+    const proj = createProjection('plane', {
+      width: 600,
+      height: 400,
+      center: [10, 50],
+      scale: 800,
+    });
+    const centerPixel = proj([10, 50]);
+    expect(centerPixel).toBeTruthy();
+    if (centerPixel) {
+      // mercator center → viewport 中心 [300, 200]
+      expect(Math.abs(centerPixel[0] - 300)).toBeLessThan(5);
+      expect(Math.abs(centerPixel[1] - 200)).toBeLessThan(5);
+    }
   });
 });
 
@@ -98,31 +114,30 @@ describe('scaleAtZoom · M-B2 T1.6+ B（真线性内插）', () => {
   });
 });
 
-describe('satelliteDistanceAtZoom · M-B2 T1.6++ B（满平滑 satellite distance 内插）', () => {
-  it('k=2.5 → distance 20（≈orthographic · 边界连续）', () => {
+describe('satelliteDistanceAtZoom · M-B2 T1.6+++（transition zone 内插 · plane 走 mercator）', () => {
+  it('k=2.5 (sphere 边界) → distance 10（近 orthographic）', () => {
     expect(satelliteDistanceAtZoom(2.5)).toBeCloseTo(SAT_DISTANCE_AT_K_TRANSITION_START, 5);
   });
 
-  it('k=8 → distance 1.1（近距透视 · plane 视觉）', () => {
-    expect(satelliteDistanceAtZoom(8)).toBeCloseTo(SAT_DISTANCE_AT_K_MAX, 5);
+  it('k=4.5 (plane 边界) → distance 2（近 mercator-like）', () => {
+    expect(satelliteDistanceAtZoom(4.5)).toBeCloseTo(SAT_DISTANCE_AT_K_TRANSITION_END, 5);
   });
 
-  it('k=4.5 → distance 中段（线性内插 ≈ 13.1）', () => {
-    // (4.5 - 2.5) / (8 - 2.5) = 2/5.5 ≈ 0.3636
-    // 20 - (20 - 1.1) * 0.3636 ≈ 20 - 6.87 ≈ 13.13
-    expect(satelliteDistanceAtZoom(4.5)).toBeCloseTo(13.13, 1);
+  it('k=3.5 (transition 中点) → distance 6（线性中点）', () => {
+    // (3.5 - 2.5) / (4.5 - 2.5) = 0.5 → 10 - (10 - 2) * 0.5 = 6
+    expect(satelliteDistanceAtZoom(3.5)).toBeCloseTo(6, 5);
   });
 
-  it('k < 2.5 → clamp 到 20', () => {
-    expect(satelliteDistanceAtZoom(1)).toBe(20);
+  it('k < 2.5 → clamp 到 10', () => {
+    expect(satelliteDistanceAtZoom(1)).toBe(10);
   });
 
-  it('k > 8 → clamp 到 1.1', () => {
-    expect(satelliteDistanceAtZoom(10)).toBeCloseTo(1.1, 5);
+  it('k > 4.5 → clamp 到 2（不真用 · plane mode 走 mercator）', () => {
+    expect(satelliteDistanceAtZoom(8)).toBeCloseTo(2, 5);
   });
 });
 
-describe('satellite transition projection · M-B2 T1.6++ B', () => {
+describe('三段式 projection · M-B2 T1.6+++（plane 回 mercator）', () => {
   const baseOpts = { width: 600, height: 400, center: [10, 50] as [number, number], scale: 200 };
 
   it('k=3 → transition mode · paris pixel 非 null', () => {
@@ -153,18 +168,27 @@ describe('satellite transition projection · M-B2 T1.6++ B', () => {
     }
   });
 
-  it('k=4.5 (transition→plane 边界) pixel 连续 · 巴黎 + 莫斯科 各 Δ < 5 px', () => {
-    // 现 transition + plane 都用 geoSatellite · k 跨 4.5 distance 内插不变 → 真连续
+  it('k=4.5 (transition→plane 边界) 有 jump · 跨投影切换（satellite→mercator）· PM 接受', () => {
+    // T1.6+++ · plane 回 geoMercator · 跨 k=4.5 satellite→mercator 数学不连续
+    // PM 接受半丝滑（plane 视觉正确优先 · 反正 mercator 真平面是 ground truth）
+    // 测试目标：两端 pixel 都非 null（projection 本身工作）/ 不强行验连续
     const parisA = interpolateProjection(4.49, baseOpts).projection([2.35, 48.86]);
     const parisB = interpolateProjection(4.51, baseOpts).projection([2.35, 48.86]);
-    const moscowA = interpolateProjection(4.49, baseOpts).projection([37.62, 55.75]);
-    const moscowB = interpolateProjection(4.51, baseOpts).projection([37.62, 55.75]);
-    if (parisA && parisB && moscowA && moscowB) {
-      // 真连续：Δ 应 < 1 px（小于 5 留余量防 floating point）
-      expect(Math.abs(parisA[0] - parisB[0])).toBeLessThan(5);
-      expect(Math.abs(parisA[1] - parisB[1])).toBeLessThan(5);
-      expect(Math.abs(moscowA[0] - moscowB[0])).toBeLessThan(5);
-      expect(Math.abs(moscowA[1] - moscowB[1])).toBeLessThan(5);
+    expect(parisA).toBeTruthy();
+    expect(parisB).toBeTruthy();
+  });
+
+  it('k=8 plane mode · 真 geoMercator（center 巴黎在中心附近）', () => {
+    // mercator 中心 = baseOpts.center [10, 50]
+    // 巴黎 [2.35, 48.86] 跟 center 偏差 ~7° lon / ~1° lat / pixel 应近 viewport 中心
+    const { mode, projection } = interpolateProjection(8, baseOpts);
+    expect(mode).toBe('plane');
+    const center = projection([10, 50]);
+    expect(center).toBeTruthy();
+    if (center) {
+      // center [10, 50] 应该投到 viewport 中心 [300, 200]
+      expect(Math.abs(center[0] - 300)).toBeLessThan(5);
+      expect(Math.abs(center[1] - 200)).toBeLessThan(5);
     }
   });
 

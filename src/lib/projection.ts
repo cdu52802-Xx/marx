@@ -17,7 +17,15 @@
 //     - 高 k=8 时 distance=1.1 → 近距视角 (tilted satellite view 接近 plane 但仍带轻微 perspective)
 // 数学连续性：geoSatellite 是 perspective projection · distance 越大越接近 orthographic / 越小越接近 plane
 // 业界参考: D3 Observable / Yan Holtz / Tom MacWright 标准做法
-import { geoOrthographic, type GeoProjection } from 'd3-geo';
+//
+// M-B2 T1.6+++ · plane 回 mercator（PM 实测反馈第三轮）
+// 问题：T1.6++ B 把 plane mode 改成 satellite distance=1.1 / 实际 distance→1 perspective 更夸张 / 球面更鼓（非更平）
+// 修法:
+//   - sphere (k ≤ 2.5): geoOrthographic + clipAngle 90 (保留)
+//   - transition (2.5 < k < 4.5): geoSatellite + distance 10→2 内插（保留半丝滑）
+//   - plane (k ≥ 4.5): geoMercator 真平面（修复"球更鼓"）
+//   跨 k=4.5 satellite→mercator 有 jump · PM 接受半丝滑（plane mode 视觉正确优先）
+import { geoOrthographic, geoMercator, type GeoProjection } from 'd3-geo';
 import { geoSatellite } from 'd3-geo-projection';
 
 export type ProjectionMode = 'sphere' | 'transition' | 'plane';
@@ -39,11 +47,12 @@ export const SCALE_AT_K_MAX = 800;
 export const K_MIN = 1;
 export const K_MAX = 8;
 
-// T1.6++ B · satellite distance 范围（k=2.5 → 20 ≈ orthographic / k=8 → 1.1 透视近距）
-//   distance > 10 时 satellite 与 orthographic 几乎一致（sub-pixel） · 保 k=2.5 边界连续
-//   distance < 1.5 时 perspective 强 · 近"plane"视觉但仍带轻微 tilt
-export const SAT_DISTANCE_AT_K_TRANSITION_START = 20; // at k = sphereMax (2.5)
-export const SAT_DISTANCE_AT_K_MAX = 1.1; // at k = K_MAX (8)
+// T1.6+++ · satellite distance 范围（transition zone 内插）
+//   k=2.5 (sphere 边界) → distance 10 (近 orthographic · sub-pixel match 与 ortho 实测无跳)
+//   k=4.5 (plane 边界) → distance 2  (近 mercator-like 但仍 satellite tilt)
+//   跨 k=4.5 切到 geoMercator 真平面 · 数学不连续但 PM 接受半丝滑（plane 视觉正确优先）
+export const SAT_DISTANCE_AT_K_TRANSITION_START = 10; // at k = sphereMax (2.5)
+export const SAT_DISTANCE_AT_K_TRANSITION_END = 2; // at k = planeMin (4.5)
 
 /**
  * 按 d3.zoom k 线性算 scale（200 at k=1 → 800 at k=8）
@@ -57,19 +66,19 @@ export function scaleAtZoom(k: number): number {
 }
 
 /**
- * T1.6++ B · 按 k 线性算 geoSatellite 的 distance 参数
- * k = sphereMax (2.5) → 20 (≈ orthographic 球面)
- * k = K_MAX (8) → 1.1 (近距透视 / plane 视觉)
- * k < sphereMax → clamp 20（不真用 · sphere mode 走 orthographic 不走 satellite）
- * k > K_MAX → clamp 1.1
+ * T1.6+++ · 按 k 线性算 geoSatellite 的 distance 参数（transition zone 内）
+ * k = sphereMax (2.5) → 10 (≈ orthographic 球面 · 边界连续)
+ * k = planeMin (4.5) → 2 (近 mercator-like · 跨 4.5 切到 geoMercator)
+ * k < sphereMax → clamp 10（不真用 · sphere mode 走 orthographic）
+ * k > planeMin → clamp 2（不真用 · plane mode 走 mercator）
  */
 export function satelliteDistanceAtZoom(k: number): number {
-  const span = K_MAX - ZOOM_THRESHOLDS.sphereMax; // 8 - 2.5 = 5.5
-  const t = (k - ZOOM_THRESHOLDS.sphereMax) / span; // 0 at k=2.5 / 1 at k=8
+  const span = ZOOM_THRESHOLDS.planeMin - ZOOM_THRESHOLDS.sphereMax; // 4.5 - 2.5 = 2.0
+  const t = (k - ZOOM_THRESHOLDS.sphereMax) / span; // 0 at k=2.5 / 1 at k=4.5
   const clamped = Math.max(0, Math.min(1, t));
   return (
     SAT_DISTANCE_AT_K_TRANSITION_START -
-    (SAT_DISTANCE_AT_K_TRANSITION_START - SAT_DISTANCE_AT_K_MAX) * clamped
+    (SAT_DISTANCE_AT_K_TRANSITION_START - SAT_DISTANCE_AT_K_TRANSITION_END) * clamped
   );
 }
 
@@ -85,10 +94,15 @@ export function createProjection(mode: ProjectionMode, opts: ProjectionOptions):
     return proj;
   }
 
-  // T1.6++ B · plane + transition 统一走 geoSatellite · distance 由 caller 通过 satelliteDistanceAtZoom 算
-  //   createProjection 不知道 k · 默认按 mode 推 distance（plane=1.1 · transition=10 中点近 ortho 侧）
-  //   interpolateProjection 真正驱动 distance 内插 → caller 直接调 interpolateProjection 即可
-  const dist = mode === 'plane' ? SAT_DISTANCE_AT_K_MAX : 10;
+  if (mode === 'plane') {
+    // T1.6+++ · 真 mercator 平面（PM 实测反馈：satellite distance→1 球更鼓 · 非更平）
+    // geoMercator 不接 rotate triple（只走 center · 经纬度对齐 viewport center）
+    return geoMercator().scale(scale).translate(translate).center(center);
+  }
+
+  // transition mode · geoSatellite distance 中点 (≈6 介于 10 和 2 之间)
+  //   createProjection 不知道 k · interpolateProjection 真正驱动 distance 内插
+  const dist = 6;
   const proj = geoSatellite().distance(dist).scale(scale).translate(translate).tilt(0);
   if (rotate) proj.rotate(rotate);
   else proj.rotate([-center[0], -center[1], 0]);
@@ -101,12 +115,12 @@ export function createProjection(mode: ProjectionMode, opts: ProjectionOptions):
  * @param opts - opts.scale 字段被 k 线性内插覆盖（caller 不必预算 scale · 传 placeholder 即可）
  * @returns mode + 内插参数
  *
- * T1.6++ B · satellite projection 真丝滑过渡
+ * T1.6+++ · 三段式投影（PM 实测反馈第三轮 · plane 必须真 mercator）
  *  - sphere mode (k ≤ 2.5): geoOrthographic + clipAngle 90 (sphere 外缘遮罩)
- *  - transition + plane (k > 2.5): geoSatellite + distance 内插
- *      distance 20 (≈orthographic · 边界 k=2.5 sub-pixel 与 ortho 一致) → 1.1 (近距透视)
+ *  - transition (2.5 < k < 4.5): geoSatellite + distance 10→2 内插（保留半丝滑）
+ *  - plane mode (k ≥ 4.5): geoMercator 真平面（修复"球更鼓"问题）
  *  - scale 任意 k 都跟随 scaleAtZoom 线性走（k=1 → 200 · k=8 → 800）
- *  - mode 标签 (sphere/transition/plane) 保留向后兼容 / 视觉 k=4.5 边界已无跳
+ *  - 跨 k=4.5 satellite→mercator 有 jump · PM 接受半丝滑（plane 视觉正确优先）
  */
 export function interpolateProjection(
   k: number,
@@ -124,12 +138,19 @@ export function interpolateProjection(
     return { mode: 'sphere', projection: proj };
   }
 
-  // transition + plane · 统一 geoSatellite · distance 跟 k 平滑内插（数学连续 · 无 k=4.5 jump）
+  // plane mode · 真 geoMercator 平面（k ≥ 4.5）
+  //   不用 rotate triple（geoMercator 不支持 yaw/pitch/roll · 只 center 经纬度）
+  //   center → 当前 Marx 地点为 viewport 中心
+  if (k >= ZOOM_THRESHOLDS.planeMin) {
+    const proj = geoMercator().scale(scale).translate(translate).center(center);
+    return { mode: 'plane', projection: proj };
+  }
+
+  // transition mode · geoSatellite distance 跟 k 内插（10 at k=2.5 → 2 at k=4.5）
   const dist = satelliteDistanceAtZoom(k);
   const proj = geoSatellite().distance(dist).scale(scale).translate(translate).tilt(0);
   if (rotate) proj.rotate(rotate);
   else proj.rotate([-center[0], -center[1], 0]);
 
-  const mode: ProjectionMode = k >= ZOOM_THRESHOLDS.planeMin ? 'plane' : 'transition';
-  return { mode, projection: proj };
+  return { mode: 'transition', projection: proj };
 }

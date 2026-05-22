@@ -14,6 +14,12 @@
 //   → year → marxLocationAtYear() → setMarxLocation → 球面 reorient (currentLoc 推 projection center)
 // d3-drag attach svg · 球面 mode 下 dx/dy → currentRotate 累加 (sphere 旋转视角)
 //   平面 mode 不响应 drag 旋转（zoom 自带 drag handling for pan）
+//
+// M-B2 T1.6+++ · plane mode pan 真生效
+// PM 第二轮 hotfix 实测：plane mode mode-aware filter 放行 mousedown 后仍无 pan 视觉响应
+// 根因：zoom event 只用了 transform.k 重 render projection · 丢了 transform.x/y（pan offset）
+// 修法：zoom event handler 在 plane mode 把 transform.x/y 通过 g.attr('transform', translate(x,y)) apply
+//   sphere/transition mode 不 translate svg layer（球面走 drag 旋转 / transition 不允许 pan）
 
 import { select } from 'd3-selection';
 import { geoPath, geoGraticule } from 'd3-geo';
@@ -104,6 +110,18 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
       if (k <= ZOOM_THRESHOLDS.sphereMax) currentMode = 'sphere';
       else if (k >= ZOOM_THRESHOLDS.planeMin) currentMode = 'plane';
       else currentMode = 'transition';
+
+      // T1.6+++ · plane mode pan 真生效 · zoom transform x/y → g.attr('transform')
+      // sphere/transition mode 不 translate（球面走 drag 旋转 / transition zone 不支持 pan）
+      // d3-zoom transform 是 SVGTransform · 直接 attr 写 string 表达 translate
+      if (currentMode === 'plane') {
+        const x = event.transform.x as number;
+        const y = event.transform.y as number;
+        g.attr('transform', `translate(${x},${y})`);
+      } else {
+        g.attr('transform', null);
+      }
+
       render();
     });
   svg.call(zoomBehavior);

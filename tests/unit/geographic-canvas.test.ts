@@ -157,4 +157,18 @@ describe('mountGeographicCanvas · M-B2 T1.3', () => {
     const transformAfterSphere = (container as unknown as { __zoom?: { k: number } }).__zoom;
     expect(transformAfterSphere).toBeTruthy();
   });
+
+  // === M-B2 T1.6+++ · plane mode zoom pan g.transform translate ===
+  it('mount 后 svg 内有 g.geographic-root（pan 视觉 translate 目标 g）', () => {
+    mountGeographicCanvas({
+      container,
+      width: 600,
+      height: 400,
+      marxCurrentLocation: [10, 50],
+    });
+    // T1.6+++ · plane mode zoom event 在此 g 上 attr('transform', 'translate(x,y)')
+    // jsdom 不易模拟真 wheel/drag · 验 g.geographic-root 已 attached（pan target 存在）
+    const g = container.querySelector('g.geographic-root');
+    expect(g).toBeTruthy();
+  });
 });
