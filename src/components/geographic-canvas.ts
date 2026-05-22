@@ -112,18 +112,21 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
   // T1.6++ A · mode-aware filter（PM 实测反馈：第一轮 hotfix 后平面 mode 完全不能拖动）
   // 球面 mode：屏蔽 mousedown · d3-drag 接管旋转
   // 平面 / transition mode：放行 mousedown · zoom 自带 pan 接管平移
-  // wheel / touchstart 等总是放行
-  // T1.6++++ · 解耦 zoom 跟 pan
-  //   - filter 屏蔽 mousedown（所有 mode 都让 d3-drag 接管 pan/rotate · 不让 d3-zoom 自带 drag-for-pan 抢）
-  //     注：T1.6++ A mode-aware filter 是为了 plane mode 走 zoom drag pan / 修法 B 取消该路径 · 所有 mode mousedown 给 drag
-  //   - zoom event handler 收到 wheel 后 reset transform.x/y = 0（防 d3-zoom 累加 x/y 跟 projection.scale 双重作用）
-  //   - g.attr('transform') 永远 null（不再用 svg g 层 translate 做 pan · 改 projection.center）
-  let resettingZoom = false; // 防 reset 时 recursive 触发 zoom event
+  // T1.6+++++ · Issue 2 修法 · 拦 wheel 自己算 k · 杜绝 race + x/y 累加
+  //   PM 实测 ad75468 后报告："缩回 sphere 那一下又不能拖动" + 偶发底图消失（不稳定复现）
+  //   根因：T1.6++++ 的 reset 逻辑同步调 zoomBehavior.transform 在 zoom event handler 内
+  //         → 同步触发二次 zoom event · resettingZoom flag 防递归 · 但 d3-zoom 内部 svg.__zoom
+  //         在两次 event 之间瞬间 inconsistent · 跟 d3-drag mousedown handler 偶发 race
+  //   修法：detach d3-zoom 默认 wheel handler（svg.on('wheel.zoom', null)）·
+  //         自挂 svg.on('wheel', custom) · preventDefault + zoomBehavior.transform(svg, scale(newK))
+  //         → 完全跳过 d3-zoom 内部 wheel anchor 算法 · transform.x/y 永远 0 · 无 race
+  //   保留：filter 屏蔽 mousedown（所有 mode 都让 d3-drag 接管 pan/rotate）·
+  //         g.attr('transform') 防御性设 null（应永远是 null · 因 x/y 不再累加）
   const zoomBehavior: ZoomBehavior<SVGSVGElement, unknown> = zoom<SVGSVGElement, unknown>()
     .scaleExtent([1, 8])
     .filter((event: Event) => {
       // mousedown 一律屏蔽 / 交 d3-drag 处理（sphere rotate · transition/plane pan）
-      // wheel · touchstart · 其他 zoom 触发源放行（仅 k 缩放走 zoom）
+      // wheel 由自挂 wheel listener 接管（svg.on('wheel.zoom', null) 后 d3-zoom 不再处理 wheel）
       if (event.type === 'mousedown') return false;
       return true;
     })
@@ -135,23 +138,26 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
       else if (k >= ZOOM_THRESHOLDS.planeMin) currentMode = 'plane';
       else currentMode = 'transition';
 
-      // T1.6++++ · 修法 B · g.transform 始终 null（不再用 g 层 translate 做 pan · 防 Bug 1 双重 transform）
+      // T1.6+++++ · 防御 · 我们自挂 wheel 不让 x/y 累加 · g.transform 应永远是 null
       g.attr('transform', null);
-
-      // T1.6++++ · reset transform.x/y · 防 d3-zoom wheel 自带累加跟 projection.scale 双重作用
-      // 仅对用户操作（event.sourceEvent 存在）做 reset · 防 recursive 触发
-      const x = event.transform.x as number;
-      const y = event.transform.y as number;
-      if (!resettingZoom && event.sourceEvent && (x !== 0 || y !== 0)) {
-        resettingZoom = true;
-        // 同步重置 __zoom internal state（zoomTransform.scale(k) 保留缩放但清 pan offset）
-        zoomBehavior.transform(svg, zoomIdentity.scale(k));
-        resettingZoom = false;
-      }
 
       render();
     });
   svg.call(zoomBehavior);
+
+  // T1.6+++++ · detach d3-zoom 默认 wheel handler · 自挂 wheel 接管
+  svg.on('wheel.zoom', null);
+  const wheelHandler = (event: WheelEvent): void => {
+    event.preventDefault();
+    // 沿用 d3-zoom 默认 wheelDelta 公式（保持手感一致）
+    // d3-zoom source: -event.deltaY * (event.deltaMode === 1 ? 0.05 : event.deltaMode ? 1 : 0.002)
+    const wheelDelta = -event.deltaY * (event.deltaMode === 1 ? 0.05 : event.deltaMode ? 1 : 0.002);
+    const newK = Math.max(1, Math.min(8, currentZoomK * Math.pow(2, wheelDelta)));
+    if (newK === currentZoomK) return;
+    // 直接 set transform = (newK, 0, 0) · 完全跳过 d3-zoom anchor 算法 · x/y 永远 0
+    zoomBehavior.transform(svg, zoomIdentity.scale(newK));
+  };
+  svg.on('wheel', wheelHandler);
 
   // T1.5 / T1.6++++ · d3-drag mode-aware
   //   - sphere mode：dx/dy → currentRotate 累加（既有 · 球面视角旋转）
@@ -329,6 +335,7 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
     },
     destroy(): void {
       window.removeEventListener('marx:time-change', timeHandler);
+      svg.on('wheel', null); // T1.6+++++ · detach 自挂 wheel handler · 防 memory leak / stale closure
       g.remove();
     },
   };

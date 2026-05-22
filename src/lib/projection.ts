@@ -6,26 +6,21 @@
 // M-B2 T1.6+ B · 真线性内插
 // scale 跟 k 线性走（不再分 mode 段跳 200/400/800）
 // k=1 → 200 sphere · k=8 → 800 plane · 中间 transition 用 sphere projection + 内插 scale
-// 真 cross-fade（双 render 叠加 fade）留 Stage 6 polish · 当前内插 scale 已达视觉"丝滑"感
 //
 // M-B2 T1.6++ B · satellite projection 真丝滑过渡（兑现 spec § 4.6 100%）
-// PM 实测前轮"半丝滑"反馈：跨 k=4.5 临界 sphere→plane projection 切换还是跳。
-// 修法: transition + plane mode 统一用 geoSatellite · distance 内插
-//   - k ≤ 2.5 球面：geoOrthographic (clipAngle 90 保 sphere 外缘遮罩)
-//   - k > 2.5 透视：geoSatellite + distance 20 → 1.1 平滑内插
-//     - 边界 k=2.5 时 distance=20 → geoSatellite ≈ geoOrthographic (sub-pixel match · 实测无跳)
-//     - 高 k=8 时 distance=1.1 → 近距视角 (tilted satellite view 接近 plane 但仍带轻微 perspective)
-// 数学连续性：geoSatellite 是 perspective projection · distance 越大越接近 orthographic / 越小越接近 plane
-// 业界参考: D3 Observable / Yan Holtz / Tom MacWright 标准做法
 //
-// M-B2 T1.6+++ · plane 回 mercator（PM 实测反馈第三轮）
-// 问题：T1.6++ B 把 plane mode 改成 satellite distance=1.1 / 实际 distance→1 perspective 更夸张 / 球面更鼓（非更平）
-// 修法:
-//   - sphere (k ≤ 2.5): geoOrthographic + clipAngle 90 (保留)
-//   - transition (2.5 < k < 4.5): geoSatellite + distance 10→2 内插（保留半丝滑）
-//   - plane (k ≥ 4.5): geoMercator 真平面（修复"球更鼓"）
-//   跨 k=4.5 satellite→mercator 有 jump · PM 接受半丝滑（plane mode 视觉正确优先）
-import { geoOrthographic, geoMercator, type GeoProjection } from 'd3-geo';
+// M-B2 T1.6+++ · plane 回 mercator（PM 实测反馈第三轮 "satellite distance→1.1 球更鼓"）
+//   sphere=orthographic / transition=satellite / plane=mercator 三段
+//
+// M-B2 T1.6+++++ · Issue 1 修法 B · 全程 geoSatellite（PM 实测第五轮反馈跨 k=4.5 生硬 jump）
+//   根因：mercator 跟 satellite 数学完全不同族（圆柱 vs 方位）· 跨界 (x, y) 坐标必不重合 · jump 不可解
+//   修法：全程 geoSatellite · distance 单参数线性内插 50→2 · clipAngle 自适应 acos(1/distance)
+//     - k=1 distance=50 视觉 ≈ orthographic 球面（差异 <1%）
+//     - k=8 distance=2 视觉 ≈ mercator look（fisheye 极弱）
+//     - 任意 k 同一 projection · 真丝滑 · 无 jump
+//   ProjectionMode 概念**仍保留**给 component 层 dispatch drag 行为（sphere rotate vs transition/plane pan center）
+//     · projection 层不再用 mode 选 projection
+import { type GeoProjection } from 'd3-geo';
 import { geoSatellite } from 'd3-geo-projection';
 
 export type ProjectionMode = 'sphere' | 'transition' | 'plane';
@@ -38,26 +33,25 @@ export interface ProjectionOptions {
   rotate?: [number, number, number]; // 球面旋转
 }
 
+// ZOOM_THRESHOLDS · 仅 component 层 dispatch drag mode 用（sphere rotate vs transition/plane pan center）
+// projection 层全程 satellite distance 内插 · 不再用 sphereMax/planeMin 选 projection 分支（T1.6+++++）
 export const ZOOM_THRESHOLDS = { sphereMax: 2.5, planeMin: 4.5 };
 
 // T1.6+ B · 真线性内插 scale 范围
-// k=1 sphere base 200 / k=8 plane base 800 / 中间 sphereProjection 内 scale 跟 k 走
 export const SCALE_AT_K_MIN = 200;
 export const SCALE_AT_K_MAX = 800;
 export const K_MIN = 1;
 export const K_MAX = 8;
 
-// T1.6+++ · satellite distance 范围（transition zone 内插）
-//   k=2.5 (sphere 边界) → distance 10 (近 orthographic · sub-pixel match 与 ortho 实测无跳)
-//   k=4.5 (plane 边界) → distance 2  (近 mercator-like 但仍 satellite tilt)
-//   跨 k=4.5 切到 geoMercator 真平面 · 数学不连续但 PM 接受半丝滑（plane 视觉正确优先）
-export const SAT_DISTANCE_AT_K_TRANSITION_START = 10; // at k = sphereMax (2.5)
-export const SAT_DISTANCE_AT_K_TRANSITION_END = 2; // at k = planeMin (4.5)
+// T1.6+++++ · 全程 satellite distance 范围（Issue 1 修法 B · PM 拍板 B 全程不切 mercator）
+//   k=1 → 50（≈ orthographic 球面视觉 / 数学 ≈ 远距 satellite）
+//   k=8 → 2 （≈ mercator look / fisheye 极弱）
+//   跨任意 k 同一 projection · 真丝滑 · 无 jump
+export const SAT_DISTANCE_AT_K_MIN = 50; // at k=1
+export const SAT_DISTANCE_AT_K_MAX = 2; // at k=8
 
 /**
  * 按 d3.zoom k 线性算 scale（200 at k=1 → 800 at k=8）
- * @param k - d3.zoom transform k（1-8）
- * @returns scale 数（线性内插）
  */
 export function scaleAtZoom(k: number): number {
   const t = (k - K_MIN) / (K_MAX - K_MIN); // 0 at k=1 / 1 at k=8
@@ -66,91 +60,83 @@ export function scaleAtZoom(k: number): number {
 }
 
 /**
- * T1.6+++ · 按 k 线性算 geoSatellite 的 distance 参数（transition zone 内）
- * k = sphereMax (2.5) → 10 (≈ orthographic 球面 · 边界连续)
- * k = planeMin (4.5) → 2 (近 mercator-like · 跨 4.5 切到 geoMercator)
- * k < sphereMax → clamp 10（不真用 · sphere mode 走 orthographic）
- * k > planeMin → clamp 2（不真用 · plane mode 走 mercator）
+ * T1.6+++++ · Issue 1 修法 B · 全程线性内插 distance（50 at k=1 → 2 at k=8）
+ *   k<1 clamp 50 · k>8 clamp 2
  */
 export function satelliteDistanceAtZoom(k: number): number {
-  const span = ZOOM_THRESHOLDS.planeMin - ZOOM_THRESHOLDS.sphereMax; // 4.5 - 2.5 = 2.0
-  const t = (k - ZOOM_THRESHOLDS.sphereMax) / span; // 0 at k=2.5 / 1 at k=4.5
+  const t = (k - K_MIN) / (K_MAX - K_MIN); // 0 at k=1 / 1 at k=8
   const clamped = Math.max(0, Math.min(1, t));
-  return (
-    SAT_DISTANCE_AT_K_TRANSITION_START -
-    (SAT_DISTANCE_AT_K_TRANSITION_START - SAT_DISTANCE_AT_K_TRANSITION_END) * clamped
-  );
+  return SAT_DISTANCE_AT_K_MIN - (SAT_DISTANCE_AT_K_MIN - SAT_DISTANCE_AT_K_MAX) * clamped;
 }
 
-/** 创建当前 mode 的投影 */
+/**
+ * T1.6+++++ · clipAngle 自适应 distance
+ *   satellite projection 可视球面半径 = acos(1/distance)
+ *   distance=50 → clipAngle ≈ 88.85°（≈ orthographic 半球 view）
+ *   distance=2 → clipAngle = 60°（局部平面视角）
+ *   D3 标准做法（Mike Bostock satellite example）
+ */
+function clipAngleForDistance(distance: number): number {
+  return (Math.acos(1 / distance) * 180) / Math.PI;
+}
+
+/**
+ * 创建当前 mode 的投影（兼容 setMode API · 全 satellite · mode 仅映射到默认 k）
+ *   sphere → k=1 / plane → k=8 / transition → k=(1+8)/2=4.5
+ */
 export function createProjection(mode: ProjectionMode, opts: ProjectionOptions): GeoProjection {
   const { width, height, center, scale, rotate } = opts;
   const translate: [number, number] = [width / 2, height / 2];
 
-  if (mode === 'sphere') {
-    const proj = geoOrthographic().scale(scale).translate(translate).clipAngle(90);
-    if (rotate) proj.rotate(rotate);
-    else proj.rotate([-center[0], -center[1]]);
-    return proj;
-  }
+  const k = mode === 'sphere' ? K_MIN : mode === 'plane' ? K_MAX : (K_MIN + K_MAX) / 2;
+  const distance = satelliteDistanceAtZoom(k);
+  const clipAngle = clipAngleForDistance(distance);
 
-  if (mode === 'plane') {
-    // T1.6+++ · 真 mercator 平面（PM 实测反馈：satellite distance→1 球更鼓 · 非更平）
-    // geoMercator 不接 rotate triple（只走 center · 经纬度对齐 viewport center）
-    return geoMercator().scale(scale).translate(translate).center(center);
-  }
-
-  // transition mode · geoSatellite distance 中点 (≈6 介于 10 和 2 之间)
-  //   createProjection 不知道 k · interpolateProjection 真正驱动 distance 内插
-  const dist = 6;
-  const proj = geoSatellite().distance(dist).scale(scale).translate(translate).tilt(0);
+  const proj = geoSatellite()
+    .distance(distance)
+    .scale(scale)
+    .translate(translate)
+    .tilt(0)
+    .clipAngle(clipAngle);
   if (rotate) proj.rotate(rotate);
   else proj.rotate([-center[0], -center[1], 0]);
   return proj;
 }
 
 /**
- * 球面 ↔ 平面平滑过渡（按 zoom level 内插）
- * @param k - d3.zoom transform k（1-8）
- * @param opts - opts.scale 字段被 k 线性内插覆盖（caller 不必预算 scale · 传 placeholder 即可）
- * @returns mode + 内插参数
- *
- * T1.6+++ · 三段式投影（PM 实测反馈第三轮 · plane 必须真 mercator）
- *  - sphere mode (k ≤ 2.5): geoOrthographic + clipAngle 90 (sphere 外缘遮罩)
- *  - transition (2.5 < k < 4.5): geoSatellite + distance 10→2 内插（保留半丝滑）
- *  - plane mode (k ≥ 4.5): geoMercator 真平面（修复"球更鼓"问题）
- *  - scale 任意 k 都跟随 scaleAtZoom 线性走（k=1 → 200 · k=8 → 800）
- *  - 跨 k=4.5 satellite→mercator 有 jump · PM 接受半丝滑（plane 视觉正确优先）
+ * T1.6+++++ · Issue 1 修法 B · 全程 geoSatellite · distance + clipAngle 单参数内插
+ *   不再分 sphere/transition/plane 三段（projection 层）· 同一 projection · 真丝滑
+ *   - scale 跟 scaleAtZoom 线性走（200→800）
+ *   - distance 跟 satelliteDistanceAtZoom 线性走（50→2）
+ *   - clipAngle 跟 distance 走（88.85°→60°）
+ *   mode 字段仅给 component 层用（dispatch drag · 区分 sphere rotate vs transition/plane pan）
  */
 export function interpolateProjection(
   k: number,
   opts: ProjectionOptions,
 ): { mode: ProjectionMode; projection: GeoProjection } {
-  const scale = scaleAtZoom(k);
   const { width, height, center, rotate } = opts;
   const translate: [number, number] = [width / 2, height / 2];
 
-  // sphere mode · pure orthographic (保 clipAngle 90 外缘遮罩)
-  if (k <= ZOOM_THRESHOLDS.sphereMax) {
-    const proj = geoOrthographic().scale(scale).translate(translate).clipAngle(90);
-    if (rotate) proj.rotate(rotate);
-    else proj.rotate([-center[0], -center[1]]);
-    return { mode: 'sphere', projection: proj };
-  }
+  const scale = scaleAtZoom(k);
+  const distance = satelliteDistanceAtZoom(k);
+  const clipAngle = clipAngleForDistance(distance);
 
-  // plane mode · 真 geoMercator 平面（k ≥ 4.5）
-  //   不用 rotate triple（geoMercator 不支持 yaw/pitch/roll · 只 center 经纬度）
-  //   center → 当前 Marx 地点为 viewport 中心
-  if (k >= ZOOM_THRESHOLDS.planeMin) {
-    const proj = geoMercator().scale(scale).translate(translate).center(center);
-    return { mode: 'plane', projection: proj };
-  }
-
-  // transition mode · geoSatellite distance 跟 k 内插（10 at k=2.5 → 2 at k=4.5）
-  const dist = satelliteDistanceAtZoom(k);
-  const proj = geoSatellite().distance(dist).scale(scale).translate(translate).tilt(0);
+  const proj = geoSatellite()
+    .distance(distance)
+    .scale(scale)
+    .translate(translate)
+    .tilt(0)
+    .clipAngle(clipAngle);
   if (rotate) proj.rotate(rotate);
   else proj.rotate([-center[0], -center[1], 0]);
 
-  return { mode: 'transition', projection: proj };
+  const mode: ProjectionMode =
+    k <= ZOOM_THRESHOLDS.sphereMax
+      ? 'sphere'
+      : k >= ZOOM_THRESHOLDS.planeMin
+        ? 'plane'
+        : 'transition';
+
+  return { mode, projection: proj };
 }

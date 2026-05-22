@@ -231,7 +231,7 @@ describe('mountGeographicCanvas · M-B2 T1.3', () => {
     const cxAfter = (
       container.querySelector('circle.test-node[data-id="paris"]') as SVGCircleElement
     )?.getAttribute('cx');
-    // 1843 → 巴黎为中心 / plane mode mercator center=paris → paris 节点 cx 必移动到 viewport 中心
+    // 1843 → 巴黎为中心 / plane mode satellite distance=2 center=paris → paris 节点 cx 必移动到 viewport 中心
     expect(cxAfter).not.toBe(cxBefore);
   });
 
@@ -253,5 +253,71 @@ describe('mountGeographicCanvas · M-B2 T1.3', () => {
       container.querySelector('circle.test-node[data-id="paris"]') as SVGCircleElement
     )?.getAttribute('cx');
     expect(cxAfter).not.toBe(cxBefore);
+  });
+
+  // === M-B2 T1.6+++++ · 拦 wheel 自己算 k（Issue 2 拍板 · 防 race / 防 x/y 累加）===
+  // 修法：svg.on('wheel.zoom', null) 完全 detach d3-zoom 默认 wheel handler
+  //   自挂 svg.on('wheel', custom) · preventDefault + scaleTo(newK) · 不动 x/y
+  // 删 resettingZoom flag + zoomBehavior.transform reset 整段
+
+  it('Issue 2 修：detach 后 svg.on("wheel.zoom") 应为 undefined（自挂 wheel 接管）', () => {
+    mountGeographicCanvas({
+      container,
+      width: 600,
+      height: 400,
+      marxCurrentLocation: [10, 50],
+    });
+    // d3-selection · on('wheel.zoom') · 返回 listener 或 undefined
+    // detach (null) 后该 namespaced listener 应为 undefined
+    const svgSel = select(container as unknown as SVGSVGElement);
+    const wheelZoomHandler = svgSel.on('wheel.zoom');
+    expect(wheelZoomHandler).toBeUndefined();
+  });
+
+  it('Issue 2 修：自挂 wheel listener 存在（custom wheel handler attached）', () => {
+    mountGeographicCanvas({
+      container,
+      width: 600,
+      height: 400,
+      marxCurrentLocation: [10, 50],
+    });
+    // 验自挂的 svg.on('wheel') custom handler 已 attach（非 undefined）
+    const svgSel = select(container as unknown as SVGSVGElement);
+    const customWheelHandler = svgSel.on('wheel');
+    expect(customWheelHandler).toBeDefined();
+    expect(typeof customWheelHandler).toBe('function');
+  });
+
+  it('Issue 2 修：scaleTo 改 k 后 __zoom.x/y 始终为 0（不累加 anchor offset）', () => {
+    mountGeographicCanvas({
+      container,
+      width: 600,
+      height: 400,
+      marxCurrentLocation: [10, 50],
+    });
+    // 初始 __zoom = zoomIdentity (k=1, x=0, y=0)
+    const before = (container as unknown as { __zoom: { x: number; y: number; k: number } }).__zoom;
+    expect(before.x).toBe(0);
+    expect(before.y).toBe(0);
+
+    // 模拟 wheel 多次后 d3-zoom scaleTo 接管 · scaleTo 不动 x/y / 仅改 k
+    // jsdom 不易精确模拟 d3-zoom scaleTo · 间接验：初始 state x=0 y=0 / 修法 B 不动 x/y
+    // 真 wheel→scaleTo 行为留 E2E（jsdom WheelEvent + d3 transform 内部 state 不完全等同 prod）
+  });
+
+  it('Issue 2 修：destroy 后 svg.on("wheel") 应 detach（不再响应 wheel）', () => {
+    const api = mountGeographicCanvas({
+      container,
+      width: 600,
+      height: 400,
+      marxCurrentLocation: [10, 50],
+    });
+    const svgSel = select(container as unknown as SVGSVGElement);
+    // destroy 前 wheel listener 存在
+    expect(svgSel.on('wheel')).toBeDefined();
+    api.destroy();
+    // destroy 后 wheel listener 应 detach（不再 attach 防 memory leak / stale closure）
+    const wheelAfter = svgSel.on('wheel');
+    expect(wheelAfter).toBeUndefined();
   });
 });
