@@ -45,10 +45,13 @@ export const K_MAX = 8;
 
 // T1.6+++++ · 全程 satellite distance 范围（Issue 1 修法 B · PM 拍板 B 全程不切 mercator）
 //   k=1 → 50（≈ orthographic 球面视觉 / 数学 ≈ 远距 satellite）
-//   k=8 → 2 （≈ mercator look / fisheye 极弱）
+//   k=8 → 1.5（更近视角 · 球面感弱 · fisheye 在 viewport 外 / 不在视野内）
+//   T1.6++++++ · PM 实测 b5cdce1 后反馈 plane 端 distance=2 仍球面感 · 调到 1.5
+//     viewport k=8 显示 21°×14° / 远小于 distance=1.5 的 clipAngle 48° / 边缘 fisheye 不在视野
+//     跟之前 distance→1.1 "球更鼓" 区别：1.1 clipAngle=25° viewport 边缘已撞 clip / 1.5 余地 37°
 //   跨任意 k 同一 projection · 真丝滑 · 无 jump
 export const SAT_DISTANCE_AT_K_MIN = 50; // at k=1
-export const SAT_DISTANCE_AT_K_MAX = 2; // at k=8
+export const SAT_DISTANCE_AT_K_MAX = 1.5; // at k=8
 
 /**
  * 按 d3.zoom k 线性算 scale（200 at k=1 → 800 at k=8）
