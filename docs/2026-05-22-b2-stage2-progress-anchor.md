@@ -100,11 +100,13 @@ T2.1.hotfix baseline 46.52 KB · +A+B+C ≈ +0.5 KB（centroid + text 渲染）�
 | Stage 1 收尾 docs | `27f6fe0` | takeaway + DR-100~105 · 19 commit / 9 lessons |
 | **T2.1** | `adfab6d` | geographic-data.ts + extractGeoNodes + swap lat/lng + 31 person 渲染（34 - 3 [0,0] filter）+ FIXTURE_NODES test 替代 TEST_NODES |
 | **T2.1.hotfix** | `74150fb` | 3 PM 实测 issue 全改 · Issue 1 背面节点 great-circle 距离>clipAngle hide / Issue 2 统一 drag state 删 currentRotate / Issue 3 K_MAX 8→16 + distance plateau + scaleExtent + dot scale-aware preview |
+| **T2.1.hotfix2** | `61f2160` | A+B+C 学 Google Maps · A K_MAX 16→32 + SCALE_AT_K_MAX 1600→3200 / B dot+stroke 反比 zoom (sqrt 公式 + clamp k<2 plateau) / C 国名英文标签 d3.geoCentroid + zoom>=4 trigger / D Leaflet/Mapbox 切换 deferred V2 |
+| **T2.1.hotfix3** | `5bc89b4` | PM polish R1 · 1A 边界 stroke dual lever (strokeWidth clamp min 0.6 + 颜色 zoom-adaptive #d8cab0→#b8a880) + 2A dot ratio clamp baseR*0.6 (person ≥3 / event ≥2.4 / location ≥1.8) + 米白 outline stroke #fcfaf6 · 3A K_MAX 扩到 64 暂不做（PM 实测 1A+2A 后再决）|
 
-**Bundle 当前**：JS gzip 46.52 KB · safe ≤80 KB · 余 33.48 KB
-**Tests**：345/348 pass · 3 M3 pre-existing 持平
+**Bundle 当前**（HEAD `5bc89b4`）：JS gzip **47.34 KB** · safe ≤80 KB · 余 32.66 KB
+**Tests**：390/393 pass · 3 M3 pre-existing 持平（hotfix2 +25 new / hotfix3 +13 new）
 **Lint**：0 warning 0 error
-**新依赖**：无（Stage 2 沿用 Stage 1 d3-geo-projection + d3-geo geoDistance）
+**新依赖**：无（Stage 2 沿用 Stage 1 d3-geo-projection + d3-geo geoDistance + 新 import geoCentroid）
 
 ---
 
@@ -144,10 +146,13 @@ T2.1.hotfix baseline 46.52 KB · +A+B+C ≈ +0.5 KB（centroid + text 渲染）�
 | **DR-T2.1.hotfix-1** | 2026-05-22 | Issue 1 球面背面节点 hide · great-circle 距离 > acos(1/distance) 弧度 `display:none` | T2.1.hotfix final |
 | **DR-T2.1.hotfix-2** | 2026-05-22 | Issue 2 统一 drag state · 删 currentRotate · 全程 panCenter（satellite `.center` 数学等价 `.rotate([-lng,-lat,0])`）· rotate API deprecated noop 保留接口 | T2.1.hotfix final |
 | **DR-T2.1.hotfix-3** | 2026-05-22 | Issue 3 K_MAX 8→16 + SCALE_AT_K_MAX 800→1600 + K_DISTANCE_PLATEAU=8（distance 在 k>=8 plateau at 2）· 第一性：distance/scale 独立维度 · 看清欧洲 = scale 翻倍 / distance 不动 | T2.1.hotfix final |
-| **DR-T2.1.hotfix2-A** | 待开工 | **A · K_MAX 16→32 + SCALE_AT_K_MAX 1600→3200**（PM 拍 · 学 Google Maps zoom 极深方向）| pending |
-| **DR-T2.1.hotfix2-B** | 待开工 | **B · dot/stroke size 反比 zoom**（sqrt 公式 · 治本 PM "圆点比国家大" 痛点）| pending |
-| **DR-T2.1.hotfix2-C** | 待开工 | **C · 国名英文标签**（centroid + zoom>=4 trigger + 字体跟 zoom 走 · CShapes Name 字段 · 中文映射 70 states 留 Stage 4 backlog）| pending |
+| **DR-T2.1.hotfix2-A** | 2026-05-22 | **A · K_MAX 16→32 + SCALE_AT_K_MAX 1600→3200**（PM 拍 · 学 Google Maps zoom 极深方向）| hotfix2 final |
+| **DR-T2.1.hotfix2-B** | 2026-05-22 | **B · dot/stroke size 反比 zoom**（sqrt 公式 + clamp k<2 plateau · 修 anchor 原公式 k=1 反向放大 bug）| hotfix2 final |
+| **DR-T2.1.hotfix2-C** | 2026-05-22 | **C · 国名英文标签**（centroid + zoom>=4 trigger + 字体跟 zoom 走 · CShapes Name 字段 · 中文映射 70 states 留 Stage 4 backlog）| hotfix2 final |
 | **DR-T2.1.hotfix2-D-defer** | 2026-05-22 | **D · 真换 Leaflet/Mapbox 不做**（V2 大决策 · 跟 Marx 思想史 spec scope 待 PM long-term vision 决策）| deferred |
+| **DR-T2.1.hotfix3-1A** | 2026-05-22 | **1A · 边界 stroke 视觉权重 dual lever**（strokeWidth 绝对值 minAbs clamp 0.6 防 sub-pixel rendering antialiasing 稀释 + borderStrokeColor zoom-adaptive sphere #d8cab0 / plane k>=4 #b8a880 沙石深一档 · spec § 6 补充非违背）| hotfix3 final |
+| **DR-T2.1.hotfix3-2A** | 2026-05-22 | **2A · dot 视觉 dual lever**（dotRadius ratio clamp baseR*0.6 · 资深设计自审：plane mode 节点仍是用户主角不该让位国家细节 + 加米白 outline stroke #fcfaf6 · separation 跟米白底图 contrast 增）| hotfix3 final |
+| **DR-T2.1.hotfix3-3A-defer** | 2026-05-22 | **3A · K_MAX 32→64 暂不做**（PM 实测 1A+2A 修后是否仍需更深 zoom · 第一性：Issue 2 修后 dot 重新 visible / "想再放大"动机可能消 · cshapes 精度 limit 提醒）| pending PM polish R2 |
 
 ---
 
@@ -294,24 +299,45 @@ Stage 2 T2.1 ship 后 gh API 撞 Windows network timeout（中国大陆 → api.
 - `feedback_auto_mode_chain_push.md`：git add / commit / push 全程分开跑
 - `feedback_qa_dom_visibility_methodology.md`：本 Stage 不涉及
 
+### 6.8 polish 期累积 backlog（PM polish R1 后追加 · 2026-05-22）
+
+| # | 项 | 来源 | 阶段 | 优先级 |
+|---|---|---|---|---|
+| **B-1** | **国名/地区标签重叠观感不舒服**（CShapes 70 states 标签密度 / 高 zoom 时部分国家边界紧凑标签碰撞）| PM polish R1 反馈 2026-05-22 | Stage 4 or Stage 6 polish | low（现阶段维持现状 · 后续有机会优化）|
+| **B-2** | 中文国名映射 70 states（Germany 1816-1870 → 普鲁士 / 1871+ → 德意志帝国 / Saxe-Weimar → 萨克森-魏玛 等 · +1-2h 工程 · 跟 timeline 动态国界切换一起做）| spec § 4.7 + DR-T2.1.hotfix2-C 注 | Stage 4 | mid |
+| **B-3** | K_MAX 32→64（PM 实测 1A+2A 后是否仍需更深 zoom · 真城市级 vector tile 留 V2 真解）| DR-T2.1.hotfix3-3A-defer | Stage 2 polish R2 待 PM 拍 | depending |
+| **B-4** | 朋友项目优秀 pattern 参考（philosophy_vis · 双 land A/B cross-fade 450ms / clock-face 多层 ring + spoke）| T2.1.hotfix2 commit 借鉴报告 | Stage 4 cross-fade / Task 2.4 spreadOverlapping 升级 | low |
+| **B-5** | plane 端 distance 仍可再试调（保留 1.5 fishbone 视觉 + 修"放大不能拖"根因）· 备案 mercator + 250ms d3-transition cross-fade | Stage 1 takeaway § 5 #9 | Stage 6 polish | low |
+| **B-6** | Marx 1843 国界静态 sample → 动态切片（当前 historical-borders.ts:filterBordersAtYear(1843) hardcode）| Stage 1 takeaway § 5 #10 | Stage 4 | mid |
+
+**国名重叠 B-1 资深设计后续优化备选**（落 Stage 4 / Stage 6 polish 时再正式 brainstorm）·
+  (a) 标签碰撞检测（O(n²) 简单 AABB intersection · 重叠的次要国家隐藏）· 工程 30-60min
+  (b) zoom-adaptive density（k=4 只显大国 5-10 个 / k=8 显 20 个 / k=16+ 显全部）· 跟 borderLabelFontSize 同 threshold pattern · 工程 20-40min
+  (c) leader line 牵引线（centroid 远离碰撞中心 / 标签外移 + 短线连国 · 类似 d3-labeler）· 工程 1-2h
+  (d) hover 才显 label（默认无标签 / 球面阶段已 hide / plane 阶段也 hide · hover 国家显标签 + tooltip）· 大改 UX · 工程 1-2h
+  (e) 标签 outline / 描边（米白 outline 增可读性 · 不解重叠根因 · 跟 dot outline 同 pattern）· 工程 10-20min · 最低 ROI 但快
+
 ---
 
 ## 7. 续接简单确认句（新窗口 AI 自报）
 
-> "我在续接 Marx M-B2 Stage 2 实施期 · HEAD `74150fb` · T2.1 ship + 1 轮 hotfix ship · **PM 已拍 `go A+B+C` 学 Google Maps 改 zoom/dot/标签 1 atomic commit 待开工** · 读 docs/2026-05-22-b2-stage2-progress-anchor.md § 1 + § 5 完整 A+B+C 修法 / TDD + atomic commit + push 拆开 + watch deploy / PM 实测拍板 → T2.2 brainstorm 节点名字标签策略 (DR-106) → T2.3 关系连线 6 类 (DR-107) → T2.4 偏移 → Stage 2 收尾 takeaway"
+> "我在续接 Marx M-B2 Stage 2 实施期 · HEAD `5bc89b4` · T2.1 + hotfix + hotfix2 (A+B+C) + hotfix3 (1A+2A) 全 ship · **PM 已拍 `go T2.2` person 节点名字标签策略 brainstorm · DR-106 待定** · 读 docs/2026-05-22-b2-stage2-progress-anchor.md § 1 + § 6.8 累积 backlog（含国名重叠 B-1 / K_MAX 64 B-3）· 进 T2.2 brainstorm 6 候选 (A 全显 / B hover / C ≡ A / D zoom-adaptive / E hover+click / F D+E 混合 推荐) → PM 拍 DR-106 → implement → T2.3 关系连线 6 类 (DR-107) → T2.4 偏移 → Stage 2 收尾 takeaway"
 
 ---
 
-## 8. 切窗口前 handover checklist（已 done）
+## 8. 切窗口前 handover checklist
 
 - ✅ T2.1 ship (HEAD adfab6d) + deploy success
 - ✅ T2.1.hotfix ship (HEAD 74150fb) + deploy success
+- ✅ T2.1.hotfix2 A+B+C ship (HEAD 61f2160) + deploy success
+- ✅ T2.1.hotfix3 1A+2A ship (HEAD 5bc89b4) + deploy success
 - ✅ Stage 1 收尾 takeaway 完整（DR-097~105 · 9 lessons · 19 commit）
 - ✅ 数据现状调查完整（plan 误读根因 / deniz 排除 / M3.5 backlog）
-- ✅ A+B+C 修法完整设计（PM 拍板后无 ambiguity）
-- ✅ 7 lessons 累积落档（4 ⚠⚠⚠ 关键 + 3 ⚠ 复用）
-- ✅ Stage 2 启动 sequence 完整（T2.1 ✓ → hotfix1 ✓ → hotfix2 待 → T2.2 → T2.3 → T2.4 → 收尾）
+- ✅ A+B+C + 1A+2A 修法 全 PM 拍板 + ship
+- ✅ DR-T2.1.hotfix2-A/B/C/D-defer + DR-T2.1.hotfix3-1A/2A/3A-defer 全落 § 4
+- ✅ Stage 2 polish 累积 backlog § 6.8 落档（B-1~B-6 · 国名重叠 / K_MAX 64 / cross-fade 等）
 - ✅ Marx 项目硬约束 7 条沿用
-- ✅ Stage 1 final tag `m-b2-stage1-final` push origin
+- ⏳ T2.2 brainstorm 进行中 · DR-106 待 PM 拍板
+- ⏳ Stage 1 final tag `m-b2-stage1-final` push origin（Stage 2 final tag 等收尾 takeaway）
 
-新窗口拿 git pull · 读本 anchor + Stage 1 takeaway · 立即按 § 5 开工 A+B+C。
+新窗口拿 git pull · 读本 anchor + Stage 1 takeaway · T2.2 brainstorm 接力 PM DR-106 拍板 → T2.3 → T2.4 → 收尾。
