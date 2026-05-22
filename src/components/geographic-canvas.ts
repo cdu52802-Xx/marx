@@ -37,7 +37,7 @@
 //   - time-change event：reset panCenter（让 Marx follow reorient 重新生效）
 
 import { select } from 'd3-selection';
-import { geoPath, geoGraticule, geoDistance, type GeoProjection } from 'd3-geo';
+import { geoPath, geoGraticule, geoDistance, geoCentroid, type GeoProjection } from 'd3-geo';
 import { zoom, zoomIdentity, type ZoomBehavior } from 'd3-zoom';
 import { drag } from 'd3-drag';
 import {
@@ -45,6 +45,9 @@ import {
   satelliteDistanceAtZoom,
   ZOOM_THRESHOLDS,
   K_MAX,
+  dotRadiusAtZoom,
+  shouldShowBorderLabels,
+  borderLabelFontSize,
   type ProjectionMode,
 } from '../lib/projection.ts';
 import { loadBorders, filterBordersAtYear } from '../lib/historical-borders.ts';
@@ -283,8 +286,13 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
     const currentDistance = satelliteDistanceAtZoom(k);
     const clipAngleRad = Math.acos(1 / currentDistance);
 
+    // T2.1.hotfix2-B · stroke-width 反比 zoom（border + graticule · 高 zoom 不模糊）
+    //   公式 dotRadiusAtZoom(k, baseW) · 同根号公式 / clamp k<2 plateau
+    const strokeW = dotRadiusAtZoom(k, 0.5);
+
     // T1.6+ C · borders 底图层（最底 / 在 graticule + nodes 之前 / 防遮节点）
     // spec § 6 视觉：米白 fill (#fcfaf6) + 沙石灰金 stroke (#d8cab0)
+    // T2.1.hotfix2-B · stroke-width 反比 zoom（高 zoom 时国界线不会太粗）
     g.selectAll('path.border').remove();
     if (bordersGeojson) {
       const borderSel = g
@@ -297,17 +305,51 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
         .attr('d', (d) => pathGen(d as GeoJSON.GeoJsonObject) ?? '')
         .attr('fill', '#fcfaf6') // 米白底 · spec § 6
         .attr('stroke', '#d8cab0') // 沙石灰金 border · spec § 6
-        .attr('stroke-width', 0.5);
+        .attr('stroke-width', strokeW);
     }
 
     // graticule 经纬网（每 10° 一条 / d3 默认 step）
+    // T2.1.hotfix2-B · stroke-width 反比 zoom（视觉风格跟 border 一致）
     g.selectAll('path.graticule').remove();
     g.append('path')
       .attr('class', 'graticule')
       .attr('d', pathGen(geoGraticule()()) ?? '')
       .attr('fill', 'none')
       .attr('stroke', '#d8cab0') // 沙石灰金 · spec § 6
-      .attr('stroke-width', 0.5);
+      .attr('stroke-width', strokeW);
+
+    // T2.1.hotfix2-C · 国名英文标签（k>=4 trigger / 字体跟 zoom 走 / 背面 hide）
+    //   位置：d3.geoCentroid 算每国地理中心 → projection 推 pixel
+    //   字段：CShapes feature.properties.Name（英文如 "Belgium" "Prussia"）
+    //   中文映射 70 states 留 Stage 4 backlog（spec § 4.7 已规划）
+    //   z-order：在 graticule 之后 · dots 之前（dots 在最上 · 标签辅助）
+    g.selectAll('text.border-label').remove();
+    if (bordersGeojson && shouldShowBorderLabels(k)) {
+      const fontSize = borderLabelFontSize(k);
+      g.selectAll<SVGTextElement, GeoJSON.Feature>('text.border-label')
+        .data(bordersGeojson.features)
+        .enter()
+        .append('text')
+        .attr('class', 'border-label')
+        .attr('x', (d) => {
+          const centroid = geoCentroid(d as GeoJSON.GeoJsonObject);
+          return projection(centroid as [number, number])?.[0] ?? 0;
+        })
+        .attr('y', (d) => {
+          const centroid = geoCentroid(d as GeoJSON.GeoJsonObject);
+          return projection(centroid as [number, number])?.[1] ?? 0;
+        })
+        .attr('text-anchor', 'middle')
+        .attr('font-size', fontSize)
+        .attr('fill', '#6a5a4a') // 沙石灰金深一档 · spec § 6
+        .attr('opacity', 0.75)
+        .attr('pointer-events', 'none')
+        .attr('display', (d) => {
+          const centroid = geoCentroid(d as GeoJSON.GeoJsonObject);
+          return geoDistance(center, centroid as [number, number]) > clipAngleRad ? 'none' : null;
+        })
+        .text((d) => ((d as GeoJSON.Feature).properties as { Name?: string } | null)?.Name ?? '');
+    }
 
     // M-B2 T2.1 · 86 节点完整渲染（V1 = 31 person · event + location backlog）
     // spec § 4.4 5 类节点视觉：
@@ -315,6 +357,7 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
     //   event  → 橙 #cc6633 · r=4（V1 数据缺口 · 留 code path · V1+ wire up）
     //   location → 灰 #9b8b6f · r=3（V1 数据缺口 · 留 code path · V1+ wire up）
     // T2.1.hotfix · Issue 1 · 背面节点 display:none（great-circle 距离 > clipAngle 隐藏）
+    // T2.1.hotfix2-B · dot radius 反比 zoom（治本 PM "圆点比国家大" 痛点）
     g.selectAll('circle.geo-node').remove();
     g.selectAll('circle.geo-node')
       .data(nodes)
@@ -324,7 +367,7 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
       .attr('data-id', (d) => d.id)
       .attr('cx', (d) => projection(d.lonLat)?.[0] ?? 0)
       .attr('cy', (d) => projection(d.lonLat)?.[1] ?? 0)
-      .attr('r', (d) => (d.type === 'person' ? 5 : d.type === 'event' ? 4 : 3))
+      .attr('r', (d) => dotRadiusAtZoom(k, d.type === 'person' ? 5 : d.type === 'event' ? 4 : 3))
       .attr('fill', (d) =>
         d.type === 'person' ? '#5b3a8c' : d.type === 'event' ? '#cc6633' : '#9b8b6f',
       )

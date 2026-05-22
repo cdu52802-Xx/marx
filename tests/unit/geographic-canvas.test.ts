@@ -441,7 +441,7 @@ describe('mountGeographicCanvas · M-B2 T1.3 + T2.1', () => {
 
   // === T2.1.hotfix · Issue 3 · scaleExtent 扩到 K_MAX (16) ===
 
-  it('Issue 3 · zoomBehavior.scaleExtent 上限 = K_MAX (16)（PM 看清欧洲国家）', () => {
+  it('Issue 3 · zoomBehavior.scaleExtent 上限 = K_MAX（PM 看清欧洲国家）', () => {
     mountGeographicCanvas({
       container,
       width: 600,
@@ -450,11 +450,74 @@ describe('mountGeographicCanvas · M-B2 T1.3 + T2.1', () => {
       marxCurrentLocation: [10, 50],
       nodes: FIXTURE_NODES,
     });
-    // d3-zoom 内部 svg.__zoom 包含 scaleExtent · 间接验：scaleTo 到 16 不被 clamp
+    // d3-zoom 内部 svg.__zoom 包含 scaleExtent · 间接验：scaleTo 到 K_MAX 不被 clamp
     const svgSel = select(container as unknown as SVGSVGElement);
     type ZoomNode = SVGSVGElement & { __zoom?: { k: number } };
     const svgNode = svgSel.node() as ZoomNode | null;
     expect(svgNode?.__zoom?.k).toBe(1); // 初始 k=1
     // 间接验 scaleExtent · 实际 zoomBehavior 内部不易 introspect / 只验初始 k 跟 K_MAX 兼容
+  });
+
+  // === M-B2 T2.1.hotfix2-B · dot radius 反比 zoom（治本 PM "圆点比国家大" 痛点）===
+
+  it('T2.1.hotfix2-B · sphere mode (effectiveK=1 clamp 到 2) → person r=5（plateau · 不缩小）', () => {
+    mountGeographicCanvas({
+      container,
+      width: 600,
+      height: 400,
+      initialMode: 'sphere',
+      marxCurrentLocation: [10, 50],
+      nodes: FIXTURE_NODES,
+    });
+    // sphere mode 初始 k=1 / dotRadiusAtZoom clamp k<2 plateau / r=5/sqrt(2/2)=5
+    const paris = container.querySelector('circle.geo-node[data-id="paris"]') as SVGCircleElement;
+    expect(parseFloat(paris.getAttribute('r')!)).toBeCloseTo(5, 1);
+  });
+
+  it('T2.1.hotfix2-B · plane mode (effectiveK=8) → person r=2.5（5/sqrt(8/2)=5/2）', () => {
+    const api = mountGeographicCanvas({
+      container,
+      width: 600,
+      height: 400,
+      initialMode: 'sphere',
+      marxCurrentLocation: [10, 50],
+      nodes: FIXTURE_NODES,
+    });
+    // setMode('plane') → computeEffectiveK 返 8 → dotRadius 5/sqrt(4) = 2.5
+    api.setMode('plane');
+    const paris = container.querySelector('circle.geo-node[data-id="paris"]') as SVGCircleElement;
+    expect(parseFloat(paris.getAttribute('r')!)).toBeCloseTo(2.5, 1);
+  });
+
+  // === M-B2 T2.1.hotfix2-C · 国名标签（k>=4 trigger / sphere mode 不显）===
+
+  it('T2.1.hotfix2-C · sphere mode (k=1 < 4) → svg 内无 text.border-label（数据加载不影响 threshold）', () => {
+    mountGeographicCanvas({
+      container,
+      width: 600,
+      height: 400,
+      initialMode: 'sphere',
+      marxCurrentLocation: [10, 50],
+      nodes: FIXTURE_NODES,
+    });
+    // sphere mode k=1 < threshold 4 / 一定 0 个 border-label（不论 async borders 加载状态）
+    expect(container.querySelectorAll('text.border-label').length).toBe(0);
+  });
+
+  it('T2.1.hotfix2-C · setMode 切换不破坏 render（border-label render 路径不报错 · 不依赖 async borders 加载）', () => {
+    const api = mountGeographicCanvas({
+      container,
+      width: 600,
+      height: 400,
+      initialMode: 'sphere',
+      marxCurrentLocation: [10, 50],
+      nodes: FIXTURE_NODES,
+    });
+    // 切到 plane mode 触发 render 通过 border-label 渲染路径
+    // jsdom 内 fetch 不可用 / bordersGeojson 永远 null / 渲染路径走 if-guard skip
+    // 验：不 throw + 切回 sphere mode 仍 0 个 label（sphere mode threshold 不达）
+    expect(() => api.setMode('plane')).not.toThrow();
+    expect(() => api.setMode('sphere')).not.toThrow();
+    expect(container.querySelectorAll('text.border-label').length).toBe(0);
   });
 });

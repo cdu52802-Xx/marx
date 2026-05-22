@@ -39,10 +39,14 @@ export const ZOOM_THRESHOLDS = { sphereMax: 2.5, planeMin: 4.5 };
 
 // T1.6+ B · 真线性内插 scale 范围
 // T2.1.hotfix · Issue 3 · 扩 K_MAX 8→16 / scale 800→1600 让 PM 看清欧洲国家细节
+// T2.1.hotfix2-A · 继续扩 K_MAX 16→32 / scale 1600→3200 看清单国家级别（比利时/卢森堡/Andorra）
+//   PM 拍 A · 学 Google Maps zoom 极深方向 · K_DISTANCE_PLATEAU=8 不变（distance 已稳）
+//   拒切 Leaflet/Mapbox tile pyramid 真 Google Maps 方案（V2 大决策 · prototype 不做）
+//   viewport k=32 显示约 5°×3.5°（比利时单国级别）
 export const SCALE_AT_K_MIN = 200;
-export const SCALE_AT_K_MAX = 1600;
+export const SCALE_AT_K_MAX = 3200;
 export const K_MIN = 1;
-export const K_MAX = 16;
+export const K_MAX = 32;
 
 // T2.1.hotfix · Issue 3 · distance plateau 起点（k >= K_DISTANCE_PLATEAU 时 distance 固定 SAT_DISTANCE_AT_K_MAX）
 //   第一性原理：相机距地球已"接近平面" (distance=2) / 用户继续放大 = 看地面细节 (scale 翻倍)
@@ -88,6 +92,44 @@ export function satelliteDistanceAtZoom(k: number): number {
  */
 function clipAngleForDistance(distance: number): number {
   return (Math.acos(1 / distance) * 180) / Math.PI;
+}
+
+/**
+ * T2.1.hotfix2-B · dot/stroke 反比 zoom（治本 PM "圆点比国家大" 痛点）
+ *   第一性：用户视觉 "圆点占地图百分比" 不能随 zoom 暴涨
+ *     k=1 时 dot=5px 是基准 / k=32 时 viewport 显示 1/32 / dot pixel 不变 = 占地图百分比 32 倍 → 喧宾夺主
+ *   选根号公式 baseR / sqrt(max(2, k) / 2):
+ *     - clamp k<2 plateau（球面 mode 节点是主角 / 保持醒目）
+ *     - k>=2 后缩小（plane mode 让位国家细节）
+ *     - k=1: 5px（plateau）/ k=2: 5px（基准）/ k=4: 3.54px / k=8: 2.5px / k=32: 1.25px
+ *   拒线性 1/k（朋友 philosophy_vis K=8 OK · 我们 K=32 用线性 = 0.156px 不可见）
+ *   拒不动（PM 实测痛点已 lock）
+ */
+export function dotRadiusAtZoom(k: number, baseR: number): number {
+  const effectiveK = Math.max(2, k);
+  return baseR / Math.sqrt(effectiveK / 2);
+}
+
+/**
+ * T2.1.hotfix2-C · 国名标签 zoom threshold
+ *   k<4 球面阶段：不显标签（视觉过载 + 节点本身是主角 + 球面背面遮一半）
+ *   k>=4 平面阶段：显标签（信息密度真增 / 用户辨识 CShapes 历史国界 1843 普鲁士/奥地利等）
+ *   threshold=4 选址：cross 球面→平面过渡中段（ZOOM_THRESHOLDS.transition→plane = 4.5 边界附近）
+ */
+export function shouldShowBorderLabels(k: number): boolean {
+  return k >= 4;
+}
+
+/**
+ * T2.1.hotfix2-C · 国名标签字体大小跟 zoom 走
+ *   k=4: 8px（threshold 起点 · 不喧宾夺主）
+ *   k>=8: 12px（plane mode 信息密度 max · 仍小于节点 dot radius 视觉层级）
+ *   中间线性 lerp · k<4 返 0（caller 应先 check shouldShowBorderLabels）
+ */
+export function borderLabelFontSize(k: number): number {
+  if (k < 4) return 0;
+  const t = Math.min(1, (k - 4) / 4);
+  return 8 + 4 * t;
 }
 
 /**
