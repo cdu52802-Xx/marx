@@ -1,7 +1,7 @@
-# Marx M-B2 · Stage 2 实施期 SSOT · 新窗口续接锚点（2026-05-22）
+# Marx M-B2 · Stage 2 实施期 SSOT · 新窗口续接锚点（2026-05-22 / 2026-05-24 updated）
 
-> **状态**：Stage 2 启动 · T2.1 ship + 1 轮 hotfix ship · **当前等开工 A+B+C 学 Google Maps 改 dot/zoom/标签 1 atomic commit**
-> **当前 HEAD**：`74150fb`（T2.1.hotfix · 3 PM 实测 issue 全改 · 全程 satellite distance plateau + scaleExtent K_MAX=16 + 统一 panCenter drag + 背面节点 hide）
+> **状态**：Stage 2 · T2.1 + hotfix + hotfix2 (A+B+C) + hotfix3 (1A+2A) + T2.2 (DR-106 F) + T2.3 (DR-107 ζ) + click-bug v1+v2 都 ship · click bug v1+v2 prod 仍 fail 落 backlog 后期 polish · **当前等开工 T2.4 spreadOverlapping**
+> **当前 HEAD**：`14c2c7f`（T2.2 click-bug v2 attempt · dragBehavior.filter target=dot return false · PM 实测 prod 仍 fail · 真根因不明 / B-7 backlog · 后期 polish 新假设验证）
 > **Git**：clean / origin/main 同步 / Stage 1 final tag = `m-b2-stage1-final`（`56874b9`）
 > **Prod**：https://cdu52802-xx.github.io/marx/ → 主画面右上 300×200 prototype 浮窗
 > **deploy 最近 success**：run 26276704839（T2.1.hotfix）/ 26272989896（Stage 1 revert）/ 26273443561（Stage 1 docs 收尾）
@@ -13,15 +13,58 @@
 
 ---
 
-## 1. ⚠⚠⚠ 新窗口 step 1 · 立即开工任务（PM 已拍 `go A+B+C`）
+## 1. ⚠⚠⚠ 新窗口 step 1 · 立即开工任务（PM 已拍 `go T2.4 spreadOverlapping`）
 
-### PM 实测 T2.1.hotfix 后第 2 轮反馈（74150fb）
+### Stage 2 至今 PM 反馈累积（5 轮 + ship 状态）
+
+| 轮 | PM 反馈 | 实施 | 状态 |
+|---|---|---|---|
+| R1 (74150fb 后) | 背面节点透 / 拖拽多次失效 / 放大不够 / 圆点比国家大 | hotfix Issue 1+2+3 (74150fb) | ✅ |
+| R2 (74150fb 后) | 仍嫌放大不够 / 学 Google Maps | hotfix2 A+B+C (61f2160) · K_MAX 32 + dot/stroke 反比 + 国名标签 | ✅ |
+| R3 polish | 边界浅 / dot 小 / 想继续放大 | hotfix3 1A+2A (5bc89b4) · stroke dual lever + dot ratio clamp + outline · 3A K_MAX 64 defer | ✅ |
+| R4 (T2.2) | 拍 F + Q1a+Q2b+Q3a+Q4a | DR-106 F ship (2da3834) | ✅ ship · click 行为 prod 不工作 |
+| R4 (T2.3) | 拍 ζ + Q5a+Q6a+Q7a+Q8a · "先看看效果 / 不行后面再调" | DR-107 ζ ship (8a61bf3) | ✅ ship |
+| R4 click bug | dot click 视觉无反应 | v1 clickDistance(5) (db68602) → prod fail · v2 dragBehavior.filter target=dot (14c2c7f) → prod 仍 fail | ⚠ v1+v2 都 fail / **暂落 backlog B-7 后期 polish** |
+
+### ⚠⚠⚠ click bug B-7 backlog 关键说明（不要重启动调查 · 等 polish R）
+
+- v1 + v2 两轮 root cause fix 都 fail · 真根因不明
+- PM 决定 "现在暂时记录把 · 后期有机会再修" · **不卡 T2.4 推进**
+- 新假设池见 § 6.8 polish 期 backlog（h1~h6 待后期专项验证）
+- 不要在 T2.4 开工时顺便再 attempt v3 fix · PM 已明确 defer
+
+### T2.4 spreadOverlapping 任务核心（PM 拍 go · plan 已有详细修法 · 不重 brainstorm）
+
+`src/lib/geographic-data.ts` 加 spreadOverlapping(nodes: GeoNode[]): GeoNode[]：
+- 同 lonLat 节点环形分布偏移
+- 0.5° radius / `dLon = cos(angle)*0.5 / dLat = sin(angle)*0.5`
+- byCoord Map 分组 / 同组 length > 1 才偏移
+- 实施 ~30 行 · 跟 plan Task 2.4 完全 align
+
+V1 数据热点：
+- **伦敦** (Marx 1849+ · Engels 部分 · 多人聚集)
+- **巴黎** (Marx 1843-45 · Proudhon · Bauer 等)
+- 其他可能：柏林 / 科隆 / 布鲁塞尔（Marx 行迹叠 · 1-2 个 person 同址）
+
+main.ts wire up：
+- `const geoNodes = extractGeoNodes(persons);`
+- 加 `const spreadNodes = spreadOverlapping(geoNodes);`
+- 改 `mountGeographicCanvas({ ..., nodes: spreadNodes, ... });`
+
+测试 5 case：
+- 单 node 不偏移
+- 同坐标 2 node 互对偏移（180°）
+- 同坐标 4 node 等距 90°
+- 不同坐标互不影响
+- key 用 toFixed(4)（精度跟 plan 一致）
+
+### PM 实测 T2.1.hotfix 后第 2 轮反馈（74150fb · 历史已 done · 保留 trace）
 
 | Issue | PM 反馈 | 状态 |
 |---|---|---|
 | 1 背面节点透出 | ✅ OK | done |
 | 2 多次拖拽后不能拖 | ✅ OK | done |
-| 3 放大不够 · 圆点比国家大 | ⚠ 仍不够 · 让 AI 学 Google Maps | **等开工 A+B+C** |
+| 3 放大不够 · 圆点比国家大 | ⚠ 仍不够 · 让 AI 学 Google Maps | **已 ship hotfix2 A+B+C** |
 | 4 圆点位置准确性 | PM 跳过 | 后续审核 |
 
 ### 学 Google Maps 第一性分析（已落档 / 见 lessons § 4）
@@ -102,11 +145,16 @@ T2.1.hotfix baseline 46.52 KB · +A+B+C ≈ +0.5 KB（centroid + text 渲染）�
 | **T2.1.hotfix** | `74150fb` | 3 PM 实测 issue 全改 · Issue 1 背面节点 great-circle 距离>clipAngle hide / Issue 2 统一 drag state 删 currentRotate / Issue 3 K_MAX 8→16 + distance plateau + scaleExtent + dot scale-aware preview |
 | **T2.1.hotfix2** | `61f2160` | A+B+C 学 Google Maps · A K_MAX 16→32 + SCALE_AT_K_MAX 1600→3200 / B dot+stroke 反比 zoom (sqrt 公式 + clamp k<2 plateau) / C 国名英文标签 d3.geoCentroid + zoom>=4 trigger / D Leaflet/Mapbox 切换 deferred V2 |
 | **T2.1.hotfix3** | `5bc89b4` | PM polish R1 · 1A 边界 stroke dual lever (strokeWidth clamp min 0.6 + 颜色 zoom-adaptive #d8cab0→#b8a880) + 2A dot ratio clamp baseR*0.6 (person ≥3 / event ≥2.4 / location ≥1.8) + 米白 outline stroke #fcfaf6 · 3A K_MAX 扩到 64 暂不做（PM 实测 1A+2A 后再决）|
+| docs anchor | `5d5a39b` | Stage 2 anchor 落档 hotfix2+3 / DR-T2.1.hotfix2 A/B/C/D + hotfix3 1A/2A/3A / polish 期 backlog B-1~B-6 |
+| **T2.2 DR-106 F** | `2da3834` | person 名字标签 D+E 混合 · D 球面 hide / plane k>=4 全显 / E hover 临时含生卒年 + click 持久 + 紫圈 + 加粗 · Q1a 紫 / Q2b 生卒年 / Q3a B1 DR-087 复用 / Q4a italic 紧贴右侧 / +18 test |
+| **T2.2 click-bug v1** | `db68602` | clickDistance(5) attempt · PM 实测 prod 仍 click 无反应 · 假设错（鼠标移动 > 5px）|
+| **T2.3 DR-107 ζ** | `8a61bf3` | 关系连线 V1 · geographic-relations.ts (NEW · 95 行) · 37 条 person-person arc 渲染 · Q5a 灰 #9b8b6f / Q6a opacity 0.25 / Q7a hover 临时 + click 持久 / Q8a 无方向 · +21 test |
+| **T2.2 click-bug v2** | `14c2c7f` | dragBehavior.filter target=dot return false attempt (root cause fix) · **PM 实测 prod 仍 click 无反应** · v1+v2 都 fail / 真根因不明 / 落 backlog B-7 后期 polish 新假设验证 |
 
-**Bundle 当前**（HEAD `5bc89b4`）：JS gzip **47.34 KB** · safe ≤80 KB · 余 32.66 KB
-**Tests**：390/393 pass · 3 M3 pre-existing 持平（hotfix2 +25 new / hotfix3 +13 new）
+**Bundle 当前**（HEAD `14c2c7f`）：JS gzip **49.38 KB**（v2 fix +0.04 KB · 几乎不增）· safe ≤80 KB · 余 30.62 KB
+**Tests**：430/433 pass · 3 M3 pre-existing 持平（Stage 2 全 +60+ new test）
 **Lint**：0 warning 0 error
-**新依赖**：无（Stage 2 沿用 Stage 1 d3-geo-projection + d3-geo geoDistance + 新 import geoCentroid）
+**新依赖**：无（Stage 2 沿用 Stage 1 d3-geo-projection + 新 import geoCentroid + d3-shape line · 既有）
 
 ---
 
@@ -153,6 +201,11 @@ T2.1.hotfix baseline 46.52 KB · +A+B+C ≈ +0.5 KB（centroid + text 渲染）�
 | **DR-T2.1.hotfix3-1A** | 2026-05-22 | **1A · 边界 stroke 视觉权重 dual lever**（strokeWidth 绝对值 minAbs clamp 0.6 防 sub-pixel rendering antialiasing 稀释 + borderStrokeColor zoom-adaptive sphere #d8cab0 / plane k>=4 #b8a880 沙石深一档 · spec § 6 补充非违背）| hotfix3 final |
 | **DR-T2.1.hotfix3-2A** | 2026-05-22 | **2A · dot 视觉 dual lever**（dotRadius ratio clamp baseR*0.6 · 资深设计自审：plane mode 节点仍是用户主角不该让位国家细节 + 加米白 outline stroke #fcfaf6 · separation 跟米白底图 contrast 增）| hotfix3 final |
 | **DR-T2.1.hotfix3-3A-defer** | 2026-05-22 | **3A · K_MAX 32→64 暂不做**（PM 实测 1A+2A 修后是否仍需更深 zoom · 第一性：Issue 2 修后 dot 重新 visible / "想再放大"动机可能消 · cshapes 精度 limit 提醒）| pending PM polish R2 |
+| **DR-106 F + Q1a+Q2b+Q3a+Q4a** | 2026-05-24 | **T2.2 person 名字标签 D+E 混合 ship** · 6 候选 (A 全显/B 仅 hover/C ≡ A/D zoom-adaptive/E hover+click/F D+E) · PM 拍 F + Q1a 紫 / Q2b 生卒年 / Q3a B1 DR-087 紫圈复用 / Q4a italic 紧贴右侧 | T2.2 final |
+| **DR-107 ζ + Q5a+Q6a+Q7a+Q8a** | 2026-05-24 | **T2.3 关系连线 V1 ζ ship** · 6 候选 (α 单类/β 类型分色/γ 默认淡+click/δ zoom-adaptive/ε hide V1/ζ γ+hover) · 数据 reality 修正 plan 6 类（41 raw → 37 person-person arc / 95% influences + 1 mentor + 1 friend_collaborator）· PM 拍 ζ + Q5a 灰 / Q6a 0.25 / Q7a hover 临时+click 持久 / Q8a 无方向 | T2.3 final |
+| **DR-T2.2-click-bug-v1** | 2026-05-22 | clickDistance(5) attempt · PM 实测 prod 仍 click 无反应 · v1 假设错（鼠标移动 > 5px 仍被 d3-drag 拦） | failed |
+| **DR-T2.2-click-bug-v2** | 2026-05-24 | dragBehavior.filter target=dot return false attempt (root cause fix · d3-drag 完全不接管 dot mousedown) · **PM 实测 prod 仍 click 无反应** · v2 也 fail / 真根因不明 | failed |
+| **DR-T2.2-click-bug-defer** | 2026-05-24 | **click bug 暂时记录落 backlog 后期 polish** · PM "现在暂时记录把 / 后期有机会再修" · 不卡 T2.4 推进 · 新假设见 B-7 backlog | deferred |
 
 ---
 
@@ -303,12 +356,29 @@ Stage 2 T2.1 ship 后 gh API 撞 Windows network timeout（中国大陆 → api.
 
 | # | 项 | 来源 | 阶段 | 优先级 |
 |---|---|---|---|---|
+| **B-7** ⚠⚠⚠ | **T2.2/T2.3 dot click 视觉无反应**（v1 clickDistance(5) + v2 dragBehavior.filter target=dot return false 两轮 fix 都失败 · PM 实测 prod 仍无紫圈/加粗/arc 联动 · 真根因不明）| PM polish R2 反馈 2026-05-24 | Stage 6 polish · 高优先（影响 F+ζ 体验）| mid-high · PM "现在暂时记录把 / 后期有机会再修" / 不卡 T2.4 推进 |
 | **B-1** | **国名/地区标签重叠观感不舒服**（CShapes 70 states 标签密度 / 高 zoom 时部分国家边界紧凑标签碰撞）| PM polish R1 反馈 2026-05-22 | Stage 4 or Stage 6 polish | low（现阶段维持现状 · 后续有机会优化）|
 | **B-2** | 中文国名映射 70 states（Germany 1816-1870 → 普鲁士 / 1871+ → 德意志帝国 / Saxe-Weimar → 萨克森-魏玛 等 · +1-2h 工程 · 跟 timeline 动态国界切换一起做）| spec § 4.7 + DR-T2.1.hotfix2-C 注 | Stage 4 | mid |
 | **B-3** | K_MAX 32→64（PM 实测 1A+2A 后是否仍需更深 zoom · 真城市级 vector tile 留 V2 真解）| DR-T2.1.hotfix3-3A-defer | Stage 2 polish R2 待 PM 拍 | depending |
 | **B-4** | 朋友项目优秀 pattern 参考（philosophy_vis · 双 land A/B cross-fade 450ms / clock-face 多层 ring + spoke）| T2.1.hotfix2 commit 借鉴报告 | Stage 4 cross-fade / Task 2.4 spreadOverlapping 升级 | low |
 | **B-5** | plane 端 distance 仍可再试调（保留 1.5 fishbone 视觉 + 修"放大不能拖"根因）· 备案 mercator + 250ms d3-transition cross-fade | Stage 1 takeaway § 5 #9 | Stage 6 polish | low |
 | **B-6** | Marx 1843 国界静态 sample → 动态切片（当前 historical-borders.ts:filterBordersAtYear(1843) hardcode）| Stage 1 takeaway § 5 #10 | Stage 4 | mid |
+
+**click bug B-7 后期 polish 新假设池**（v1+v2 都失败 / 后期专项 brainstorm 验证）·
+  v1 clickDistance(5) · 假设鼠标 < 5px 抖动 · prod fail = 实际 > 5px · ❌
+  v2 dragBehavior.filter target=dot return false · 假设 d3-drag 拦 dot mousedown 是根因 · prod fail = 不是 d3-drag · ❌
+  **新假设池**（后期专项验证 · 配 prod console 实测）·
+    (h1) M5 主图 svg-level click listener 拦了？查 main.ts svg.on('click') · M5 outsideClickHandler / M5 viewport click 可能 stopPropagation
+    (h2) z-index:1000 仍不够 · prototype svg 上面有 fixed/absolute element 遮（M5 timeline 浮窗 / B1 detail card 等）
+    (h3) prototype svg 是 SVG element · 渲染在 body 上 · 浏览器 SVG hit test 跟 HTML 不同（点 dot 时实际 hit svg root 不 hit circle）
+    (h4) dot pointer-events 被 default style 覆盖 (CSS `* { pointer-events: none }` 之类的 global rule？)
+    (h5) prod build 跟 dev 行为差异（Vite tree-shake d3-selection .on 函数？）
+    (h6) GH Pages CDN 缓存旧版本 / 强刷不够 / 浏览器 service worker 缓存
+  diagnostic 工具 · prod F12 console:
+    `document.querySelector('circle.geo-node[data-id="wd-q9061"]').addEventListener('click', e=>alert('YES'))` 试是否真能收到
+    Element panel inspect dot · listeners tab 看 click listener attach 情况
+    Network tab 看 GH Actions 部署的 bundle 跟最新 hash 匹配
+    Console 看是否有 stopPropagation 抢
 
 **国名重叠 B-1 资深设计后续优化备选**（落 Stage 4 / Stage 6 polish 时再正式 brainstorm）·
   (a) 标签碰撞检测（O(n²) 简单 AABB intersection · 重叠的次要国家隐藏）· 工程 30-60min
@@ -321,7 +391,7 @@ Stage 2 T2.1 ship 后 gh API 撞 Windows network timeout（中国大陆 → api.
 
 ## 7. 续接简单确认句（新窗口 AI 自报）
 
-> "我在续接 Marx M-B2 Stage 2 实施期 · HEAD `5bc89b4` · T2.1 + hotfix + hotfix2 (A+B+C) + hotfix3 (1A+2A) 全 ship · **PM 已拍 `go T2.2` person 节点名字标签策略 brainstorm · DR-106 待定** · 读 docs/2026-05-22-b2-stage2-progress-anchor.md § 1 + § 6.8 累积 backlog（含国名重叠 B-1 / K_MAX 64 B-3）· 进 T2.2 brainstorm 6 候选 (A 全显 / B hover / C ≡ A / D zoom-adaptive / E hover+click / F D+E 混合 推荐) → PM 拍 DR-106 → implement → T2.3 关系连线 6 类 (DR-107) → T2.4 偏移 → Stage 2 收尾 takeaway"
+> "我在续接 Marx M-B2 Stage 2 实施期 · HEAD `14c2c7f` · T2.1 + hotfix + hotfix2 (A+B+C) + hotfix3 (1A+2A) + T2.2 (DR-106 F) + T2.3 (DR-107 ζ) 全 ship · click bug v1+v2 都 fail / **暂落 backlog B-7 后期 polish · 不卡 T2.4 推进** · **PM 已拍 `go T2.4 spreadOverlapping`** · 读 docs/2026-05-22-b2-stage2-progress-anchor.md 完整 8 section / 重点 § 1 T2.4 修法 + § 4 DR-T2.4 待定 + § 6.8 backlog (B-7 click bug 高优先 / B-1 国名重叠 / B-3 K_MAX 64) · T2.4 后 → Stage 2 收尾 takeaway"
 
 ---
 
@@ -331,13 +401,22 @@ Stage 2 T2.1 ship 后 gh API 撞 Windows network timeout（中国大陆 → api.
 - ✅ T2.1.hotfix ship (HEAD 74150fb) + deploy success
 - ✅ T2.1.hotfix2 A+B+C ship (HEAD 61f2160) + deploy success
 - ✅ T2.1.hotfix3 1A+2A ship (HEAD 5bc89b4) + deploy success
+- ✅ T2.2 DR-106 F ship (HEAD 2da3834) + deploy success
+- ✅ T2.2 click-bug v1 attempt (HEAD db68602) + ship · prod fail
+- ✅ T2.3 DR-107 ζ ship (HEAD 8a61bf3) + deploy success
+- ✅ T2.2 click-bug v2 attempt (HEAD 14c2c7f) + ship · prod fail · backlog B-7
 - ✅ Stage 1 收尾 takeaway 完整（DR-097~105 · 9 lessons · 19 commit）
-- ✅ 数据现状调查完整（plan 误读根因 / deniz 排除 / M3.5 backlog）
-- ✅ A+B+C + 1A+2A 修法 全 PM 拍板 + ship
-- ✅ DR-T2.1.hotfix2-A/B/C/D-defer + DR-T2.1.hotfix3-1A/2A/3A-defer 全落 § 4
-- ✅ Stage 2 polish 累积 backlog § 6.8 落档（B-1~B-6 · 国名重叠 / K_MAX 64 / cross-fade 等）
+- ✅ 数据现状调查完整（person + relation reality 跟 plan 假设差距全落档）
+- ✅ A+B+C + 1A+2A + F + ζ 修法 全 PM 拍板 + ship
+- ✅ DR-T2.1.hotfix2 A/B/C/D-defer + hotfix3 1A/2A/3A-defer + DR-106 F + DR-107 ζ + click-bug v1/v2/defer 全落 § 4
+- ✅ Stage 2 polish 累积 backlog § 6.8 落档（B-7 click bug 高优先 / B-1 国名重叠 / B-3 K_MAX 64 / B-2/B-4/B-5/B-6 其他）
 - ✅ Marx 项目硬约束 7 条沿用
-- ⏳ T2.2 brainstorm 进行中 · DR-106 待 PM 拍板
+- ⏳ T2.4 spreadOverlapping 待 PM 拍 `go` 开工
 - ⏳ Stage 1 final tag `m-b2-stage1-final` push origin（Stage 2 final tag 等收尾 takeaway）
 
-新窗口拿 git pull · 读本 anchor + Stage 1 takeaway · T2.2 brainstorm 接力 PM DR-106 拍板 → T2.3 → T2.4 → 收尾。
+**T2.4 任务核心**（plan Task 2.4 已有详细修法 · 不需重 brainstorm）·
+  `src/lib/geographic-data.ts:spreadOverlapping(nodes)` · 同坐标多 person 节点环形偏移 0.5° radius
+  V1 数据热点 = 伦敦 (Marx 1849+ Engels 等) + 巴黎 (Marx 1843-45 Proudhon 等)
+  实施 ~30 行 + test 5 case · 1 atomic commit + push + watch
+
+新窗口拿 git pull · 完整读本 anchor 8 section · 立即 T2.4 implement（PM 已拍 go T2.4）。
