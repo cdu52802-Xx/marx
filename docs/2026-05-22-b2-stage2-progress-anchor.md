@@ -1,6 +1,8 @@
 # Marx M-B2 · Stage 2 实施期 SSOT · 新窗口续接锚点（2026-05-22 / 2026-05-24 updated）
 
-> **状态**：Stage 2 · T2.1 + hotfix + hotfix2 (A+B+C) + hotfix3 (1A+2A) + T2.2 (DR-106 F) + T2.3 (DR-107 ζ) + click-bug v1+v2 都 ship · click bug v1+v2 prod 仍 fail 落 backlog 后期 polish · **当前等开工 T2.4 spreadOverlapping**
+> ⛔ **FROZEN（2026-05-24）· Stage 2 + 阶段 A + 阶段 B.1 全 ship · 新窗口续接走 [收尾 takeaway](./2026-05-24-b2-stage2-plus-ab-takeaway.md) 不走本 anchor · 本 anchor 保留作中段 trace history**
+
+> **状态（已 frozen）**：Stage 2 · T2.1 + hotfix + hotfix2 (A+B+C) + hotfix3 (1A+2A) + T2.2 (DR-106 F) + T2.3 (DR-107 ζ) + click-bug v1+v2 都 ship · click bug v1+v2 prod 仍 fail 落 backlog 后期 polish · ~~当前等开工 T2.4 spreadOverlapping~~ → T2.4 已 ship + 阶段 A 翻 plan 顺序 + 阶段 B.1 大窗 polish 全 ship · HEAD `b2f9782` · 等 tag `m-b2-stage2-final`
 > **当前 HEAD**：`14c2c7f`（T2.2 click-bug v2 attempt · dragBehavior.filter target=dot return false · PM 实测 prod 仍 fail · 真根因不明 / B-7 backlog · 后期 polish 新假设验证）
 > **Git**：clean / origin/main 同步 / Stage 1 final tag = `m-b2-stage1-final`（`56874b9`）
 > **Prod**：https://cdu52802-xx.github.io/marx/ → 主画面右上 300×200 prototype 浮窗
