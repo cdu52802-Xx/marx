@@ -45,6 +45,7 @@ import {
   satelliteDistanceAtZoom,
   ZOOM_THRESHOLDS,
   K_MAX,
+  DOT_BASE_RADIUS,
   dotRadiusAtZoom,
   strokeWidthAtZoom,
   borderStrokeColor,
@@ -455,7 +456,16 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
       .attr('data-id', (d) => d.id)
       .attr('cx', (d) => projection(d.lonLat)?.[0] ?? 0)
       .attr('cy', (d) => projection(d.lonLat)?.[1] ?? 0)
-      .attr('r', (d) => dotRadiusAtZoom(k, d.type === 'person' ? 5 : d.type === 'event' ? 4 : 3))
+      .attr('r', (d) =>
+        dotRadiusAtZoom(
+          k,
+          d.type === 'person'
+            ? DOT_BASE_RADIUS.person
+            : d.type === 'event'
+              ? DOT_BASE_RADIUS.event
+              : DOT_BASE_RADIUS.location,
+        ),
+      )
       .attr('fill', (d) =>
         d.type === 'person' ? '#5b3a8c' : d.type === 'event' ? '#cc6633' : '#9b8b6f',
       )
@@ -504,7 +514,7 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
       .attr('class', 'person-label')
       .attr('data-id', (d) => d.id)
       .attr('x', (d) => {
-        const dotR = dotRadiusAtZoom(k, 5); // person baseR=5
+        const dotR = dotRadiusAtZoom(k, DOT_BASE_RADIUS.person);
         return (projection(d.lonLat)?.[0] ?? 0) + dotR + 2;
       })
       .attr('y', (d) => (projection(d.lonLat)?.[1] ?? 0) + 3)

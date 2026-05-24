@@ -10,6 +10,7 @@ import {
   K_MAX,
   SCALE_AT_K_MAX,
   K_DISTANCE_PLATEAU,
+  DOT_BASE_RADIUS,
   dotRadiusAtZoom,
   strokeWidthAtZoom,
   borderStrokeColor,
@@ -95,13 +96,13 @@ describe('ZOOM_THRESHOLDS · M-B2 T1.1', () => {
   });
 });
 
-describe('K_MAX / SCALE_AT_K_MAX const · M-B2 T2.1.hotfix2-A（PM 拍 · 学 Google Maps 极深 zoom）', () => {
-  it('K_MAX = 32（从 16 扩到 32 · viewport k=32 显示约 5°×3.5° 比利时单国级别）', () => {
-    expect(K_MAX).toBe(32);
+describe('K_MAX / SCALE_AT_K_MAX const · M-B2 阶段 B PM 大窗实测拍 #1（want 再放大 / Google maps 感觉）', () => {
+  it('K_MAX = 64（从 32 翻倍 · viewport k=64 显示约 2.5°×1.75° 城市级别）', () => {
+    expect(K_MAX).toBe(64);
   });
 
-  it('SCALE_AT_K_MAX = 3200（从 1600 翻倍 · k=32 时 scale 3200）', () => {
-    expect(SCALE_AT_K_MAX).toBe(3200);
+  it('SCALE_AT_K_MAX = 6400（从 3200 翻倍 · 保持 dual 比例 · k=64 时 scale 6400）', () => {
+    expect(SCALE_AT_K_MAX).toBe(6400);
   });
 
   it('K_DISTANCE_PLATEAU = 8 不变（distance 在 k>=8 plateau at 2 / 已稳定 / 不动）', () => {
@@ -109,41 +110,46 @@ describe('K_MAX / SCALE_AT_K_MAX const · M-B2 T2.1.hotfix2-A（PM 拍 · 学 Go
   });
 });
 
-describe('scaleAtZoom · M-B2 T2.1.hotfix2-A（K_MAX 16→32 · scale 1600→3200）', () => {
+describe('scaleAtZoom · M-B2 阶段 B（K_MAX 32→64 · scale 3200→6400 翻倍）', () => {
   it('k=1 → scale 200（球面 base · 起点）', () => {
     expect(scaleAtZoom(1)).toBeCloseTo(200, 5);
   });
 
-  it('k=32 → scale 3200（细节 max · 新 K_MAX）', () => {
-    expect(scaleAtZoom(32)).toBeCloseTo(3200, 5);
+  it('k=64 → scale 6400（细节 max · 新 K_MAX 翻倍）', () => {
+    expect(scaleAtZoom(64)).toBeCloseTo(6400, 5);
   });
 
-  it('k=16 → scale ≈ 1651.6（旧 K_MAX 节点 · 新公式中段 linear lerp(200,3200,(16-1)/31)）', () => {
-    // (16 - 1) / 31 = 0.4839 → 200 + 3000 * 0.4839 ≈ 1651.6
-    expect(scaleAtZoom(16)).toBeCloseTo(1651.6, 1);
+  it('k=32 → scale ≈ 3250.8（旧 K_MAX 节点 · 新公式中段 linear lerp(200,6400,(32-1)/63)）', () => {
+    // (32 - 1) / 63 = 0.4921 → 200 + 6200 * 0.4921 ≈ 3250.8
+    expect(scaleAtZoom(32)).toBeCloseTo(3250.8, 1);
   });
 
-  it('k=8 → scale ≈ 877.4（distance plateau 起点 · linear lerp(200,3200,(8-1)/31)）', () => {
-    // (8 - 1) / 31 = 0.2258 → 200 + 3000 * 0.2258 ≈ 877.4
-    expect(scaleAtZoom(8)).toBeCloseTo(877.4, 1);
+  it('k=16 → scale ≈ 1676.2（旧节点 · linear lerp(200,6400,(16-1)/63)）', () => {
+    // (16 - 1) / 63 = 0.2381 → 200 + 6200 * 0.2381 ≈ 1676.2
+    expect(scaleAtZoom(16)).toBeCloseTo(1676.2, 1);
   });
 
-  it('k=4.5 → scale ≈ 538.7（中段线性内插）', () => {
-    // (4.5 - 1) / 31 = 0.1129 → 200 + 3000 * 0.1129 ≈ 538.7
-    expect(scaleAtZoom(4.5)).toBeCloseTo(538.7, 1);
+  it('k=8 → scale ≈ 888.9（distance plateau 起点 · linear lerp(200,6400,(8-1)/63)）', () => {
+    // (8 - 1) / 63 = 0.1111 → 200 + 6200 * 0.1111 ≈ 888.9
+    expect(scaleAtZoom(8)).toBeCloseTo(888.9, 1);
   });
 
-  it('k=2.5 → scale ≈ 345.2（sphere→transition 边界）', () => {
-    // (2.5 - 1) / 31 = 0.0484 → 200 + 3000 * 0.0484 ≈ 345.2
-    expect(scaleAtZoom(2.5)).toBeCloseTo(345.2, 1);
+  it('k=4.5 → scale ≈ 544.4（中段线性内插）', () => {
+    // (4.5 - 1) / 63 = 0.0556 → 200 + 6200 * 0.0556 ≈ 544.4
+    expect(scaleAtZoom(4.5)).toBeCloseTo(544.4, 1);
+  });
+
+  it('k=2.5 → scale ≈ 347.6（sphere→transition 边界）', () => {
+    // (2.5 - 1) / 63 = 0.0238 → 200 + 6200 * 0.0238 ≈ 347.6
+    expect(scaleAtZoom(2.5)).toBeCloseTo(347.6, 1);
   });
 
   it('k < 1 → clamp 到 200（防越界）', () => {
     expect(scaleAtZoom(0.5)).toBe(200);
   });
 
-  it('k > 32 → clamp 到 3200（防越界 · 新 K_MAX）', () => {
-    expect(scaleAtZoom(40)).toBe(3200);
+  it('k > 64 → clamp 到 6400（防越界 · 新 K_MAX）', () => {
+    expect(scaleAtZoom(70)).toBe(6400);
   });
 });
 
@@ -176,49 +182,80 @@ describe('satelliteDistanceAtZoom · M-B2 T1.6+++++（全程线性内插 50→2 
     expect(satelliteDistanceAtZoom(10)).toBe(2);
   });
 
-  it('T2.1.hotfix2-A · k=32 (新 K_MAX) → distance 2（plateau · K_DISTANCE_PLATEAU=8 在新 K_MAX 仍生效）', () => {
+  it('T2.1.hotfix2-A · k=32 → distance 2（plateau · K_DISTANCE_PLATEAU=8 仍生效）', () => {
     expect(satelliteDistanceAtZoom(32)).toBe(2);
+  });
+
+  it('阶段 B · k=64 (新 K_MAX) → distance 2（plateau · K_DISTANCE_PLATEAU=8 在新 K_MAX 仍生效）', () => {
+    expect(satelliteDistanceAtZoom(64)).toBe(2);
   });
 });
 
-describe('dotRadiusAtZoom · M-B2 T2.1.hotfix2-B + hotfix3-2A（反比 + ratio clamp）', () => {
-  it('k=1 → r=5（plateau · clamp k<2 / 球面 mode 节点醒目）', () => {
-    expect(dotRadiusAtZoom(1, 5)).toBe(5);
+describe('DOT_BASE_RADIUS · M-B2 阶段 B 常量提升（5/4/3 → 8/7/6 · PM 大窗实测拍 #2）', () => {
+  it('person = 8（+60% vs 旧 5 · 大窗主角醒目）', () => {
+    expect(DOT_BASE_RADIUS.person).toBe(8);
   });
 
-  it('k=2 → r=5（基准 · plateau 起点 · 5/sqrt(2/2)=5）', () => {
-    expect(dotRadiusAtZoom(2, 5)).toBe(5);
+  it('event = 7（+75% vs 旧 4 · 中间档位）', () => {
+    expect(DOT_BASE_RADIUS.event).toBe(7);
   });
 
-  it('k=4 → r ≈ 3.54（中段缩小 · 5/sqrt(4/2)=5/sqrt(2) · 仍 > min 3）', () => {
-    expect(dotRadiusAtZoom(4, 5)).toBeCloseTo(3.5355, 3);
+  it('location = 6（+100% vs 旧 3 · 辅助 hierarchy 保留）', () => {
+    expect(DOT_BASE_RADIUS.location).toBe(6);
+  });
+});
+
+describe('dotRadiusAtZoom · M-B2 阶段 B（baseR 提升 + 反比公式调温和 sqrt(k/4) plateau k<4 + clamp 0.5）', () => {
+  it('k=1 baseR=8 → r=8（plateau · effectiveK=max(4,1)=4 · 8/sqrt(1)=8）', () => {
+    expect(dotRadiusAtZoom(1, 8)).toBe(8);
   });
 
-  it('T2.1.hotfix3-2A · k=8 baseR=5 → r=3（ratio clamp baseR*0.6 · 公式值 2.5 被 clamp）', () => {
-    // 公式：5 / sqrt(4) = 2.5 · ratio min: 5 * 0.6 = 3 · max(3, 2.5) = 3
-    expect(dotRadiusAtZoom(8, 5)).toBe(3);
+  it('k=2 baseR=8 → r=8（plateau · effectiveK=max(4,2)=4）', () => {
+    expect(dotRadiusAtZoom(2, 8)).toBe(8);
   });
 
-  it('T2.1.hotfix3-2A · k=16 baseR=5 → r=3（ratio clamp · 公式值 1.77 被 clamp）', () => {
-    // 公式：5 / sqrt(8) ≈ 1.77 · ratio min: 3 · max(3, 1.77) = 3
-    expect(dotRadiusAtZoom(16, 5)).toBe(3);
+  it('k=4 baseR=8 → r=8（plateau 终点 · effectiveK=4 · 8/sqrt(1)=8）', () => {
+    expect(dotRadiusAtZoom(4, 8)).toBe(8);
   });
 
-  it('T2.1.hotfix3-2A · k=32 baseR=5 → r=3（ratio clamp · 公式值 1.25 被 clamp）', () => {
-    // 公式：5 / sqrt(16) = 1.25 · ratio min: 3 · max(3, 1.25) = 3
-    expect(dotRadiusAtZoom(32, 5)).toBe(3);
+  it('k=8 baseR=8 → r ≈ 5.66（开始反比 · 8/sqrt(8/4)=8/sqrt(2)）', () => {
+    expect(dotRadiusAtZoom(8, 8)).toBeCloseTo(5.6569, 3);
   });
 
-  it('T2.1.hotfix3-2A · baseR=4 (event) k=8 → r=2.4（ratio clamp 4*0.6=2.4 · 公式值 2 被 clamp）', () => {
-    expect(dotRadiusAtZoom(8, 4)).toBe(2.4);
+  it('k=16 baseR=8 → r=4（公式值 8/sqrt(4)=4 · ratio clamp baseR*0.5=4 · 刚好相等）', () => {
+    expect(dotRadiusAtZoom(16, 8)).toBe(4);
   });
 
-  it('T2.1.hotfix3-2A · baseR=3 (location) k=8 → r=1.8（ratio clamp 3*0.6=1.8 · 公式值 1.5 被 clamp）', () => {
-    expect(dotRadiusAtZoom(8, 3)).toBeCloseTo(1.8, 5);
+  it('k=32 baseR=8 → r=4（ratio clamp · 公式值 8/sqrt(8)≈2.83 < min 4）', () => {
+    expect(dotRadiusAtZoom(32, 8)).toBe(4);
   });
 
-  it('T2.1.hotfix3-2A · baseR=4 (event) k=4 → r ≈ 2.83（公式值 4/sqrt(2)=2.83 > min 2.4 · clamp 不起）', () => {
-    expect(dotRadiusAtZoom(4, 4)).toBeCloseTo(2.8284, 3);
+  it('k=64 (新 K_MAX) baseR=8 → r=4（ratio clamp · 公式值 8/sqrt(16)=2 < min 4）', () => {
+    expect(dotRadiusAtZoom(64, 8)).toBe(4);
+  });
+
+  it('baseR=7 (event) k=1 → r=7（plateau / +75% vs 旧 4）', () => {
+    expect(dotRadiusAtZoom(1, 7)).toBe(7);
+  });
+
+  it('baseR=7 (event) k=8 → r ≈ 4.95（公式值 7/sqrt(2)）', () => {
+    expect(dotRadiusAtZoom(8, 7)).toBeCloseTo(4.9497, 3);
+  });
+
+  it('baseR=7 (event) k=64 → r=3.5（ratio clamp 7*0.5）', () => {
+    expect(dotRadiusAtZoom(64, 7)).toBe(3.5);
+  });
+
+  it('baseR=6 (location) k=1 → r=6（plateau / +100% vs 旧 3）', () => {
+    expect(dotRadiusAtZoom(1, 6)).toBe(6);
+  });
+
+  it('baseR=6 (location) k=8 → r ≈ 4.24（公式值 6/sqrt(2)）', () => {
+    expect(dotRadiusAtZoom(8, 6)).toBeCloseTo(4.2426, 3);
+  });
+
+  it('baseR=6 (location) k=64 → r=3（ratio clamp 6*0.5）', () => {
+    expect(dotRadiusAtZoom(64, 6)).toBe(3);
   });
 });
 

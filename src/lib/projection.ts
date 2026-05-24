@@ -40,13 +40,15 @@ export const ZOOM_THRESHOLDS = { sphereMax: 2.5, planeMin: 4.5 };
 // T1.6+ B · 真线性内插 scale 范围
 // T2.1.hotfix · Issue 3 · 扩 K_MAX 8→16 / scale 800→1600 让 PM 看清欧洲国家细节
 // T2.1.hotfix2-A · 继续扩 K_MAX 16→32 / scale 1600→3200 看清单国家级别（比利时/卢森堡/Andorra）
-//   PM 拍 A · 学 Google Maps zoom 极深方向 · K_DISTANCE_PLATEAU=8 不变（distance 已稳）
-//   拒切 Leaflet/Mapbox tile pyramid 真 Google Maps 方案（V2 大决策 · prototype 不做）
-//   viewport k=32 显示约 5°×3.5°（比利时单国级别）
+// M-B2 阶段 B · 大窗实测 PM 拍 #1（want 再放大 / Google maps 感觉）·
+//   K_MAX 32→64 / SCALE_AT_K_MAX 3200→6400 · 保持 dual 翻倍比例
+//   viewport k=64 显示约 2.5°×1.75°（城市级别 · 比利时整国仅占 viewport 1/3）
+//   K_DISTANCE_PLATEAU=8 不变（distance 已稳 / 不动 distance 维度）
+//   小盒子下"3A backlog 暂不做"决策大窗实测后 override · process 校准 lesson
 export const SCALE_AT_K_MIN = 200;
-export const SCALE_AT_K_MAX = 3200;
+export const SCALE_AT_K_MAX = 6400;
 export const K_MIN = 1;
-export const K_MAX = 32;
+export const K_MAX = 64;
 
 // T2.1.hotfix · Issue 3 · distance plateau 起点（k >= K_DISTANCE_PLATEAU 时 distance 固定 SAT_DISTANCE_AT_K_MAX）
 //   第一性原理：相机距地球已"接近平面" (distance=2) / 用户继续放大 = 看地面细节 (scale 翻倍)
@@ -95,21 +97,31 @@ function clipAngleForDistance(distance: number): number {
 }
 
 /**
+ * M-B2 阶段 B · dot baseR 常量（PM 大窗实测拍 #2 · "圆点小了 重新考虑设计"）
+ *   第一性根因：之前 5/4/3 是 300×200 小盒子下相对合适 · 大窗 1200×800 同值视觉小 4 倍
+ *     viewport 占比从 1.7% → 0.4% · 节点是用户主角 视觉不该这么稀
+ *   新值 8/7/6：person +60% / event +75% / location +100% · 大窗主角醒目
+ *   hierarchy 保留（person > event > location）· spec § 4.4 5 类节点视觉
+ */
+export const DOT_BASE_RADIUS = {
+  person: 8,
+  event: 7,
+  location: 6,
+} as const;
+
+/**
  * T2.1.hotfix2-B · dot radius 反比 zoom（治本 PM "圆点比国家大" 痛点）
  *   第一性：用户视觉 "圆点占地图百分比" 不能随 zoom 暴涨
- *   选根号公式 baseR / sqrt(max(2, k) / 2):
- *     - clamp k<2 plateau（球面 mode 节点是主角 / 保持醒目）
- *     - k>=2 后缩小（plane mode 让位国家细节）
- *   T2.1.hotfix3-2A · 加 ratio clamp baseR*0.6（PM polish R1 拍板）
- *     第一性反思：plane mode 节点仍是用户主角（看哪些哲学家在哪国）· 不该缩到看不见
- *     min clamp 保 visibility · 同时不破"防 cover 整个小国"原意（min 仍小于 baseR）
- *     k=1/2: 5px（plateau）/ k=4: 3.54px / k=8: max(3, 2.5)=3 / k=32: max(3, 1.25)=3
- *     person baseR=5 → min 3px / event baseR=4 → min 2.4px / location baseR=3 → min 1.8px
- *   拒线性 1/k（朋友 philosophy_vis K=8 OK · 我们 K=32 用线性 = 0.156px 不可见）
+ *   M-B2 阶段 B · 公式调温和（PM 大窗实测拍 #2）·
+ *     旧 sqrt(max(2, k)/2) clamp 0.6 · 大窗下 k=4 起 dot 就开始缩 · 过 aggressive
+ *     新 sqrt(max(4, k)/4) clamp 0.5 · plateau k<4 不缩 · 让球面 mode + 浅 plane 节点保 baseR 醒目
+ *   跑数字（baseR=8 person）·
+ *     k=1/2/4 plateau: 8px · k=8: 5.66px · k=16: 4px · k=32: clamp 4px · k=64: clamp 4px
+ *   拒线性 1/k（朋友 philosophy_vis K=8 OK · 我们 K=64 用线性 = 0.125px 不可见）
  */
 export function dotRadiusAtZoom(k: number, baseR: number): number {
-  const effectiveK = Math.max(2, k);
-  return Math.max(baseR * 0.6, baseR / Math.sqrt(effectiveK / 2));
+  const effectiveK = Math.max(4, k);
+  return Math.max(baseR * 0.5, baseR / Math.sqrt(effectiveK / 4));
 }
 
 /**

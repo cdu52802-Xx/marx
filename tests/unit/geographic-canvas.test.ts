@@ -77,7 +77,7 @@ describe('mountGeographicCanvas · M-B2 T1.3 + T2.1', () => {
     expect(firstDotSphere).not.toBe(firstDotPlane);
   });
 
-  it('T2.1 · person 节点 fill = 紫 #5b3a8c · r=5', () => {
+  it('T2.1 · person 节点 fill = 紫 #5b3a8c · 阶段 B 大窗 baseR=8', () => {
     mountGeographicCanvas({
       container,
       width: 600,
@@ -88,7 +88,8 @@ describe('mountGeographicCanvas · M-B2 T1.3 + T2.1', () => {
     });
     const dot = container.querySelector('circle.geo-node') as SVGCircleElement;
     expect(dot.getAttribute('fill')).toBe('#5b3a8c');
-    expect(dot.getAttribute('r')).toBe('5');
+    // 阶段 B · baseR=8 / sphere k=1 plateau · r=8
+    expect(dot.getAttribute('r')).toBe('8');
     expect(dot.getAttribute('class')).toContain('geo-node-person');
     expect(dot.getAttribute('data-id')).toBe('p1');
   });
@@ -461,7 +462,7 @@ describe('mountGeographicCanvas · M-B2 T1.3 + T2.1', () => {
 
   // === M-B2 T2.1.hotfix2-B · dot radius 反比 zoom（治本 PM "圆点比国家大" 痛点）===
 
-  it('T2.1.hotfix2-B · sphere mode (effectiveK=1 clamp 到 2) → person r=5（plateau · 不缩小）', () => {
+  it('阶段 B · sphere mode (effectiveK=max(4,1)=4) → person r=8（plateau · 不缩小）', () => {
     mountGeographicCanvas({
       container,
       width: 600,
@@ -470,12 +471,12 @@ describe('mountGeographicCanvas · M-B2 T1.3 + T2.1', () => {
       marxCurrentLocation: [10, 50],
       nodes: FIXTURE_NODES,
     });
-    // sphere mode 初始 k=1 / dotRadiusAtZoom clamp k<2 plateau / r=5/sqrt(2/2)=5
+    // sphere mode 初始 k=1 / dotRadiusAtZoom plateau k<4 / r=8/sqrt(4/4)=8
     const paris = container.querySelector('circle.geo-node[data-id="paris"]') as SVGCircleElement;
-    expect(parseFloat(paris.getAttribute('r')!)).toBeCloseTo(5, 1);
+    expect(parseFloat(paris.getAttribute('r')!)).toBeCloseTo(8, 1);
   });
 
-  it('T2.1.hotfix3-2A · plane mode (effectiveK=8) → person r=3（ratio clamp · 公式值 2.5 < min 3）', () => {
+  it('阶段 B · plane mode (effectiveK=8) → person r ≈ 5.66（公式值 8/sqrt(2) · clamp 不起）', () => {
     const api = mountGeographicCanvas({
       container,
       width: 600,
@@ -484,10 +485,10 @@ describe('mountGeographicCanvas · M-B2 T1.3 + T2.1', () => {
       marxCurrentLocation: [10, 50],
       nodes: FIXTURE_NODES,
     });
-    // setMode('plane') → computeEffectiveK 返 8 → dotRadius max(3, 5/sqrt(4)) = max(3, 2.5) = 3
+    // setMode('plane') → computeEffectiveK 返 8 → dotRadius max(4, 8/sqrt(2)) = 5.66
     api.setMode('plane');
     const paris = container.querySelector('circle.geo-node[data-id="paris"]') as SVGCircleElement;
-    expect(parseFloat(paris.getAttribute('r')!)).toBeCloseTo(3, 1);
+    expect(parseFloat(paris.getAttribute('r')!)).toBeCloseTo(5.66, 1);
   });
 
   it('T2.1.hotfix3-2A · dot 加米白 outline stroke（separation 跟米白底图 contrast）', () => {
