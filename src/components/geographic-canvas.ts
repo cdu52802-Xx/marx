@@ -200,14 +200,31 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
   //   sphere mode 视觉表现仍是"旋转地球"（panCenter 改 = projection.rotate 自动跟着改 / 视觉等价）
   //   transition/plane mode 视觉表现是"拖动地图"（同一 state · 同一公式 · 一致体验）
   //
-  // T2.2-F click-bug fix · clickDistance(5) 防 d3-drag 拦截 dot click
-  //   根因（第一性）：d3-drag clickDistance default=0 · 任何 sub-pixel 鼠标抖动算 drag
-  //     mouseup 后 d3-drag attach `click.drag` listener on window {capture: true}
-  //     capture phase 先于 circle bubble · 调 stopImmediatePropagation 拦截 native click
-  //     → dot 上的 click handler 永远收不到 (PM polish R2 2026-05-22 实测 click 无反应)
-  //   修法：clickDistance(5) · 5px 内 mousedown→mouseup 不算 drag · click.drag listener 不 attach
-  //   trade-off：用户拖动 < 5px 时算 click 不算 drag · 5px 在 300×200 浮窗上是合理 threshold
+  // T2.2-F click-bug fix v2 (root cause) · dragBehavior.filter target = dot 时 return false
+  //   v1 (db68602) clickDistance(5) PM 实测 prod 仍 click 无反应
+  //   v1 不足根因：用户鼠标实际可能移动 > 5px 时仍被 d3-drag 视为 drag · 拦 click
+  //     jsdom test pass · jsdom dispatchEvent('click') 直接给 circle 不走 mousedown/move/up 流程
+  //     → jsdom 无法 catch d3-drag 拦 click 真 bug（lesson 4.9 复用：E2E 路径补 jsdom 漏）
+  //
+  //   v2 root cause fix · dragBehavior.filter check event.target ·
+  //     如果 mousedown 命中 circle.geo-node → return false → d3-drag 完全不接管该 mousedown
+  //     → 不 attach window click.drag listener → native click 100% 到 dot.on('click') handler
+  //   保留 clickDistance(5) 作为 svg 空白 click 的兜底（双保险）
+  //
+  //   行为 trade-off ·
+  //     dot mousedown → 走 click 路径（hover/click 联动 · F+ζ pattern）
+  //     svg 空白 mousedown → 走 drag pan 路径（unchanged）
+  //     → 用户体验：dot 是"点击 commit" · 空白是"拖动 pan" · 各司其职
   const dragBehavior = drag<SVGSVGElement, unknown>()
+    .filter((event: Event) => {
+      // v2 fix · mousedown 命中 dot → d3-drag 不接管 · 让 native click 独立路径走 dot click handler
+      const target = event.target as Element | null;
+      if (target?.tagName === 'circle' && target.classList?.contains('geo-node')) {
+        return false;
+      }
+      // svg 空白 + 其他子元素 mousedown → d3-drag 接管走 pan/rotate 路径（unchanged）
+      return true;
+    })
     .clickDistance(5)
     .on('drag', (event) => {
       const dx = event.dx as number;

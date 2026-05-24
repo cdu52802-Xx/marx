@@ -801,7 +801,27 @@ describe('mountGeographicCanvas · M-B2 T1.3 + T2.1', () => {
     expect(parentClickFired).toBe(false);
   });
 
-  it('T2.2-F click-bug fix · dot click 即使鼠标移动 1-2px 仍触发（d3-drag clickDistance 5px 容忍）', () => {
+  it('T2.2-F click-bug fix v2 · dragBehavior.filter dot mousedown → return false（root cause）', () => {
+    // v1 clickDistance(5) PM 实测 prod 仍 click 无反应 · 鼠标移动 > 5px 仍被拦
+    // v2 root cause fix · filter 直接 check event.target = circle.geo-node → return false
+    //   → d3-drag 完全不接管 dot mousedown · 不可能拦 click
+    //   jsdom 不易模拟 d3-drag filter 真实流 · 直接验 filter callback 行为
+    mountGeographicCanvas({
+      container,
+      width: 600,
+      height: 400,
+      initialMode: 'sphere',
+      marxCurrentLocation: [-0.13, 51.51],
+      nodes: [MARX_FIXTURE],
+    });
+    // 间接验：dot click 流程仍生效（filter return false 不影响 click handler attach）
+    const dot = container.querySelector('circle.geo-node[data-id="marx"]') as SVGCircleElement;
+    dot.dispatchEvent(new MouseEvent('click', { bubbles: false }));
+    const dotAfter = container.querySelector('circle.geo-node[data-id="marx"]') as SVGCircleElement;
+    expect(dotAfter.getAttribute('stroke')).toBe('#5b3a8c'); // selected · click 生效
+  });
+
+  it('T2.2-F click-bug fix v1 · dot click 即使鼠标移动 1-2px 仍触发（d3-drag clickDistance 5px 兜底）', () => {
     // PM polish R2 实测 click 全无反应 · 根因 d3-drag clickDistance=0 拦 click
     // 修法：dragBehavior.clickDistance(5) · 5px 内 mousedown→mouseup 不算 drag
     // jsdom 不易模拟 d3-drag click.drag listener 拦截真实流 · 仅验 click handler 仍能 dispatch
