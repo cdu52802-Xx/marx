@@ -57,6 +57,7 @@ import { applyClaimFilters } from './components/apply-claim-filters.ts';
 import { mountGeographicCanvas } from './components/geographic-canvas.ts';
 import { extractGeoNodes, spreadOverlapping } from './lib/geographic-data.ts';
 import { extractGeoRelations, type RawRelation } from './lib/geographic-relations.ts';
+import { mountSwapButton } from './components/swap-button.ts';
 import type { ClaimNode, ClaimRelation } from './types/Claim.ts';
 import type { PersonNode } from './types/Node.ts';
 
@@ -1614,11 +1615,15 @@ console.log(
   '[Marx M-B1] render complete · timeline + sidebar + header-controls + search + popover mounted',
 );
 
-// === M-B2 T1.3 · Stage 1 prototype 临时挂载（主画面右上 300×200 浮窗） ===
-// 不删 M5 主图 / 不动 B1 header + claim-popover 主流程
-// Stage 5 真副窗实施时下线临时浮窗 · 保留至少到 T5.1
-//
-// M-B2 T2.1 升级：删 5 个 hardcode TEST_NODES · 接真 persons 数据
+// === M-B2 阶段 A · Geo 主画布 fullscreen mount + dev swap toggle ===
+// PM 2026-05-24 拍板翻 plan 顺序：砍 300×200 prototype 浮窗（避 PM checkpoint 滤镜污染）
+//   - Geo SVG 跟 M5 SVG 同级 mount 到 #app · 占满 viewport · viewBox 1200×800
+//   - 默认 display:none（list-main 时 M5 主图占主画布 · 跟 B1 ship 后既有体验一致）
+//   - swap button 切到 geo-main 时 show Geo / hide M5
+//   - swap-button.ts 复用 plan T3.2 工程 · STORAGE_KEY 'marx:canvas-role' 持久化
+//   - Stage 3 polish 时升级为正式互换按钮（mount 移 header / 视觉风格 polish）
+
+// 数据 pipeline (T2.1+T2.4+T2.3)
 //   V1 PM 拍板 A 路径：34 person · 3 [0,0] 占位 filter · 31 GeoNode 渲染
 //   event + location 数据缺口落 backlog · V1+ enrich 后扩展（入参签名预留）
 const geoNodes = extractGeoNodes(persons);
@@ -1636,19 +1641,58 @@ console.log(
 const geoRelations = extractGeoRelations(spreadNodes, nodeRelations);
 console.log(`[Marx M-B2 T2.3] geo relations: ${geoRelations.length} / ${nodeRelations.length} raw`);
 
-const protoSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-protoSvg.setAttribute('width', '300');
-protoSvg.setAttribute('height', '200');
-protoSvg.style.cssText =
-  'position:fixed;right:10px;top:50px;background:#fcfaf6;border:1px solid #d8cab0;z-index:1000';
-document.body.appendChild(protoSvg);
+// Geo SVG · viewBox 内部坐标 1200×800（projection center + scale 公式用）
+//   外部 width/height 100% · preserveAspectRatio meet（letterbox fit · 跟 M5 SVG 一致）
+const GEO_VIEWBOX_W = 1200;
+const GEO_VIEWBOX_H = 800;
+const geoSvg = app
+  .append('svg')
+  .attr('class', 'geo-canvas-svg')
+  .attr('viewBox', `0 0 ${GEO_VIEWBOX_W} ${GEO_VIEWBOX_H}`)
+  .attr('width', '100%')
+  .attr('height', '100%')
+  .attr('preserveAspectRatio', 'xMidYMid meet')
+  .style('background', '#fcfaf6')
+  .style('display', 'none'); // 默认 hide · swap toggle 切 geo-main 时 show
+
 const protoApi = mountGeographicCanvas({
-  container: protoSvg,
-  width: 300,
-  height: 200,
+  container: geoSvg.node() as SVGSVGElement,
+  width: GEO_VIEWBOX_W,
+  height: GEO_VIEWBOX_H,
   initialMode: 'sphere',
   marxCurrentLocation: [10, 50],
   nodes: spreadNodes,
   relations: geoRelations,
 });
 (window as unknown as { protoApi: typeof protoApi }).protoApi = protoApi; // PM console 调
+
+// dev swap toggle · 左上 fixed mount · z-index 10（高于 header 9 / 低于全屏 modal 1000）
+//   按钮文案 "↔ 列表 ⇄ 地图" · 一键切 · localStorage 持久化跨刷新
+//   Stage 3 polish 时移到 header.ts container + 视觉移 styles.css（mount 函数签名不变）
+const swapHost = document.createElement('div');
+swapHost.id = 'swap-button-host';
+swapHost.style.cssText = 'position:fixed;left:6px;top:6px;z-index:10;';
+document.body.appendChild(swapHost);
+const swapApi = mountSwapButton(swapHost);
+const swapBtn = swapHost.querySelector('button.swap-button') as HTMLButtonElement | null;
+if (swapBtn) {
+  // dev 期 inline style（Stage 3 polish 时移到 styles.css .swap-button class）
+  swapBtn.style.cssText =
+    'background:#fcfaf6;border:1px solid #5b3a8c;border-radius:3px;padding:4px 10px;' +
+    'font-family:system-ui,sans-serif;font-size:12px;color:#5b3a8c;cursor:pointer;' +
+    'box-shadow:0 1px 3px rgba(91,58,140,0.15);';
+}
+
+function applyCanvasRole(role: 'list-main' | 'geo-main'): void {
+  if (role === 'geo-main') {
+    svg.style('display', 'none');
+    geoSvg.style('display', 'block');
+  } else {
+    svg.style('display', 'block');
+    geoSvg.style('display', 'none');
+  }
+  console.log(`[Marx M-B2 阶段 A] canvas-role → ${role}`);
+}
+applyCanvasRole(swapApi.getCurrent());
+swapApi.onChange(applyCanvasRole);
+(window as unknown as { swapApi: typeof swapApi }).swapApi = swapApi; // PM console 调
