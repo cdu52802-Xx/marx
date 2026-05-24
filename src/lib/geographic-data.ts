@@ -68,3 +68,44 @@ export function extractGeoNodes(
   }
   return out;
 }
+
+/**
+ * M-B2 T2.4 · 同坐标多 person 节点环形分布偏移防视觉重叠
+ *
+ * V1 数据热点：
+ *   - 伦敦 [-0.1278, 51.5074]：Marx 1849+ / Engels 部分 / Stirner / Bauer 等聚集
+ *   - 巴黎 [2.3522, 48.8566]：Marx 1843-45 / Proudhon / Bauer 等
+ *
+ * 算法：
+ *   1. byCoord Map 按 `${lng.toFixed(4)},${lat.toFixed(4)}` key 分组
+ *      （toFixed(4) 容忍真数据浮点精度差异 · 0.0001° ≈ 11m 同址精度）
+ *   2. 同组 length === 1 → 不偏移原样输出
+ *   3. 同组 length > 1 → 环形分布 0.5° radius
+ *      公式：angle = (i/n) * 2π · dLon = cos(angle)*0.5 · dLat = sin(angle)*0.5
+ *
+ * @param nodes - 原始 GeoNode[]
+ * @returns 偏移后 GeoNode[]（长度跟入参相同 · 同坐标节点 lonLat 散开）
+ */
+export function spreadOverlapping(nodes: GeoNode[]): GeoNode[] {
+  const byCoord = new Map<string, GeoNode[]>();
+  for (const n of nodes) {
+    const key = `${n.lonLat[0].toFixed(4)},${n.lonLat[1].toFixed(4)}`;
+    const arr = byCoord.get(key) ?? [];
+    arr.push(n);
+    byCoord.set(key, arr);
+  }
+  const out: GeoNode[] = [];
+  for (const arr of byCoord.values()) {
+    if (arr.length === 1) {
+      out.push(arr[0]);
+      continue;
+    }
+    arr.forEach((n, i) => {
+      const angle = (i / arr.length) * 2 * Math.PI;
+      const dLon = Math.cos(angle) * 0.5;
+      const dLat = Math.sin(angle) * 0.5;
+      out.push({ ...n, lonLat: [n.lonLat[0] + dLon, n.lonLat[1] + dLat] });
+    });
+  }
+  return out;
+}

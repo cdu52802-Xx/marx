@@ -55,7 +55,7 @@ import { showClaimPopover } from './components/claim-popover.ts';
 import { showArcPopover, hideArcPopover } from './components/arc-popover.ts';
 import { applyClaimFilters } from './components/apply-claim-filters.ts';
 import { mountGeographicCanvas } from './components/geographic-canvas.ts';
-import { extractGeoNodes } from './lib/geographic-data.ts';
+import { extractGeoNodes, spreadOverlapping } from './lib/geographic-data.ts';
 import { extractGeoRelations, type RawRelation } from './lib/geographic-relations.ts';
 import type { ClaimNode, ClaimRelation } from './types/Claim.ts';
 import type { PersonNode } from './types/Node.ts';
@@ -1622,11 +1622,18 @@ console.log(
 //   V1 PM 拍板 A 路径：34 person · 3 [0,0] 占位 filter · 31 GeoNode 渲染
 //   event + location 数据缺口落 backlog · V1+ enrich 后扩展（入参签名预留）
 const geoNodes = extractGeoNodes(persons);
-console.log(`[Marx M-B2 T2.1] geo nodes: ${geoNodes.length} / ${persons.length} person`);
+// M-B2 T2.4 · 同坐标多 person 节点环形分布偏移 0.5° radius 防视觉重叠
+//   V1 热点：伦敦（Marx 1849+ Engels 等）/ 巴黎（Marx 1843-45 Proudhon 等）
+//   spreadNodes 长度跟 geoNodes 相同 · 只 lonLat 偏移
+const spreadNodes = spreadOverlapping(geoNodes);
+console.log(
+  `[Marx M-B2 T2.1+T2.4] geo nodes: ${spreadNodes.length} / ${persons.length} person · spread overlap`,
+);
 
 // M-B2 T2.3 · 抽取 person-person GeoRelation[]（PM 拍 ζ · DR-107）
 //   V1 数据 reality 41 raw / extract 后约 37 条（filter author + 双端有效）
-const geoRelations = extractGeoRelations(geoNodes, nodeRelations);
+//   ⚠ 用 spreadNodes 不用 geoNodes · arc 端点跟 dot 偏移后位置一致（视觉对齐）
+const geoRelations = extractGeoRelations(spreadNodes, nodeRelations);
 console.log(`[Marx M-B2 T2.3] geo relations: ${geoRelations.length} / ${nodeRelations.length} raw`);
 
 const protoSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -1641,7 +1648,7 @@ const protoApi = mountGeographicCanvas({
   height: 200,
   initialMode: 'sphere',
   marxCurrentLocation: [10, 50],
-  nodes: geoNodes,
+  nodes: spreadNodes,
   relations: geoRelations,
 });
 (window as unknown as { protoApi: typeof protoApi }).protoApi = protoApi; // PM console 调
