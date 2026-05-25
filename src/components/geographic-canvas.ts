@@ -252,23 +252,37 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
   // timeline T4.x dispatch 此 event · 现在只 listen（dispatch 由后续 task 加）
   // listener 必须 destroy 时 detach（不然组件卸载后 stale closure 持续累加）
   // T2.1.hotfix · Issue 2 · 统一 state · 只 reset panCenter（删 currentRotate path）
+  // Stage 4.1 · borders 动态切片（接 marx:time-change event）
+  //   bordersFullGeojson cache 完整 322 features · loadBorders 内部 _cache 已防重复 fetch
+  //   bordersGeojson 按 currentYear filter 后 ≈ 50-100 features · 喂 render() pathGen
+  //   currentYear 初始 1843（hardcode 跟 Stage 1 sample 一致 · main.ts wire timeline initialCursor 后接到 Marx 1818-1883 range）
+  let bordersFullGeojson: GeoJSON.FeatureCollection | null = null;
+  let bordersGeojson: GeoJSON.FeatureCollection | null = null;
+  let currentYear: number = 1843;
+
   const timeHandler = (e: Event): void => {
     const detail = (e as CustomEvent).detail as { year?: number } | undefined;
     if (typeof detail?.year === 'number') {
+      currentYear = detail.year;
       currentLoc = marxLocationAtYear(detail.year);
       panCenter = null; // reset pan · 让 currentLoc 重新作 projection.center · render 重算 rotate
+      // Stage 4.1 · 动态 re-filter borders 按新 year（bordersFullGeojson 已 cache · O(322) features filter · 快）
+      if (bordersFullGeojson) {
+        bordersGeojson = filterBordersAtYear(bordersFullGeojson, currentYear);
+      }
       render();
     }
   };
   window.addEventListener('marx:time-change', timeHandler);
 
-  // T1.6+ C · cshapes 底图临时上（Stage 1 静态 1843 sample）
-  // Stage 4 真接 timeline year 动态切换 + build-time filter Marx subset (~480 KB)
+  // T1.6+ C · cshapes 底图加载（Stage 1 静态 1843 sample · Stage 4.1 升级动态切片）
+  //   loadBorders().then 内：保存 full geojson + 按 currentYear initial filter
+  //   后续 marx:time-change event 触发 timeHandler 内 re-filter
   // async load · 失败兜底（L1 留 V1+ world-atlas fallback / 现在只 console.error）
-  let bordersGeojson: GeoJSON.FeatureCollection | null = null;
   loadBorders()
     .then((g) => {
-      bordersGeojson = filterBordersAtYear(g, 1843);
+      bordersFullGeojson = g;
+      bordersGeojson = filterBordersAtYear(g, currentYear);
       render();
     })
     .catch((err) => {

@@ -242,3 +242,124 @@ describe('timeline · play button toggle (B2 fix)', () => {
     expect(api.getCurrentYear()).toBeLessThan(1800);
   });
 });
+
+// Stage 4.1 · marx:time-change event dispatch（动态历史国界 + Marx 行迹联动）
+//   timeline 用户交互（click / drag / playback）时同步 dispatch CustomEvent
+//   geographic-canvas + 未来其他 listener 监听 → re-render with new year
+//   setCursor 不 dispatch（external API · 不算用户交互 · 跟 onCursorChange callback 一致）
+describe('timeline · Stage 4.1 marx:time-change event dispatch', () => {
+  let container: HTMLElement;
+  let dispatched: number[];
+  const listener = (e: Event): void => {
+    const detail = (e as CustomEvent).detail as { year?: number } | undefined;
+    if (typeof detail?.year === 'number') dispatched.push(detail.year);
+  };
+
+  beforeEach(() => {
+    document.body.innerHTML = '';
+    container = document.createElement('div');
+    document.body.appendChild(container);
+    dispatched = [];
+    window.addEventListener('marx:time-change', listener);
+  });
+
+  afterEach(() => {
+    window.removeEventListener('marx:time-change', listener);
+  });
+
+  it('click-to-seek 触发 dispatch · detail.year = currentYear', () => {
+    const api = mountTimeline({ container, yearMin: 1770, yearMax: 1950, initialCursor: 1860 });
+    const svg = container.querySelector('#tl-svg') as SVGSVGElement;
+    svg.getBoundingClientRect = () => ({
+      left: 0,
+      width: 600,
+      top: 0,
+      height: 60,
+      right: 600,
+      bottom: 60,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    });
+    svg.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, clientX: 480, clientY: 30 }));
+    expect(dispatched.length).toBe(1);
+    expect(dispatched[0]).toBe(api.getCurrentYear());
+    document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+  });
+
+  it('drag 触发 dispatch 每次 mousemove · 跟 currentYear 同步', () => {
+    const api = mountTimeline({ container, yearMin: 1770, yearMax: 1950, initialCursor: 1860 });
+    const svg = container.querySelector('#tl-svg') as SVGSVGElement;
+    svg.getBoundingClientRect = () => ({
+      left: 0,
+      width: 600,
+      top: 0,
+      height: 60,
+      right: 600,
+      bottom: 60,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    });
+    svg.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, clientX: 300, clientY: 30 }));
+    dispatched = []; // 重置 · 只统计 drag 期间
+    document.dispatchEvent(
+      new MouseEvent('mousemove', { bubbles: true, clientX: 350, clientY: 30 }),
+    );
+    document.dispatchEvent(
+      new MouseEvent('mousemove', { bubbles: true, clientX: 400, clientY: 30 }),
+    );
+    expect(dispatched.length).toBe(2);
+    expect(dispatched[dispatched.length - 1]).toBe(api.getCurrentYear());
+    document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+  });
+
+  it('playback 自动播放每步触发 dispatch', () => {
+    vi.useFakeTimers();
+    mountTimeline({ container, yearMin: 1770, yearMax: 1950, initialCursor: 1850 });
+    const btn = container.querySelector('#tl-play') as HTMLButtonElement;
+    btn.click();
+    vi.advanceTimersByTime(500); // 至少触发几步
+    expect(dispatched.length).toBeGreaterThan(0);
+    for (const year of dispatched) {
+      expect(year).toBeGreaterThanOrEqual(1850);
+      expect(year).toBeLessThanOrEqual(1950);
+    }
+    btn.click(); // pause
+    vi.useRealTimers();
+  });
+
+  it('setCursor 不 dispatch（external API · 跟 onCursorChange callback 一致 / 避免初始化反向触发）', () => {
+    const api = mountTimeline({ container, yearMin: 1770, yearMax: 1950, initialCursor: 1860 });
+    api.setCursor(1900);
+    expect(dispatched.length).toBe(0);
+    expect(api.getCurrentYear()).toBe(1900);
+  });
+
+  it('dispatch event 是 CustomEvent · detail.year 类型 number', () => {
+    let caughtEvent: CustomEvent | null = null;
+    const typeCheckListener = (e: Event): void => {
+      caughtEvent = e as CustomEvent;
+    };
+    window.addEventListener('marx:time-change', typeCheckListener);
+    mountTimeline({ container, yearMin: 1770, yearMax: 1950, initialCursor: 1860 });
+    const svg = container.querySelector('#tl-svg') as SVGSVGElement;
+    svg.getBoundingClientRect = () => ({
+      left: 0,
+      width: 600,
+      top: 0,
+      height: 60,
+      right: 600,
+      bottom: 60,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    });
+    svg.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, clientX: 300, clientY: 30 }));
+    expect(caughtEvent).not.toBeNull();
+    expect(caughtEvent!.type).toBe('marx:time-change');
+    expect(typeof caughtEvent!.detail.year).toBe('number');
+    window.removeEventListener('marx:time-change', typeCheckListener);
+    document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+  });
+});

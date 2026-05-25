@@ -109,6 +109,13 @@ export function mountTimeline(opts: TimelineOptions): TimelineApi {
   // === 2. 内部状态 ===
   let currentYear = clamp(initialCursor, yearMin, yearMax);
 
+  // Stage 4.1 · dispatch 'marx:time-change' window event 给 geographic-canvas + 未来 listener
+  //   触发点：click-to-seek / drag / playback 自动播放（用户交互）
+  //   不触发：setCursor external API（跟 onCursorChange callback 一致 / 避免初始化反向触发）
+  function dispatchTimeChange(year: number): void {
+    window.dispatchEvent(new CustomEvent('marx:time-change', { detail: { year } }));
+  }
+
   const FALLBACK_SVG_WIDTH_PX = 600;
   function getSvgWidthPx(): number {
     const w = svg.getBoundingClientRect().width;
@@ -285,6 +292,7 @@ export function mountTimeline(opts: TimelineOptions): TimelineApi {
     dragStartYear = seekYear;
     renderAll();
     onCursorChange?.(seekYear);
+    dispatchTimeChange(seekYear);
     svg.style.cursor = 'grabbing';
     e.preventDefault();
   }
@@ -299,6 +307,7 @@ export function mountTimeline(opts: TimelineOptions): TimelineApi {
     currentYear = newYear;
     renderAll();
     onCursorChange?.(newYear);
+    dispatchTimeChange(newYear);
   }
 
   function onMouseUp() {
@@ -339,11 +348,13 @@ export function mountTimeline(opts: TimelineOptions): TimelineApi {
         currentYear = yearMax;
         renderAll();
         onCursorChange?.(currentYear);
+        dispatchTimeChange(currentYear);
         stopPlayback();
         return;
       }
       renderAll();
       onCursorChange?.(currentYear);
+      dispatchTimeChange(currentYear);
     }, PLAY_INTERVAL_MS);
   }
 
