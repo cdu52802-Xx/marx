@@ -1,8 +1,13 @@
 // M4 T6 主画布 layout 算法
 // 落地 spec § 5 layout 规范 + § 5.4 半圆弧规范（PM 反馈硬约束）
-// - 斜向流：person 按 birth_year 排序后 X+50 / Y+60 偏移
-// - obs 堆叠：每行 22px，每 5 条 X 偏移 25px（主张族群区隔）
+// - 斜向流：全部 obs 走同一条 45° 直斜线（对齐 denizcemonduygu/philo/browse 视觉参照）
+// - obs 堆叠：每步 Δx = Δy = 22px · 段交界 Δx = Δy = 77px（22 步 + 55 段距）
 // - 半圆弧：绿弧左下 / 红弧右上 / 灰弧微弯向右（坑 23 防御 · 弧线方向容易写反）
+//
+// PM R2（2026-06-11）· "斜线是歪的不直" 修复：
+//   旧实现段内 22/22 是 45° · 但段交界跳「右 50 / 下 77」≈57° → 27 段累计折出 ~730px 歪线
+//   新实现：单一 chain 游标贯穿全部 obs · 每步（含段交界）Δx 恒等 Δy → x − y 全局恒定 = 真直线
+//   纵坐标跟旧版逐点一致（行距/段距/呼吸感不变）· 仅横坐标摆正 · header 锚定第一条 obs（左 100 / 上 25）
 
 import type { ClaimNode } from '../types/Claim.ts';
 
@@ -31,21 +36,20 @@ interface PersonInput {
   claims: ClaimNode[];
 }
 
-const PERSON_X_OFFSET = 50; // 每个 person 比上一个 X 偏移
-const PERSON_Y_OFFSET = 60; // 每个 person 比上一个 Y 偏移（基础, 未直接使用 — 由 obs 区动态高度决定）
-const OBS_ROW_HEIGHT = 22; // obs 行垂直间距
-const OBS_X_FROM_HEADER = 100; // obs 起点 = person 标题 X + 100
-const SECTION_TOP_PADDING = 25; // person 标题到第一条 obs 的间距
-
-// 抑制未使用常量 lint 警告（保留为 spec 文档化锚点）
-void PERSON_Y_OFFSET;
+const OBS_STEP = 22; // 45° 链条步长 · Δx = Δy（原 OBS_ROW_HEIGHT · 行距视觉不变）
+const SECTION_GAP = 55; // 段交界额外 45° 间隙（25 标题顶距 + 30 段距 · 原纵向节奏不变）
+const HEADER_LEFT_OF_OBS = 100; // person 标题在第一条 obs 左侧偏移（原 OBS_X_FROM_HEADER）
+const HEADER_ABOVE_OBS = 25; // person 标题在第一条 obs 上方（原 SECTION_TOP_PADDING）
+const CHAIN_START_X = 160; // 第一条 obs 起点（原 60 header + 100）
+const CHAIN_START_Y = 105; // 原 80 header + 25
 
 export function computePersonSectionPositions(persons: PersonInput[]): PersonSection[] {
   // 按 birth_year 排序
   const sorted = [...persons].sort((a, b) => a.birth_year - b.birth_year);
   const sections: PersonSection[] = [];
-  let currentX = 60;
-  let currentY = 80;
+  // PM R2 · 单一 chain 游标贯穿全部 obs · 每步 Δx 恒等 Δy → 全局共线 45° 直斜线
+  let chainX = CHAIN_START_X;
+  let chainY = CHAIN_START_Y;
 
   for (const p of sorted) {
     const section: PersonSection = {
@@ -54,32 +58,23 @@ export function computePersonSectionPositions(persons: PersonInput[]): PersonSec
       name_orig: p.name_orig,
       birth_year: p.birth_year,
       death_year: p.death_year,
-      x: currentX,
-      y: currentY,
+      // header 锚定本段第一条 obs（左 100 / 上 25）· header 们自成一条平行斜线
+      x: chainX - HEADER_LEFT_OF_OBS,
+      y: chainY - HEADER_ABOVE_OBS,
       claims: [],
     };
 
-    // 每个 obs 行 X = section X + 偏移 + (i 偶数小偏移)
-    const obsBaseX = currentX + OBS_X_FROM_HEADER;
-    let obsY = currentY + SECTION_TOP_PADDING;
-    p.claims.forEach((c, i) => {
-      // 45° 斜向排列: 每行 X 增量 = Y 增量 = OBS_ROW_HEIGHT (22px) (2026-05-12 PM 视觉反馈)
-      section.claims.push({
-        ...c,
-        x: obsBaseX + i * OBS_ROW_HEIGHT,
-        y: obsY,
-      });
-      obsY += OBS_ROW_HEIGHT;
-    });
+    for (const c of p.claims) {
+      section.claims.push({ ...c, x: chainX, y: chainY });
+      chainX += OBS_STEP;
+      chainY += OBS_STEP;
+    }
 
     sections.push(section);
 
-    // 下一个 person 位置：沿斜线继续（2026-05-12 PM 视觉反馈 / Engels 之后不再堆中间）
-    // X 累加 = 当前 section 内 obs 已经斜出去多远 + PERSON_X_OFFSET buffer
-    // obsXSpan = (N-1) × OBS_ROW_HEIGHT，N=obs 数 (单 obs section span=0 / 0 obs section span=0)
-    const obsXSpan = Math.max(0, p.claims.length - 1) * OBS_ROW_HEIGHT;
-    currentX = currentX + obsXSpan + PERSON_X_OFFSET;
-    currentY = obsY + 30;
+    // 段交界：沿同一条 45° 线再走 SECTION_GAP（0 obs 段也不破链）
+    chainX += SECTION_GAP;
+    chainY += SECTION_GAP;
   }
 
   return sections;

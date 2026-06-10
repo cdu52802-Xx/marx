@@ -44,6 +44,54 @@ describe('claim-layout · person section 斜向流坐标', () => {
     const p1Bottom = sections[0].y + sections[0].claims.length * 22;
     expect(sections[1].y).toBeGreaterThan(p1Bottom); // p2 不重叠 p1 obs 区
   });
+
+  // PM R2（2026-06-11）· "斜线是歪的不直" · 对齐 denizcemonduygu/philo/browse 直 45° 斜线
+  //   旧 bug：段内 22/22 是 45° · 但段交界跳「右 50 / 下 77」≈57° → 27 段累计折出 ~730px 歪线
+  it('PM R2 · 全部 obs 跨 section 共线（x−y 恒定 = 同一条 45° 直线）', () => {
+    const persons: LayoutPersonFixture[] = [
+      { id: 'p1', birth_year: 1770, claims: [{ id: 'a1' }, { id: 'a2' }, { id: 'a3' }] },
+      { id: 'p2', birth_year: 1820, claims: [{ id: 'b1' }] },
+      { id: 'p3', birth_year: 1850, claims: [] }, // 0 claim section 不破链
+      { id: 'p4', birth_year: 1880, claims: [{ id: 'c1' }, { id: 'c2' }] },
+    ];
+    const sections = computePersonSectionPositions(asPersons(persons));
+    const allObs = sections.flatMap((s) => s.claims);
+    expect(allObs.length).toBe(6);
+    const diag = allObs[0].x - allObs[0].y;
+    for (const c of allObs) {
+      expect(c.x - c.y, `obs ${c.id} 必须在同一条 45° 线上`).toBeCloseTo(diag, 5);
+    }
+    // 链条单调右下走
+    for (let i = 1; i < allObs.length; i++) {
+      expect(allObs[i].x).toBeGreaterThan(allObs[i - 1].x);
+      expect(allObs[i].y).toBeGreaterThan(allObs[i - 1].y);
+    }
+  });
+
+  it('PM R2 · 纵向节奏不变：段内 Δy=22 · 段交界 Δy=77（22 步 + 55 段距 · 原垂直呼吸感保留）', () => {
+    const persons: LayoutPersonFixture[] = [
+      { id: 'p1', birth_year: 1770, claims: [{ id: 'a1' }, { id: 'a2' }] },
+      { id: 'p2', birth_year: 1820, claims: [{ id: 'b1' }] },
+    ];
+    const sections = computePersonSectionPositions(asPersons(persons));
+    expect(sections[0].claims[1].y - sections[0].claims[0].y).toBe(22);
+    expect(sections[1].claims[0].y - sections[0].claims[1].y).toBe(77);
+  });
+
+  it('PM R2 · header 锚定第一条 obs（左 100 / 上 25 · 跟 obs 链同向平行斜线）', () => {
+    const persons: LayoutPersonFixture[] = [
+      { id: 'p1', birth_year: 1770, claims: [{ id: 'a1' }] },
+      { id: 'p2', birth_year: 1820, claims: [{ id: 'b1' }] },
+    ];
+    const sections = computePersonSectionPositions(asPersons(persons));
+    for (const s of sections) {
+      expect(s.claims[0].x - s.x).toBe(100);
+      expect(s.claims[0].y - s.y).toBe(25);
+    }
+    // 首 section 起点不变（视觉锚点沿用 60/80）
+    expect(sections[0].x).toBe(60);
+    expect(sections[0].y).toBe(80);
+  });
 });
 
 describe('claim-layout · 半圆弧 SVG path generator', () => {
