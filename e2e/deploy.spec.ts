@@ -1,37 +1,34 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Marx 星图 M2 · 在线部署形态校验', () => {
+// 部署形态冒烟校验（m-b2-complete 分支重写）
+// 原 M2 星图版 spec（relations-svg / node-circle / force simulation）在 M4 vision pivot
+// （claim-on-timeline）后选择器全部不存在 · 持续 fail 的 stale spec · 按当前形态重写：
+//   1. 页面标题（M4 已改 "Marx 思想史 · claim-on-timeline"）
+//   2. M5 主画布 obs 节点规模（claim 数据 wire 正常）
+//   3. timeline 底栏存在（共享基础设施）
+//   4. cshapes 国界 geojson 资产可达（B2 地理图 4.5MB public asset 部署完整性）
+
+test.describe('Marx · 部署形态冒烟', () => {
   test('页面标题正确', async ({ page }) => {
     await page.goto('/');
-    await expect(page).toHaveTitle(/Marx 星图/);
+    await expect(page).toHaveTitle(/Marx 思想史/);
   });
 
-  test('SVG 容器存在', async ({ page }) => {
+  test('M5 主画布渲染 ≥ 20 个 obs 节点（claim 数据 wire）', async ({ page }) => {
     await page.goto('/');
-    const svg = page.getByTestId('relations-svg');
-    await expect(svg).toBeVisible();
-  });
-
-  test('渲染至少 20 个节点圆（M2 SPARQL 骨架规模）', async ({ page }) => {
-    await page.goto('/');
-    await page.waitForTimeout(800); // 节点变多，等 force simulation 稳定时间加长
-    const circles = page.getByTestId('node-circle');
-    const count = await circles.count();
+    await page.waitForSelector('g.zoom-layer g.obs');
+    const count = await page.locator('g.zoom-layer g.obs').count();
     expect(count).toBeGreaterThanOrEqual(20);
   });
 
-  test('渲染至少 20 条关系连线', async ({ page }) => {
+  test('timeline 底栏存在（▶ 播放按钮 + 轴 svg）', async ({ page }) => {
     await page.goto('/');
-    await page.waitForTimeout(800);
-    const lines = page.getByTestId('relation-line');
-    const count = await lines.count();
-    expect(count).toBeGreaterThanOrEqual(20);
+    await expect(page.locator('#tl-play')).toBeVisible();
+    await expect(page.locator('#tl-svg')).toBeVisible();
   });
 
-  test('Marx 自己的节点 + 中文标签存在', async ({ page }) => {
-    await page.goto('/');
-    await page.waitForTimeout(800);
-    const labels = page.getByTestId('node-label');
-    await expect(labels.filter({ hasText: '卡尔·马克思' })).toHaveCount(1);
+  test('cshapes 国界 geojson 资产可达（B2 地理图部署完整性）', async ({ page, baseURL }) => {
+    const resp = await page.request.get(`${baseURL}geo/cshapes-europe.geojson`);
+    expect(resp.status()).toBe(200);
   });
 });
