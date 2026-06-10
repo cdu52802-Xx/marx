@@ -119,6 +119,13 @@ export interface GeographicCanvasOptions {
    *   0 = 关过渡（同步 join · 副窗低密度版 + unit test 用）
    */
   borderTransitionMs?: number;
+  /**
+   * M-B2 Stage 5 T5.2 · 副窗信息密度低版（plan "只显人节点 + 不显关系连线 + 不显国界过渡"）
+   *   'low'：渲染 borders + graticule + migration + dots · 无 relations / 国名标签 / 人名标签
+   *   非交互缩略图（zoom/drag/wheel/dot handler 全不挂）· 国界过渡默认关（borderTransitionMs 0）
+   *   仍监听 marx:time-change（borders/迁徙/球心跟主时间轴走）+ marx:obs-selected（主副联动高亮）
+   */
+  density?: 'full' | 'low';
 }
 
 export interface GeographicCanvasApi {
@@ -138,10 +145,12 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
   let currentLoc: [number, number] = opts.marxCurrentLocation ?? [10, 50];
   // M-B2 T2.1 · 渲染节点 · default [] 兼容 Stage 1 prototype unit test 不传 nodes 场景
   const nodes: GeoNode[] = opts.nodes ?? [];
-  // M-B2 T2.3 · 渲染关系连线 · default [] 兼容
-  const relations: GeoRelation[] = opts.relations ?? [];
-  // T4.2 · 国界 fade 时长（0 = 关）
-  const borderTransitionMs = opts.borderTransitionMs ?? BORDER_TRANSITION_MS;
+  // Stage 5 · 副窗低密度版（非交互缩略图）
+  const isLow = (opts.density ?? 'full') === 'low';
+  // M-B2 T2.3 · 渲染关系连线 · default [] 兼容 · low 密度不渲染
+  const relations: GeoRelation[] = isLow ? [] : (opts.relations ?? []);
+  // T4.2 · 国界 fade 时长（0 = 关 · low 密度默认关 = "不显国界过渡"）
+  const borderTransitionMs = opts.borderTransitionMs ?? (isLow ? 0 : BORDER_TRANSITION_MS);
   // T4.3 · 迁徙 segment（5 段 · mount 时算一次 · 静态数据）
   const migrationSegments: MigrationSegment[] = computeMigrationSegments();
   // T1.6+ B · 真线性内插 · k 从 zoom event 拿 / interpolateProjection 内按 k 算 scale
@@ -241,7 +250,8 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
 
       render();
     });
-  svg.call(zoomBehavior);
+  // Stage 5 · low 密度非交互缩略图 · zoom 不挂
+  if (!isLow) svg.call(zoomBehavior);
 
   // T1.6+++++ · detach d3-zoom 默认 wheel handler · 自挂 wheel 接管
   svg.on('wheel.zoom', null);
@@ -255,7 +265,7 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
     // 直接 set transform = (newK, 0, 0) · 完全跳过 d3-zoom anchor 算法 · x/y 永远 0
     zoomBehavior.transform(svg, zoomIdentity.scale(newK));
   };
-  svg.on('wheel', wheelHandler);
+  if (!isLow) svg.on('wheel', wheelHandler);
 
   // T2.1.hotfix · Issue 2 · 统一 drag handler · 全 mode 改 panCenter（删 currentRotate path）
   //   数学：dx/dy 像素 → projection.invert 反算 viewport 中心 vs 偏移点 Δlon/Δlat → panCenter 累加
@@ -309,7 +319,8 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
       panCenter = [base[0] + dLon, base[1] + dLat];
       render();
     });
-  svg.call(dragBehavior);
+  // Stage 5 · low 密度非交互缩略图 · drag 不挂
+  if (!isLow) svg.call(dragBehavior);
 
   // T1.5 · window 'marx:time-change' event listener · year → Marx 当年地点 → reorient
   // listener 必须 destroy 时 detach（不然组件卸载后 stale closure 持续累加）
@@ -365,22 +376,24 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
     return false;
   }
 
-  const timeHandler = (e: Event): void => {
-    const detail = (e as CustomEvent).detail as { year?: number } | undefined;
-    if (typeof detail?.year !== 'number') return;
-    currentYear = detail.year;
+  /**
+   * time-change / obs-selected 共用 · 年份应用（双守卫 + re-filter + render）
+   * @returns 是否已触发渲染（false = 守卫 skip 或隐藏期 pending）
+   */
+  function applyYear(year: number): boolean {
+    currentYear = year;
     // Stage 4 守卫 1 · 整数年粒度 · borders 过滤 + marxLocationAtYear 都是整数年粒度
     //   同一整数年内的高频 dispatch（timeline drag mousemove / playback 0.45 年步进）= 视觉 no-op
     //   panCenter 非 null 时不 skip（time-change 要 reset 回 Marx follow · 既有行为）
-    const yearInt = Math.trunc(currentYear);
-    if (yearInt === lastHandledYearInt && panCenter === null) return;
+    const yearInt = Math.trunc(year);
+    if (yearInt === lastHandledYearInt && panCenter === null) return false;
     lastHandledYearInt = yearInt;
-    currentLoc = marxLocationAtYear(currentYear);
+    currentLoc = marxLocationAtYear(year);
     panCenter = null; // reset pan · 让 currentLoc 重新作 projection.center · render 重算 rotate
     // Stage 4.1 · 动态 re-filter borders 按新 year（bordersFullGeojson 已 cache · O(322) features filter · 快）
     let animateBorders = false;
     if (bordersFullGeojson) {
-      const filtered = filterBordersAtYear(bordersFullGeojson, clampBordersYear(currentYear));
+      const filtered = filterBordersAtYear(bordersFullGeojson, clampBordersYear(year));
       animateBorders = bordersSetChanged(bordersGeojson, filtered);
       bordersGeojson = filtered;
     }
@@ -389,11 +402,37 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
     //   状态已更新（currentYear/currentLoc/bordersGeojson）· swap 切回 geo-main 时 refresh() 补渲染
     if (isContainerHidden()) {
       pendingRender = true;
-      return;
+      return false;
     }
     render({ animateBorders });
+    return true;
+  }
+
+  const timeHandler = (e: Event): void => {
+    const detail = (e as CustomEvent).detail as { year?: number } | undefined;
+    if (typeof detail?.year !== 'number') return;
+    applyYear(detail.year);
   };
   window.addEventListener('marx:time-change', timeHandler);
+
+  // M-B2 T3.1 · 主副联动 forward · 主图 obs click → 本画布高亮作者 + reorient 到 claim 年
+  //   list-main 模式下副窗 mini 画布（可见）实时高亮 · 主画布 geo（隐藏）走 pendingRender 守卫
+  //   反向联动（geo dot click → 主图高亮）被 B-7 click bug 阻塞 · 等专项修后接（DR-T3.1）
+  const obsHandler = (e: Event): void => {
+    const detail = (e as CustomEvent).detail as { authorId?: string; year?: number } | undefined;
+    if (!detail) return;
+    if (typeof detail.authorId === 'string') {
+      // authorId 可能不在 31 个 geo 节点内（[0,0] 占位被 filter）· 查不到清空选中
+      selectedPersonId = nodes.some((n) => n.id === detail.authorId) ? detail.authorId : null;
+    }
+    const rendered = typeof detail.year === 'number' ? applyYear(detail.year) : false;
+    if (!rendered) {
+      // 年份守卫 skip 了渲染 · 但选中态变了 · 补一次 focus 样式刷新
+      if (isContainerHidden()) pendingRender = true;
+      else renderFocusStyles();
+    }
+  };
+  window.addEventListener('marx:obs-selected', obsHandler);
 
   // T1.6+ C · cshapes 底图加载（Stage 1 静态 1843 sample · Stage 4.1 升级动态切片）
   //   loadBorders().then 内：保存 full geojson + 数据年份范围 + 按 currentYear initial filter
@@ -547,7 +586,7 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
     //   字段：CShapes feature.properties.Name（英文如 "Belgium" "Prussia"）
     //   z-order：在 graticule 之后 · dots 之前（dots 在最上 · 标签辅助）
     const labelFeatures =
-      bordersGeojson && shouldShowBorderLabels(k) ? bordersGeojson.features : [];
+      !isLow && bordersGeojson && shouldShowBorderLabels(k) ? bordersGeojson.features : [];
     const labelFontSize = borderLabelFontSize(k);
     layers.borderLabels
       .selectAll<SVGTextElement, GeoJSON.Feature>('text.border-label')
@@ -624,31 +663,36 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
     layers.nodes
       .selectAll<SVGCircleElement, GeoNode>('circle.geo-node')
       .data(nodes, (d) => d.id)
-      .join((enter) =>
-        enter
+      .join((enter) => {
+        const entered = enter
           .append('circle')
           .attr('class', (d) => `geo-node geo-node-${d.type}`)
-          .attr('data-id', (d) => d.id)
-          .on('mouseenter', (_event, d) => {
-            if (d.type !== 'person') return;
-            hoveredPersonId = d.id;
-            renderFocusStyles(); // Stage 4 守卫 · 只刷样式（之前 hover 触发全量几何重投影）
-          })
-          .on('mouseleave', (_event, d) => {
-            if (d.type !== 'person') return;
-            if (hoveredPersonId === d.id) {
-              hoveredPersonId = null;
+          .attr('data-id', (d) => d.id);
+        // Stage 5 · low 密度非交互缩略图 · hover/click handler 不挂
+        if (!isLow) {
+          entered
+            .on('mouseenter', (_event, d) => {
+              if (d.type !== 'person') return;
+              hoveredPersonId = d.id;
+              renderFocusStyles(); // Stage 4 守卫 · 只刷样式（之前 hover 触发全量几何重投影）
+            })
+            .on('mouseleave', (_event, d) => {
+              if (d.type !== 'person') return;
+              if (hoveredPersonId === d.id) {
+                hoveredPersonId = null;
+                renderFocusStyles();
+              }
+            })
+            .on('click', (event: MouseEvent, d) => {
+              if (d.type !== 'person') return;
+              event.stopPropagation();
+              // toggle · 点同一个取消 / 点另一个切换
+              selectedPersonId = selectedPersonId === d.id ? null : d.id;
               renderFocusStyles();
-            }
-          })
-          .on('click', (event: MouseEvent, d) => {
-            if (d.type !== 'person') return;
-            event.stopPropagation();
-            // toggle · 点同一个取消 / 点另一个切换
-            selectedPersonId = selectedPersonId === d.id ? null : d.id;
-            renderFocusStyles();
-          }),
-      )
+            });
+        }
+        return entered;
+      })
       .attr('cx', (d) => projection(d.lonLat)?.[0] ?? 0)
       .attr('cy', (d) => projection(d.lonLat)?.[1] ?? 0)
       .attr('r', (d) =>
@@ -721,6 +765,7 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
     center: [number, number],
     clipAngleRad: number,
   ): void {
+    if (isLow) return; // Stage 5 · 副窗低密度 · 380×214 放不下人名标签
     const visiblePersonLabels = nodes.filter((d) => {
       if (d.type !== 'person') return false;
       if (d.id === selectedPersonId) return true;
@@ -813,6 +858,7 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
     },
     destroy(): void {
       window.removeEventListener('marx:time-change', timeHandler);
+      window.removeEventListener('marx:obs-selected', obsHandler); // T3.1 对仗 detach
       svg.on('wheel', null); // T1.6+++++ · detach 自挂 wheel handler · 防 memory leak / stale closure
       svg.on('.zoom', null); // Stage 4 · destroy 对仗 · detach d3-zoom 全部 namespaced listener
       svg.on('.drag', null); // Stage 4 · destroy 对仗 · detach d3-drag mousedown listener

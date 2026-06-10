@@ -105,11 +105,16 @@ function _doShowClaim(claim: ClaimNode, ctx: ClaimPopoverContext) {
   //     - header content top:14 + bottom:39 ≈ 总占 50px / 设 54 留 4px buffer + 跟 breadcrumb top:54 视觉对齐
   //     - 之前 top:0 + z-index:1000 覆盖 header（B1 Stage 1 header 1st-class 后暴露）
   //   详情卡占屏幕中部 → timeline 底部完全可见可拖 / header 顶部完全可见可点
+  // M-B2 T3.4 · 副窗在场（list-main 模式 .geographic-panel 可见）时让位 · bottom 60 → 274（60 + 214）
+  //   geo-main 模式副窗隐藏（display:none）→ 维持 60（详情卡主要在 list-main 出现 · 防御分支）
+  const geoPanel = document.querySelector<HTMLElement>('.geographic-panel');
+  const panelVisible = geoPanel !== null && geoPanel.style.display !== 'none';
+  const popoverBottom = panelVisible ? 274 : 60;
   sidebar.style.cssText = `
     position:fixed;
     top:54px;
     right:0;
-    bottom:60px;
+    bottom:${popoverBottom}px;
     width:380px;
     background:#fcfaf6;
     border-left:1px solid #d8cab0;

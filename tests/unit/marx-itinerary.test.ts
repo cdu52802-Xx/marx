@@ -5,6 +5,7 @@ import { describe, it, expect } from 'vitest';
 import {
   MARX_LOCATIONS,
   marxLocationAtYear,
+  marxPlaceAtYear,
   computeMigrationSegments,
 } from '../../src/lib/marx-itinerary.ts';
 
@@ -26,6 +27,14 @@ describe('marx-itinerary · M-B2 T4.3', () => {
   it('marxLocationAtYear · 范围外 fallback 欧洲中心 [10, 50]', () => {
     expect(marxLocationAtYear(1700)).toEqual([10, 50]);
     expect(marxLocationAtYear(2000)).toEqual([10, 50]);
+  });
+
+  it('marxPlaceAtYear · 1844 → 巴黎 · 范围外 → null（副窗标题用）', () => {
+    expect(MARX_LOCATIONS[0].place).toBe('特里尔');
+    expect(marxPlaceAtYear(1844)).toBe('巴黎');
+    expect(marxPlaceAtYear(1848)).toBe('科隆');
+    expect(marxPlaceAtYear(1700)).toBeNull();
+    expect(marxPlaceAtYear(2000)).toBeNull();
   });
 
   it('computeMigrationSegments · 7 地点 → 6 段 · arrivalYear = 下一段 yearStart', () => {

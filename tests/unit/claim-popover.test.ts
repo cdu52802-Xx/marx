@@ -75,6 +75,26 @@ describe('claim-popover · 详情右侧栏 (M4 T9 改造 / spec § 8.2)', () => 
     expect(sidebar.style.width).toBe('380px');
   });
 
+  // M-B2 T3.4 · 副窗在场（list-main 模式 .geographic-panel 可见）时详情卡让位
+  it('T3.4 · 副窗可见时 bottom 60 → 274（60 + 214 让出副窗）', () => {
+    const panel = document.createElement('aside');
+    panel.className = 'geographic-panel';
+    document.body.appendChild(panel);
+    showClaimPopover(mockClaim, mockCtx);
+    const sidebar = document.querySelector('.claim-popover') as HTMLElement;
+    expect(sidebar.style.bottom).toBe('274px');
+  });
+
+  it('T3.4 · 副窗存在但 display:none（geo-main 模式）→ bottom 维持 60', () => {
+    const panel = document.createElement('aside');
+    panel.className = 'geographic-panel';
+    panel.style.display = 'none';
+    document.body.appendChild(panel);
+    showClaimPopover(mockClaim, mockCtx);
+    const sidebar = document.querySelector('.claim-popover') as HTMLElement;
+    expect(sidebar.style.bottom).toBe('60px');
+  });
+
   // Stage 2 PM checkpoint Issue 2.3 修：原 mousedown 被 d3.zoom nopropagation 拦 / 改 click
   it('点击 sidebar 外 click → hide sidebar (PM Q4 决策 = 三路关闭之一 / Stage 2 改用 click)', async () => {
     showClaimPopover(mockClaim, mockCtx);

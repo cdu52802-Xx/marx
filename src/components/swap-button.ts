@@ -23,10 +23,24 @@ export interface SwapApi {
 const STORAGE_KEY = 'marx:canvas-role';
 const DEFAULT_ROLE: CanvasRole = 'list-main';
 
+// Stage 3 polish · localStorage 隐私模式（GH Pages 第三方上下文）可能 throw SecurityError ·
+//   try/catch 兜底（读 fallback 默认 / 写静默失败 · 不影响当次会话切换）
 function readStoredRole(): CanvasRole {
-  const stored = localStorage.getItem(STORAGE_KEY);
-  if (stored === 'list-main' || stored === 'geo-main') return stored;
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored === 'list-main' || stored === 'geo-main') return stored;
+  } catch {
+    // 隐私模式 · 用默认
+  }
   return DEFAULT_ROLE;
+}
+
+function writeStoredRole(role: CanvasRole): void {
+  try {
+    localStorage.setItem(STORAGE_KEY, role);
+  } catch {
+    // 隐私模式 · 当次会话内仍可切换 · 仅不持久化
+  }
 }
 
 export function mountSwapButton(container: HTMLElement): SwapApi {
@@ -36,8 +50,9 @@ export function mountSwapButton(container: HTMLElement): SwapApi {
   const btn = document.createElement('button');
   btn.className = 'swap-button';
   btn.type = 'button';
-  btn.textContent = '↔ 列表 ⇄ 地图';
-  btn.title = '切换主画布（dev 期 · Stage 3 升级为正式互换按钮）';
+  // Stage 3 polish · dev 文案 "↔ 列表 ⇄ 地图" → 正式 "↔ 互换"（spec § 2.2 header 命名）
+  btn.textContent = '↔ 互换';
+  btn.title = '主副画布互换（观点列表 ⇄ 地理图）';
   container.appendChild(btn);
 
   function notify(): void {
@@ -46,7 +61,7 @@ export function mountSwapButton(container: HTMLElement): SwapApi {
 
   function toggle(): void {
     current = current === 'list-main' ? 'geo-main' : 'list-main';
-    localStorage.setItem(STORAGE_KEY, current);
+    writeStoredRole(current);
     notify();
   }
 

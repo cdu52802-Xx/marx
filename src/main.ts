@@ -58,6 +58,8 @@ import { mountGeographicCanvas } from './components/geographic-canvas.ts';
 import { extractGeoNodes, spreadOverlapping } from './lib/geographic-data.ts';
 import { extractGeoRelations, type RawRelation } from './lib/geographic-relations.ts';
 import { mountSwapButton } from './components/swap-button.ts';
+import { mountGeographicPanel } from './components/geographic-panel.ts';
+import { mountLegendPanel } from './components/legend-panel.ts';
 import type { ClaimNode, ClaimRelation } from './types/Claim.ts';
 import type { PersonNode } from './types/Node.ts';
 
@@ -823,6 +825,13 @@ sectionG.each(function (section) {
         return { id: other.id, author: otherAuthor?.name_zh ?? '?', text: other.claim_text };
       })
       .filter((x): x is { id: string; author: string; text: string } => x !== null);
+
+    // M-B2 T3.1 · 主副联动 forward · 副窗 mini 地理图（list-main 可见）高亮作者 + reorient 到 claim 年
+    //   主画布 geo（隐藏中）走 pendingRender 守卫 · swap 切回时 refresh 补
+    //   反向联动（geo dot click → 主图高亮）被 B-7 click bug 阻塞 · 等专项修后接
+    window.dispatchEvent(
+      new CustomEvent('marx:obs-selected', { detail: { authorId: c.author_id, year: c.year } }),
+    );
 
     showClaimPopover(c, {
       authorName: author?.name_zh ?? '?',
@@ -1655,7 +1664,7 @@ const geoSvg = app
   .style('background', '#fcfaf6')
   .style('display', 'none'); // 默认 hide · swap toggle 切 geo-main 时 show
 
-const protoApi = mountGeographicCanvas({
+const geoMainApi = mountGeographicCanvas({
   container: geoSvg.node() as SVGSVGElement,
   width: GEO_VIEWBOX_W,
   height: GEO_VIEWBOX_H,
@@ -1664,34 +1673,64 @@ const protoApi = mountGeographicCanvas({
   nodes: spreadNodes,
   relations: geoRelations,
 });
-(window as unknown as { protoApi: typeof protoApi }).protoApi = protoApi; // PM console 调
+(window as unknown as { protoApi: typeof geoMainApi }).protoApi = geoMainApi; // PM console 调（沿用旧名）
 
-// dev swap toggle · 左上 fixed mount · z-index 10（高于 header 9 / 低于全屏 modal 1000）
-//   按钮文案 "↔ 列表 ⇄ 地图" · 一键切 · localStorage 持久化跨刷新
-//   Stage 3 polish 时移到 header.ts container + 视觉移 styles.css（mount 函数签名不变）
-const swapHost = document.createElement('div');
-swapHost.id = 'swap-button-host';
-swapHost.style.cssText = 'position:fixed;left:6px;top:6px;z-index:10;';
-document.body.appendChild(swapHost);
-const swapApi = mountSwapButton(swapHost);
-const swapBtn = swapHost.querySelector('button.swap-button') as HTMLButtonElement | null;
-if (swapBtn) {
-  // dev 期 inline style（Stage 3 polish 时移到 styles.css .swap-button class）
-  swapBtn.style.cssText =
-    'background:#fcfaf6;border:1px solid #5b3a8c;border-radius:3px;padding:4px 10px;' +
-    'font-family:system-ui,sans-serif;font-size:12px;color:#5b3a8c;cursor:pointer;' +
-    'box-shadow:0 1px 3px rgba(91,58,140,0.15);';
+// === M-B2 Stage 3 polish · header ↔ 互换按钮启用（B1 placeholder 兑现）===
+//   dev 左上 fixed toggle 退役 · mountSwapButton 签名不变（lesson 4.11）·
+//   原位替换 header placeholder（保持 搜索 · 互换 · 关于 · 致谢 顺序）· 视觉移 styles.css .swap-button
+const swapSlot = document.createElement('span');
+swapSlot.className = 'header-swap-slot';
+headerApi.swapButton.replaceWith(swapSlot);
+const swapApi = mountSwapButton(swapSlot);
+
+// === M-B2 Stage 5 · 副窗 paper 容器 + 低密度 mini 地理图（list-main 时显示）===
+//   DR-stage5 · V1 副窗只承载地理图缩略 · geo-main 时副窗隐藏
+//   （"观点列表 380×214 缩略"M5 单实例不可双渲染且缩略不可读 · V2 再议）
+const geoPanelApi = mountGeographicPanel({ onSwap: () => swapApi.toggle() });
+const GEO_PANEL_W = 380;
+const GEO_PANEL_H = 178; // 214 - 36 标题栏
+const geoMiniApi = mountGeographicCanvas({
+  container: geoPanelApi.getCanvasContainer(),
+  width: GEO_PANEL_W,
+  height: GEO_PANEL_H,
+  initialMode: 'sphere',
+  marxCurrentLocation: [10, 50],
+  nodes: spreadNodes,
+  density: 'low', // 低密度减法：人节点 + 国界 + 迁徙 · 无关系线/标签 · 非交互（plan T5.2）
+});
+
+// === M-B2 T6.1 · 图例 panel（左下 paper · 只在 geo-main 显示）===
+const legendApi = mountLegendPanel();
+
+// === 主副 role 切换（阶段 A dev 版升级）===
+//   T3.3 切换动画 · 拍 B-lite（DR-T3.3）：入场画布 200ms opacity fade-in
+//   不做双画布同显 cross-fade（两 svg 都是 #app 文档流 block · 同显纵向叠加跳版）
+function showWithFade(el: SVGSVGElement): void {
+  el.style.display = 'block';
+  el.style.opacity = '0';
+  requestAnimationFrame(() => {
+    el.style.transition = 'opacity 200ms ease';
+    el.style.opacity = '1';
+  });
 }
 
 function applyCanvasRole(role: 'list-main' | 'geo-main'): void {
+  const m5El = svg.node() as SVGSVGElement;
+  const geoEl = geoSvg.node() as SVGSVGElement;
   if (role === 'geo-main') {
-    svg.style('display', 'none');
-    geoSvg.style('display', 'block');
+    m5El.style.display = 'none';
+    showWithFade(geoEl);
+    geoMainApi.refresh(); // 隐藏期 pending 的 time-change 渲染补上（Stage 4 守卫 2 配套）
+    geoPanelApi.setVisible(false); // DR-stage5 · V1 副窗只承载地理图
+    legendApi.setVisible(true);
   } else {
-    svg.style('display', 'block');
-    geoSvg.style('display', 'none');
+    geoEl.style.display = 'none';
+    showWithFade(m5El);
+    geoPanelApi.setVisible(true);
+    geoMiniApi.refresh();
+    legendApi.setVisible(false);
   }
-  console.log(`[Marx M-B2 阶段 A] canvas-role → ${role}`);
+  console.log(`[Marx M-B2] canvas-role → ${role}`);
 }
 applyCanvasRole(swapApi.getCurrent());
 swapApi.onChange(applyCanvasRole);

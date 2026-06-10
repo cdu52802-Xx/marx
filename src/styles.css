@@ -597,3 +597,30 @@ g.obs.obs-spring-enter circle.obs-dot {
   animation: search-popover-exit 120ms ease-in forwards;
   pointer-events: none;
 }
+
+/* ============= M-B2 Stage 3 · 正式 ↔ 互换按钮（dev inline style 退役 · plan T6.3 视觉）============= */
+/* mount 在 header-controls 内（B1 placeholder 原位）· EB Garamond italic + dotted border
+ * hover 紫（跟 header-about/credit 同 transition 节奏）· 0 圆角硬约束 */
+.header-controls .header-swap-slot {
+  display: inline-flex;
+  align-items: center;
+}
+.swap-button {
+  font-family: 'EB Garamond', Georgia, serif;
+  font-style: italic;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  color: #888;
+  background: transparent;
+  border: 1px dotted #d8cab0;
+  border-radius: 0;
+  padding: 2px 8px;
+  cursor: pointer;
+  transition:
+    color 0.18s ease,
+    border-color 0.18s ease;
+}
+.swap-button:hover {
+  color: #5b3a8c;
+  border-color: #5b3a8c;
+}
