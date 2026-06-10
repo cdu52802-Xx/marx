@@ -55,9 +55,7 @@ export function computeTickPositions(yearMin: number, yearMax: number): Timeline
   return Array.from(yearSet.values()).sort((a, b) => a.year - b.year);
 }
 
-export function yearToPercent(year: number, yearMin: number, yearMax: number): number {
-  return ((year - yearMin) / (yearMax - yearMin)) * 100;
-}
+// Stage 4 简化（审查 workflow 确认）· 删 yearToPercent 死 export（仅自身测试在用 · src 内零调用）
 
 // === Mount API ===
 
@@ -121,22 +119,23 @@ export function mountTimeline(opts: TimelineOptions): TimelineApi {
     const w = svg.getBoundingClientRect().width;
     return w > 0 ? w : FALLBACK_SVG_WIDTH_PX;
   }
-  function getAxisWidthPx(): number {
-    return getSvgWidthPx() * (1 - (2 * AXIS_PAD_PCT) / 100);
-  }
-  function getAxisLeftPx(): number {
-    return getSvgWidthPx() * (AXIS_PAD_PCT / 100);
+
+  // Stage 4 性能修正（审查 workflow 确认）· 每帧只读一次 svg 宽度
+  //   之前 renderAll 内 yearToAxisPx 每次调 getAxisLeftPx + getAxisWidthPx · 各读一次
+  //   getBoundingClientRect → 36 个 tick 元素单帧 70+ 次 rect 读 · 跟 setAttribute 写交错
+  type AxisMetrics = { left: number; width: number };
+  function computeAxisMetrics(): AxisMetrics {
+    const w = getSvgWidthPx();
+    return { left: w * (AXIS_PAD_PCT / 100), width: w * (1 - (2 * AXIS_PAD_PCT) / 100) };
   }
 
-  function yearToAxisPx(year: number): number {
-    return getAxisLeftPx() + ((year - yearMin) / yearSpan) * getAxisWidthPx();
+  function yearToAxisPx(year: number, m: AxisMetrics): number {
+    return m.left + ((year - yearMin) / yearSpan) * m.width;
   }
   // click-to-seek 反算
-  function axisPxToYear(pxFromSvgLeft: number): number {
-    const left = getAxisLeftPx();
-    const width = getAxisWidthPx();
-    if (width <= 0) return yearMin;
-    return yearMin + ((pxFromSvgLeft - left) / width) * yearSpan;
+  function axisPxToYear(pxFromSvgLeft: number, m: AxisMetrics): number {
+    if (m.width <= 0) return yearMin;
+    return yearMin + ((pxFromSvgLeft - m.left) / m.width) * yearSpan;
   }
 
   // === 3. 渲染 SVG ===
@@ -185,6 +184,8 @@ export function mountTimeline(opts: TimelineOptions): TimelineApi {
   svg.appendChild(cursorBadge);
 
   // 3.4 ticks + labels
+  // Stage 4 性能修正 · 创建时存元素引用（之前 updateTicks 每帧 querySelectorAll('[data-year]') 重查）
+  const tickRefs: { line: SVGLineElement; label: SVGTextElement; year: number }[] = [];
   const ticks = computeTickPositions(yearMin, yearMax);
   for (const t of ticks) {
     const line = document.createElementNS(SVG_NS, 'line');
@@ -209,6 +210,8 @@ export function mountTimeline(opts: TimelineOptions): TimelineApi {
     label.textContent = t.label;
     label.dataset.year = String(t.year);
     svg.appendChild(label);
+
+    tickRefs.push({ line, label, year: t.year });
   }
 
   // 3.5 drag-area: 透明 rect 覆盖整个 svg / 接收 mousedown
@@ -224,29 +227,22 @@ export function mountTimeline(opts: TimelineOptions): TimelineApi {
 
   // === 4. 渲染更新 ===
 
-  function updateAxisLine() {
-    const left = getAxisLeftPx();
-    const width = getAxisWidthPx();
-    axisLine.setAttribute('x1', String(left));
-    axisLine.setAttribute('x2', String(left + width));
+  function updateAxisLine(m: AxisMetrics) {
+    axisLine.setAttribute('x1', String(m.left));
+    axisLine.setAttribute('x2', String(m.left + m.width));
   }
 
-  function updateTicks() {
-    const tickEls = svg.querySelectorAll<SVGElement>('[data-year]');
-    tickEls.forEach((el) => {
-      const year = parseInt(el.dataset.year ?? '0', 10);
-      const x = yearToAxisPx(year);
-      if (el.tagName === 'line') {
-        el.setAttribute('x1', String(x));
-        el.setAttribute('x2', String(x));
-      } else if (el.tagName === 'text') {
-        el.setAttribute('x', String(x));
-      }
-    });
+  function updateTicks(m: AxisMetrics) {
+    for (const t of tickRefs) {
+      const x = yearToAxisPx(t.year, m);
+      t.line.setAttribute('x1', String(x));
+      t.line.setAttribute('x2', String(x));
+      t.label.setAttribute('x', String(x));
+    }
   }
 
-  function updateCursorVisuals() {
-    const x = yearToAxisPx(currentYear);
+  function updateCursorVisuals(m: AxisMetrics) {
+    const x = yearToAxisPx(currentYear, m);
     cursorLine.setAttribute('x1', String(x));
     cursorLine.setAttribute('x2', String(x));
     // floating badge：rect + text 跟随 cursor x
@@ -255,8 +251,8 @@ export function mountTimeline(opts: TimelineOptions): TimelineApi {
     badgeText.setAttribute('x', String(x));
     // rect 宽度按字符数估 (1 char ≈ 6px @ 10px font + 5px padding 两侧)
     const rectW = yearText.length * 6 + 10;
-    const axisLeft = getAxisLeftPx();
-    const axisRight = axisLeft + getAxisWidthPx();
+    const axisLeft = m.left;
+    const axisRight = m.left + m.width;
     // clamp badge 在 axis 内不出边界
     let rectX = x - rectW / 2;
     if (rectX < axisLeft - 4) rectX = axisLeft - 4;
@@ -268,9 +264,10 @@ export function mountTimeline(opts: TimelineOptions): TimelineApi {
   }
 
   function renderAll() {
-    updateAxisLine();
-    updateTicks();
-    updateCursorVisuals();
+    const m = computeAxisMetrics(); // 每帧 1 次 rect 读
+    updateAxisLine(m);
+    updateTicks(m);
+    updateCursorVisuals(m);
   }
 
   renderAll();
@@ -287,7 +284,11 @@ export function mountTimeline(opts: TimelineOptions): TimelineApi {
     dragStartX = e.clientX;
     const svgRect = svg.getBoundingClientRect();
     const clickPxFromSvgLeft = e.clientX - svgRect.left;
-    const seekYear = clamp(axisPxToYear(clickPxFromSvgLeft), yearMin, yearMax);
+    const seekYear = clamp(
+      axisPxToYear(clickPxFromSvgLeft, computeAxisMetrics()),
+      yearMin,
+      yearMax,
+    );
     currentYear = seekYear;
     dragStartYear = seekYear;
     renderAll();
@@ -300,7 +301,7 @@ export function mountTimeline(opts: TimelineOptions): TimelineApi {
   function onMouseMove(e: MouseEvent) {
     if (!dragging) return;
     const dx = e.clientX - dragStartX;
-    const axisWidth = getAxisWidthPx();
+    const axisWidth = computeAxisMetrics().width;
     if (axisWidth <= 0) return;
     const yearDelta = (dx / axisWidth) * yearSpan;
     const newYear = clamp(dragStartYear + yearDelta, yearMin, yearMax);

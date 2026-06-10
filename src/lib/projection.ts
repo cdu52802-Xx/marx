@@ -187,28 +187,9 @@ export function personLabelFontSize(k: number): number {
   return 9 + 2 * t;
 }
 
-/**
- * 创建当前 mode 的投影（兼容 setMode API · 全 satellite · mode 仅映射到默认 k）
- *   sphere → k=1 / plane → k=8 / transition → k=(1+8)/2=4.5
- */
-export function createProjection(mode: ProjectionMode, opts: ProjectionOptions): GeoProjection {
-  const { width, height, center, scale, rotate } = opts;
-  const translate: [number, number] = [width / 2, height / 2];
-
-  const k = mode === 'sphere' ? K_MIN : mode === 'plane' ? K_MAX : (K_MIN + K_MAX) / 2;
-  const distance = satelliteDistanceAtZoom(k);
-  const clipAngle = clipAngleForDistance(distance);
-
-  const proj = geoSatellite()
-    .distance(distance)
-    .scale(scale)
-    .translate(translate)
-    .tilt(0)
-    .clipAngle(clipAngle);
-  if (rotate) proj.rotate(rotate);
-  else proj.rotate([-center[0], -center[1], 0]);
-  return proj;
-}
+// Stage 4 简化（审查 workflow 确认）· 删 createProjection 死产线 export
+//   仅自身测试在用 · 语义已随 K_MAX 32→64 漂移（plane → k=K_MAX 早不是 distance plateau 起点）
+//   真投影入口 = interpolateProjection（geographic-canvas 唯一调用方）
 
 /**
  * T1.6+++++ · Issue 1 修法 B · 全程 geoSatellite · distance + clipAngle 单参数内插

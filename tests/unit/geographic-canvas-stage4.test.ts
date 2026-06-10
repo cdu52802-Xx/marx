@@ -11,6 +11,7 @@
 // loadBorders 用 vi.mock 注入合成 3-feature 数据（jsdom 无真 fetch 资产）
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { select } from 'd3-selection';
 import { mountGeographicCanvas } from '../../src/components/geographic-canvas.ts';
 import { BORDER_TRANSITION_MS } from '../../src/components/geographic-canvas.ts';
 
@@ -166,6 +167,52 @@ describe('geographic-canvas Stage 4.2 · 国界动态过渡', () => {
     });
     window.dispatchEvent(new CustomEvent('marx:time-change', { detail: { year: 2030 } }));
     expect(borderNames(container)).toEqual(['StateB', 'StateC']);
+  });
+});
+
+describe('geographic-canvas 性能守卫（审查 workflow 确认项）', () => {
+  let container: SVGSVGElement;
+
+  beforeEach(() => {
+    container = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    container.setAttribute('width', '600');
+    container.setAttribute('height', '400');
+    document.body.appendChild(container);
+  });
+
+  it('隐藏画布守卫 · display:none 时 time-change 只更新状态不渲染 · refresh() 补渲染', async () => {
+    const api = mountGeographicCanvas({
+      container,
+      width: 600,
+      height: 400,
+      marxCurrentLocation: [10, 50],
+      borderTransitionMs: 0,
+    });
+    await vi.waitFor(() => {
+      expect(borderNames(container)).toEqual(['StateA', 'StateC']);
+    });
+    container.style.display = 'none';
+    window.dispatchEvent(new CustomEvent('marx:time-change', { detail: { year: 1875 } }));
+    // 隐藏中 · DOM 不动（状态已更新但跳过 render）
+    expect(borderNames(container)).toEqual(['StateA', 'StateC']);
+    // swap 切回 geo-main 时 main.ts 调 refresh() 补一次
+    container.style.display = 'block';
+    api.refresh();
+    expect(borderNames(container)).toEqual(['StateB', 'StateC']);
+  });
+
+  it('destroy 对仗 · zoom/drag/wheel listener 全 detach', () => {
+    const api = mountGeographicCanvas({
+      container,
+      width: 600,
+      height: 400,
+      marxCurrentLocation: [10, 50],
+    });
+    api.destroy();
+    const svgSel = select(container as unknown as SVGSVGElement);
+    expect(svgSel.on('wheel')).toBeUndefined();
+    expect(svgSel.on('mousedown.drag')).toBeUndefined();
+    expect(svgSel.on('dblclick.zoom')).toBeUndefined();
   });
 });
 

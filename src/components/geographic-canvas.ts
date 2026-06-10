@@ -124,6 +124,10 @@ export interface GeographicCanvasApi {
   setMode(mode: ProjectionMode): void;
   setMarxLocation(loc: [number, number]): void;
   rotate(deg: [number, number, number]): void;
+  /**
+   * Stage 4 性能守卫 · 隐藏期（display:none）跳过的 time-change 渲染 · swap 切回 geo-main 时补一次
+   */
+  refresh(): void;
   destroy(): void;
 }
 
@@ -154,6 +158,25 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
   //   selected 视觉：紫圈 indicator (B1 DR-087 复用 · stroke #5b3a8c sw=2) + label 加粗
   let hoveredPersonId: string | null = null;
   let selectedPersonId: string | null = null;
+
+  // Stage 4 性能守卫（审查 workflow 确认 3 条 high finding）·
+  //   lastGeom：最近一次完整 render 的几何上下文 · hover/click 只刷样式时复用（不重算投影/路径）
+  //   pendingRender：隐藏期（list-main 模式 geo svg display:none）跳过的渲染标记 · refresh() 补
+  //   lastHandledYearInt：整数年粒度守卫 · borders From/To 整数 + Marx 行迹整数边界
+  //     → 同一整数年内的高频 time-change（drag mousemove / playback 50ms 小数步进）是视觉 no-op · skip
+  let lastGeom: {
+    projection: GeoProjection;
+    k: number;
+    center: [number, number];
+    clipAngleRad: number;
+    dotOutlineW: number;
+  } | null = null;
+  let pendingRender = false;
+  let lastHandledYearInt: number | null = null;
+
+  function isContainerHidden(): boolean {
+    return container.style.display === 'none';
+  }
 
   const svg = select(container);
   const g = svg.append('g').attr('class', 'geographic-root');
@@ -343,19 +366,31 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
 
   const timeHandler = (e: Event): void => {
     const detail = (e as CustomEvent).detail as { year?: number } | undefined;
-    if (typeof detail?.year === 'number') {
-      currentYear = detail.year;
-      currentLoc = marxLocationAtYear(detail.year);
-      panCenter = null; // reset pan · 让 currentLoc 重新作 projection.center · render 重算 rotate
-      // Stage 4.1 · 动态 re-filter borders 按新 year（bordersFullGeojson 已 cache · O(322) features filter · 快）
-      let animateBorders = false;
-      if (bordersFullGeojson) {
-        const filtered = filterBordersAtYear(bordersFullGeojson, clampBordersYear(currentYear));
-        animateBorders = bordersSetChanged(bordersGeojson, filtered);
-        bordersGeojson = filtered;
-      }
-      render({ animateBorders });
+    if (typeof detail?.year !== 'number') return;
+    currentYear = detail.year;
+    // Stage 4 守卫 1 · 整数年粒度 · borders 过滤 + marxLocationAtYear 都是整数年粒度
+    //   同一整数年内的高频 dispatch（timeline drag mousemove / playback 0.45 年步进）= 视觉 no-op
+    //   panCenter 非 null 时不 skip（time-change 要 reset 回 Marx follow · 既有行为）
+    const yearInt = Math.trunc(currentYear);
+    if (yearInt === lastHandledYearInt && panCenter === null) return;
+    lastHandledYearInt = yearInt;
+    currentLoc = marxLocationAtYear(currentYear);
+    panCenter = null; // reset pan · 让 currentLoc 重新作 projection.center · render 重算 rotate
+    // Stage 4.1 · 动态 re-filter borders 按新 year（bordersFullGeojson 已 cache · O(322) features filter · 快）
+    let animateBorders = false;
+    if (bordersFullGeojson) {
+      const filtered = filterBordersAtYear(bordersFullGeojson, clampBordersYear(currentYear));
+      animateBorders = bordersSetChanged(bordersGeojson, filtered);
+      bordersGeojson = filtered;
     }
+    // Stage 4 守卫 2 · 隐藏画布（list-main 模式 geo svg display:none）·
+    //   之前用户在 M5 主图拖时间轴时 · 每个 mousemove 都为看不见的画布做全量投影 + DOM 更新
+    //   状态已更新（currentYear/currentLoc/bordersGeojson）· swap 切回 geo-main 时 refresh() 补渲染
+    if (isContainerHidden()) {
+      pendingRender = true;
+      return;
+    }
+    render({ animateBorders });
   };
   window.addEventListener('marx:time-change', timeHandler);
 
@@ -459,6 +494,9 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
     const borderColor = borderStrokeColor(k);
     const dotOutlineW = strokeWidthAtZoom(k, 0.5, 0.3);
 
+    // Stage 4 性能守卫 · 缓存几何上下文给 renderFocusStyles（hover/click 只刷样式不重算几何）
+    lastGeom = { projection, k, center, clipAngleRad, dotOutlineW };
+
     // === borders 底图层（最底 · 防遮节点）===
     // spec § 6 视觉：米白 fill (#fcfaf6) + 沙石灰金 stroke
     // Stage 4.2 · keyed join + enter/exit fade（DR-T4.2）· update 的 d 即时更新
@@ -551,9 +589,7 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
     //   click person → 涉及 arc 持久高亮紫 opacity 0.85 sw 1.2
     //   其他 arc（有 focus 但本 arc 不涉及）fade opacity 0.1（让位 focus · 突出叙事）
     //   z-order：在 migration 之后 · dots 之前（arc 不遮 dots · dot pointer-events 优先）
-    const focusPersonId = selectedPersonId ?? hoveredPersonId;
-    const hasFocus = focusPersonId !== null;
-    const focusIsSelected = selectedPersonId !== null;
+    const rel = relationStyleFns();
     layers.relations
       .selectAll<SVGPathElement, GeoRelation>('path.geo-relation')
       .data(relations, (d) => `${d.fromId}|${d.toId}|${d.type}`)
@@ -563,16 +599,9 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
       .attr('data-to', (d) => d.toId)
       .attr('d', (d) => greatCircleArc(d.fromLonLat, d.toLonLat, projection))
       .attr('fill', 'none')
-      .attr('stroke', (d) => (isRelationInvolved(d, focusPersonId) ? '#5b3a8c' : '#9b8b6f'))
-      .attr('stroke-width', (d) => {
-        if (isRelationInvolved(d, focusPersonId)) return focusIsSelected ? 1.2 : 1;
-        return 0.5;
-      })
-      .attr('opacity', (d) => {
-        if (isRelationInvolved(d, focusPersonId)) return focusIsSelected ? 0.85 : 0.7;
-        if (hasFocus) return 0.1;
-        return 0.25;
-      })
+      .attr('stroke', rel.stroke)
+      .attr('stroke-width', rel.strokeWidth)
+      .attr('opacity', rel.opacity)
       .attr('pointer-events', 'none');
 
     // M-B2 T2.1 · 86 节点完整渲染（V1 = 31 person · event + location backlog）
@@ -598,13 +627,13 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
           .on('mouseenter', (_event, d) => {
             if (d.type !== 'person') return;
             hoveredPersonId = d.id;
-            render();
+            renderFocusStyles(); // Stage 4 守卫 · 只刷样式（之前 hover 触发全量几何重投影）
           })
           .on('mouseleave', (_event, d) => {
             if (d.type !== 'person') return;
             if (hoveredPersonId === d.id) {
               hoveredPersonId = null;
-              render();
+              renderFocusStyles();
             }
           })
           .on('click', (event: MouseEvent, d) => {
@@ -612,7 +641,7 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
             event.stopPropagation();
             // toggle · 点同一个取消 / 点另一个切换
             selectedPersonId = selectedPersonId === d.id ? null : d.id;
-            render();
+            renderFocusStyles();
           }),
       )
       .attr('cx', (d) => projection(d.lonLat)?.[0] ?? 0)
@@ -631,18 +660,64 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
         d.type === 'person' ? '#5b3a8c' : d.type === 'event' ? '#cc6633' : '#9b8b6f',
       )
       // T2.2-F-Q3a · selected dot 用紫圈 stroke 替换米白 outline · sw=2 视觉跟 B1 DR-087 一致
-      .attr('stroke', (d) => (d.id === selectedPersonId ? '#5b3a8c' : '#fcfaf6'))
-      .attr('stroke-width', (d) => (d.id === selectedPersonId ? 2 : dotOutlineW))
+      .attr('stroke', nodeStrokeFns(dotOutlineW).stroke)
+      .attr('stroke-width', nodeStrokeFns(dotOutlineW).strokeWidth)
       .attr('display', (d) => (geoDistance(center, d.lonLat) > clipAngleRad ? 'none' : null));
 
-    // T2.2-F · person 节点名字标签（D+E 混合 · 数据 + zoom + hover/click 三维 visibility）
-    //   D zoom threshold：plane mode (k>=4) 默认全显 · 球面 mode (k<4) 默认 hide
-    //   E hover/click：任何 zoom 下 hover/selected 都显（且切到含生卒年 Q2 b 格式）
-    //   selected 加粗 (font-weight 700 · Q3 a 跟紫圈 dual indicator)
-    //   位置：cx + r + 2 紧贴右侧 / italic / 紫 #5b3a8c (Q1 a · Q4 a)
-    //   pointer-events none · 不抢 dot hover
-    const personNodes = nodes.filter((d) => d.type === 'person');
-    const visiblePersonLabels = personNodes.filter((d) => {
+    renderPersonLabels(projection, k, center, clipAngleRad);
+  }
+
+  /** T2.3 ζ focus 样式三元组（render 全量 join 与 renderFocusStyles 共用 · 读 hover/selected closure state） */
+  function relationStyleFns(): {
+    stroke: (d: GeoRelation) => string;
+    strokeWidth: (d: GeoRelation) => number;
+    opacity: (d: GeoRelation) => number;
+  } {
+    const focusPersonId = selectedPersonId ?? hoveredPersonId;
+    const hasFocus = focusPersonId !== null;
+    const focusIsSelected = selectedPersonId !== null;
+    return {
+      stroke: (d) => (isRelationInvolved(d, focusPersonId) ? '#5b3a8c' : '#9b8b6f'),
+      strokeWidth: (d) => {
+        if (isRelationInvolved(d, focusPersonId)) return focusIsSelected ? 1.2 : 1;
+        return 0.5;
+      },
+      opacity: (d) => {
+        if (isRelationInvolved(d, focusPersonId)) return focusIsSelected ? 0.85 : 0.7;
+        if (hasFocus) return 0.1;
+        return 0.25;
+      },
+    };
+  }
+
+  /** T2.2-F-Q3a · selected 紫圈 / 默认米白 outline（render 与 renderFocusStyles 共用） */
+  function nodeStrokeFns(outlineW: number): {
+    stroke: (d: GeoNode) => string;
+    strokeWidth: (d: GeoNode) => number;
+  } {
+    return {
+      stroke: (d) => (d.id === selectedPersonId ? '#5b3a8c' : '#fcfaf6'),
+      strokeWidth: (d) => (d.id === selectedPersonId ? 2 : outlineW),
+    };
+  }
+
+  /**
+   * T2.2-F · person 节点名字标签（D+E 混合 · 数据 + zoom + hover/click 三维 visibility）
+   *   D zoom threshold：plane mode (k>=4) 默认全显 · 球面 mode (k<4) 默认 hide
+   *   E hover/click：任何 zoom 下 hover/selected 都显（且切到含生卒年 Q2 b 格式）
+   *   selected 加粗 (font-weight 700 · Q3 a 跟紫圈 dual indicator)
+   *   位置：cx + r + 2 紧贴右侧 / italic / 紫 #5b3a8c (Q1 a · Q4 a)
+   *   pointer-events none · 不抢 dot hover
+   *   Stage 4 · 抽函数 · render（现算几何）与 renderFocusStyles（lastGeom 缓存几何）共用
+   */
+  function renderPersonLabels(
+    projection: GeoProjection,
+    k: number,
+    center: [number, number],
+    clipAngleRad: number,
+  ): void {
+    const visiblePersonLabels = nodes.filter((d) => {
+      if (d.type !== 'person') return false;
       if (d.id === selectedPersonId) return true;
       if (d.id === hoveredPersonId) return true;
       return k >= 4;
@@ -680,6 +755,31 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
       });
   }
 
+  /**
+   * Stage 4 性能守卫（审查 workflow 确认 finding · hover 全量重投影）·
+   * hover/click 只改 focus 样式（relation stroke/opacity · dot 紫圈 · person label join）
+   * 不重算 projection / border path / graticule / migration（几何全在 lastGeom 缓存里）
+   */
+  function renderFocusStyles(): void {
+    if (!lastGeom) {
+      render();
+      return;
+    }
+    const { projection, k, center, clipAngleRad, dotOutlineW } = lastGeom;
+    const rel = relationStyleFns();
+    layers.relations
+      .selectAll<SVGPathElement, GeoRelation>('path.geo-relation')
+      .attr('stroke', rel.stroke)
+      .attr('stroke-width', rel.strokeWidth)
+      .attr('opacity', rel.opacity);
+    const nodeFns = nodeStrokeFns(dotOutlineW);
+    layers.nodes
+      .selectAll<SVGCircleElement, GeoNode>('circle.geo-node')
+      .attr('stroke', nodeFns.stroke)
+      .attr('stroke-width', nodeFns.strokeWidth);
+    renderPersonLabels(projection, k, center, clipAngleRad);
+  }
+
   render();
 
   return {
@@ -699,9 +799,18 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
         '[geographic-canvas] rotate(deg) deprecated · 用 setMarxLocation(loc) 改 projection.center',
       );
     },
+    refresh(): void {
+      // Stage 4 守卫 2 配套 · 隐藏期状态已更新 · 这里补一次完整渲染（不 animate · 用户没看过中间态）
+      // 没有 pending（隐藏期间无 time-change）就跳过 · swap 来回切不重复渲染
+      if (!pendingRender) return;
+      pendingRender = false;
+      render();
+    },
     destroy(): void {
       window.removeEventListener('marx:time-change', timeHandler);
       svg.on('wheel', null); // T1.6+++++ · detach 自挂 wheel handler · 防 memory leak / stale closure
+      svg.on('.zoom', null); // Stage 4 · destroy 对仗 · detach d3-zoom 全部 namespaced listener
+      svg.on('.drag', null); // Stage 4 · destroy 对仗 · detach d3-drag mousedown listener
       g.remove();
     },
   };

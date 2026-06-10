@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   computeTickPositions,
-  yearToPercent,
   mountTimeline,
   type TimelineTick,
 } from '../../src/components/timeline.ts';
@@ -25,11 +24,7 @@ describe('timeline · ticks 计算', () => {
     }
   });
 
-  it('yearToPercent 正确映射 1770→0, 1950→100', () => {
-    expect(yearToPercent(1770, 1770, 1950)).toBeCloseTo(0);
-    expect(yearToPercent(1950, 1770, 1950)).toBeCloseTo(100);
-    expect(yearToPercent(1860, 1770, 1950)).toBeCloseTo(50);
-  });
+  // Stage 4 简化 · yearToPercent 死 export 已删（src 内零调用 · 坐标换算走 mount 内 yearToAxisPx）
 });
 
 // M5 T6 · timeline 新 API 测试

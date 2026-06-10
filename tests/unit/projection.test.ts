@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest';
 import {
-  createProjection,
   interpolateProjection,
   scaleAtZoom,
   satelliteDistanceAtZoom,
@@ -19,43 +18,8 @@ import {
   personLabelFontSize,
 } from '../../src/lib/projection.ts';
 
-describe('createProjection · M-B2 T1.1', () => {
-  it('mode=sphere → satellite distance=50 ≈ orthographic（巴黎在 sphere 上有 pixel）', () => {
-    const proj = createProjection('sphere', {
-      width: 600,
-      height: 400,
-      center: [10, 50],
-      scale: 200,
-    });
-    expect(proj([2.35, 48.86])).toBeTruthy();
-  });
-
-  it('mode=plane → satellite distance=2 ≈ mercator-like（巴黎在 plane 上有 pixel）', () => {
-    const proj = createProjection('plane', {
-      width: 600,
-      height: 400,
-      center: [10, 50],
-      scale: 800,
-    });
-    expect(proj([2.35, 48.86])).toBeTruthy();
-  });
-
-  it('mode=plane (T1.6+++++) · satellite distance=2 · center 投到 viewport 中心附近', () => {
-    const proj = createProjection('plane', {
-      width: 600,
-      height: 400,
-      center: [10, 50],
-      scale: 800,
-    });
-    const centerPixel = proj([10, 50]);
-    expect(centerPixel).toBeTruthy();
-    if (centerPixel) {
-      // satellite center → viewport 中心 [300, 200]（绕中心很小 sub-pixel 误差）
-      expect(Math.abs(centerPixel[0] - 300)).toBeLessThan(5);
-      expect(Math.abs(centerPixel[1] - 200)).toBeLessThan(5);
-    }
-  });
-});
+// Stage 4 简化 · createProjection 死产线 export 已删（仅本测试在用 · 语义随 K_MAX 漂移）
+//   投影行为测试全走 interpolateProjection（geographic-canvas 唯一真入口）
 
 describe('interpolateProjection · M-B2 T1.1', () => {
   it('k=1 → sphere mode', () => {
