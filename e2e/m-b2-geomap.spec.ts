@@ -32,6 +32,8 @@ test.describe('M-B2 副窗地理图 · 全量完成', () => {
     // 副窗可见 · 图例隐藏
     await expect(page.locator('.geographic-panel')).toBeVisible();
     await expect(page.locator('.legend-panel')).toBeHidden();
+    // PM R1 · 初始状态同步：副窗标题跟 timeline 初始游标 2030 一致（不再停 1843 无年份）
+    await expect(page.locator('.geographic-panel-title')).toContainText('2030');
   });
 
   test('副窗低密度 · 人节点渲染 / 关系线不渲染 / paper 风格 380×214', async ({ page }) => {
@@ -48,13 +50,22 @@ test.describe('M-B2 副窗地理图 · 全量完成', () => {
     await expect(panel.locator('.geographic-panel-title')).toContainText('§ 地理图');
   });
 
-  test('header ↔ 互换 → geo-main · 主画布地理图 + 副窗隐藏 + 图例显示', async ({ page }) => {
+  test('header ↔ 互换 → geo-main · 主画布地理图 + 副窗隐藏 + 图例显示 + M5 控件隐藏', async ({
+    page,
+  }) => {
     await page.locator('.header-controls .swap-button').click();
     await expect(page.locator('svg.geo-canvas-svg')).toBeVisible();
     await expect(page.locator('.geographic-panel')).toBeHidden();
     const legend = page.locator('.legend-panel');
     await expect(legend).toBeVisible();
     await expect(legend.locator('.legend-row')).toHaveCount(5);
+    // PM R1 · M5 专属控件隐藏（zoom-control 压图例 + sidebar 盖地图左缘 · 点了对地图无效）
+    await expect(page.locator('.zoom-control')).toBeHidden();
+    await expect(page.locator('#sidebar-fixed')).toBeHidden();
+    // 切回 list-main 恢复
+    await page.locator('.header-controls .swap-button').click();
+    await expect(page.locator('.zoom-control')).toBeVisible();
+    await expect(page.locator('#sidebar-fixed')).toBeVisible();
   });
 
   test('geo 主画布完整渲染 · 国界 + 迁徙 6 段 + 人节点 + 关系线', async ({ page }) => {

@@ -533,6 +533,9 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
     const borderStrokeW = strokeWidthAtZoom(k, 0.5, 0.6);
     const borderColor = borderStrokeColor(k);
     const dotOutlineW = strokeWidthAtZoom(k, 0.5, 0.3);
+    // PM R1 反馈（2026-06-10）· 380×178 缩略图上 r=8 dot 挤成一坨紫还盖住迁徙线
+    //   low 密度 dot 缩 0.45×（8→3.6）· 主画布 baseR 8/7/6 是 PM 阶段 B.1 拍的 · 不动
+    const dotScale = isLow ? 0.45 : 1;
 
     // Stage 4 性能守卫 · 缓存几何上下文给 renderFocusStyles（hover/click 只刷样式不重算几何）
     lastGeom = { projection, k, center, clipAngleRad, dotOutlineW };
@@ -612,7 +615,7 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
     // === M-B2 T4.3 · 迁徙轨迹（borders 之上 · relations/dots 之下）===
     //   已走（currentYear >= arrivalYear）紫实线 opacity 0.55 / 未来紫虚线 '4 3' opacity 0.35
     //   stroke-width 反比 zoom（跟 border dual lever 同思路 · base 1.2 / min 0.7）
-    const migrationStrokeW = strokeWidthAtZoom(k, 1.2, 0.7);
+    const migrationStrokeW = strokeWidthAtZoom(k, isLow ? 0.9 : 1.2, isLow ? 0.5 : 0.7);
     layers.migration
       .selectAll<SVGPathElement, MigrationSegment>('path.migration')
       .data(migrationSegments)
@@ -695,15 +698,17 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
       })
       .attr('cx', (d) => projection(d.lonLat)?.[0] ?? 0)
       .attr('cy', (d) => projection(d.lonLat)?.[1] ?? 0)
-      .attr('r', (d) =>
-        dotRadiusAtZoom(
-          k,
-          d.type === 'person'
-            ? DOT_BASE_RADIUS.person
-            : d.type === 'event'
-              ? DOT_BASE_RADIUS.event
-              : DOT_BASE_RADIUS.location,
-        ),
+      .attr(
+        'r',
+        (d) =>
+          dotRadiusAtZoom(
+            k,
+            d.type === 'person'
+              ? DOT_BASE_RADIUS.person
+              : d.type === 'event'
+                ? DOT_BASE_RADIUS.event
+                : DOT_BASE_RADIUS.location,
+          ) * dotScale,
       )
       .attr('fill', (d) =>
         d.type === 'person' ? '#5b3a8c' : d.type === 'event' ? '#cc6633' : '#9b8b6f',

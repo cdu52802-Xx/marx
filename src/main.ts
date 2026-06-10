@@ -1714,17 +1714,27 @@ function showWithFade(el: SVGSVGElement): void {
   });
 }
 
+// PM R1 反馈（2026-06-10 遮挡回顾）· geo-main 时 M5 专属控件必须隐藏：
+//   - zoom-control（+/1.0×/−/⌂ · z11）压在图例 panel 上 · 且控制的是隐藏的 M5 画布（点了"没反应"假死感）
+//   - sidebar 滤镜图标栏（48px · z10）盖住地图左缘 · 类别滤镜对地理图无意义
+//   切回 list-main 全恢复 · geo 自身缩放走滚轮（地图缩放按钮 V2 再议）
+const m5OnlyControls = ['#sidebar-fixed', '.zoom-control'].map((s) =>
+  document.querySelector<HTMLElement>(s),
+);
+
 function applyCanvasRole(role: 'list-main' | 'geo-main'): void {
   const m5El = svg.node() as SVGSVGElement;
   const geoEl = geoSvg.node() as SVGSVGElement;
   if (role === 'geo-main') {
     m5El.style.display = 'none';
+    for (const el of m5OnlyControls) if (el) el.style.display = 'none';
     showWithFade(geoEl);
     geoMainApi.refresh(); // 隐藏期 pending 的 time-change 渲染补上（Stage 4 守卫 2 配套）
     geoPanelApi.setVisible(false); // DR-stage5 · V1 副窗只承载地理图
     legendApi.setVisible(true);
   } else {
     geoEl.style.display = 'none';
+    for (const el of m5OnlyControls) if (el) el.style.display = '';
     showWithFade(m5El);
     geoPanelApi.setVisible(true);
     geoMiniApi.refresh();
@@ -1735,3 +1745,10 @@ function applyCanvasRole(role: 'list-main' | 'geo-main'): void {
 applyCanvasRole(swapApi.getCurrent());
 swapApi.onChange(applyCanvasRole);
 (window as unknown as { swapApi: typeof swapApi }).swapApi = swapApi; // PM console 调
+
+// PM R1 反馈（2026-06-10）· 初始状态同步：timeline 游标初始 2030 但 setCursor 不 dispatch（Stage 4.1 决策）
+//   → geo 画布国界停 1843 / 副窗标题无年份 · 跟游标不一致
+//   修法：geo 侧全 mount 完后补发一次 time-change（M5 不听 window event · 不影响主图既有初始化）
+window.dispatchEvent(
+  new CustomEvent('marx:time-change', { detail: { year: INITIAL_CURSOR_YEAR } }),
+);

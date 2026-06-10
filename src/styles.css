@@ -624,3 +624,16 @@ g.obs.obs-spring-enter circle.obs-dot {
   color: #5b3a8c;
   border-color: #5b3a8c;
 }
+
+/* ============= M-B2 PM R1 遮挡回顾（2026-06-10）· 两条布局防御 ============= */
+/* 1 · 搜索浮窗 max-height 防御：结果多 + 小屏（≤768 高）时不穿到副窗/时间轴 · 内部滚动 */
+.search-result-popover {
+  max-height: calc(100vh - 380px);
+  overflow-y: auto;
+}
+/* 2 · header 控件底色：窄窗口下 brand 标题文字跟搜索框/按钮重叠成"文字叠文字"
+ *    米白半透明底 + 轻微 padding · 重叠时上层可读 · 宽窗口视觉几乎无感 */
+.header-controls {
+  background: rgba(252, 250, 246, 0.92);
+  padding: 2px 8px;
+}

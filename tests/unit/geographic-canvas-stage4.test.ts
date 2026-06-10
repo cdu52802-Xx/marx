@@ -268,6 +268,21 @@ describe('geographic-canvas · Stage 5 density low + T3.1 主副联动', () => {
     expect(container.querySelectorAll('circle.geo-node').length).toBe(2);
   });
 
+  it('density low · dot 半径缩 0.45×（PM R1 反馈：380×178 缩略图 r=8 挤成一坨）', () => {
+    mountGeographicCanvas({
+      container,
+      width: 380,
+      height: 178,
+      initialMode: 'sphere',
+      marxCurrentLocation: [10, 50],
+      nodes: [MARX],
+      density: 'low',
+    });
+    const dot = container.querySelector('circle.geo-node[data-id="marx"]') as SVGCircleElement;
+    // sphere k=1 plateau · full 模式 r=8 → low 模式 8×0.45=3.6
+    expect(parseFloat(dot.getAttribute('r')!)).toBeCloseTo(3.6, 1);
+  });
+
   it('density low · zoom/drag/wheel 不挂（非交互缩略图）· dot click 无反应', () => {
     mountGeographicCanvas({
       container,
