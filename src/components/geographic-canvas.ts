@@ -35,8 +35,29 @@
 //   - drag mode-aware：sphere → currentRotate（既有）/ transition + plane → projection.center 改
 //     精确数学：dx/dy 像素 → Δlon/Δlat 用 projection.invert 反算（d3 标准做法 / mercator + satellite 都支持）
 //   - time-change event：reset panCenter（让 Marx follow reorient 重新生效）
+//
+// M-B2 Stage 4.2 · 渲染架构升级 · 分层 g + keyed data join（替代每帧全量 remove+rebuild）
+//   动机：T4.2 国界过渡需要 enter/exit 区分（fade in/out）· remove+rebuild 架构做不了 transition
+//   附带收益（goal #3 优化）：zoom/drag/hover 高频 render 不再重建全部 DOM · 只 update attr
+//   分层 z-order（替代渲染顺序隐式 z-order）：
+//     borders-layer → graticule-layer → border-labels-layer → migration-layer
+//     → relations-layer → nodes-layer → person-labels-layer
+//   国界过渡（DR-T4.2）：
+//     - enter fade in / exit fade out 350ms（1871 普鲁士诸邦淡出 · 德意志帝国淡入）
+//     - update 的 path d 即时更新（不做 path morph · 避免跟节点瞬移不同步 + interpolateString 开销）
+//     - 只在 feature set 真变化时 fade（拖动时间轴同一时期内不触发 transition）
+//     - borderTransitionMs option：0 = 关过渡（副窗低密度版 + unit test 同步断言用）
+//     - 信息性 motion 不加 reduce-motion guard（anchor § 3 拍板 · Win10 陷阱只 guard 装饰性 motion）
+//   年份 clamp（数据边界修正）：cshapes 1806-2023 · timeline 1770-2030 超界年份 clamp 到数据范围
+//     （之前 year > 2022 时 filterBordersAtYear 返回空 → 国界全消失 · 初始游标 2030 必踩）
+//
+// M-B2 Stage 4.3 · 迁徙轨迹（plan T4.3）
+//   MARX_LOCATIONS 7 段（抽到 lib/marx-itinerary.ts · 补 1848 科隆修空洞）→ 6 段 great-circle path
+//   已走（currentYear >= arrivalYear）紫实线 / 未来紫虚线 '4 3' · 时间 forward 实线段延长
+//   z-order：borders 之上 · relations/dots 之下（anchor § 3 拍板）
 
 import { select } from 'd3-selection';
+import 'd3-transition'; // 注册 selection.transition / interrupt（T4.2 国界 fade 用）
 import { geoPath, geoGraticule, geoDistance, geoCentroid, type GeoProjection } from 'd3-geo';
 import { zoom, zoomIdentity, type ZoomBehavior } from 'd3-zoom';
 import { drag } from 'd3-drag';
@@ -55,31 +76,23 @@ import {
   type ProjectionMode,
 } from '../lib/projection.ts';
 import { loadBorders, filterBordersAtYear } from '../lib/historical-borders.ts';
+import {
+  marxLocationAtYear,
+  computeMigrationSegments,
+  type MigrationSegment,
+} from '../lib/marx-itinerary.ts';
 import type { GeoNode } from '../lib/geographic-data.ts';
 import { isRelationInvolved, type GeoRelation } from '../lib/geographic-relations.ts';
 import { greatCircleArc } from '../lib/great-circle.ts';
 
-// M-B2 T2.1 · 删 TEST_NODES（Stage 1 prototype 5 hardcode）· 改接外部 nodes 入参
+// M-B2 T2.1 · 删 TEST_NODES（Stage 1 prototype 5 hardcode）· 改接 nodes 入参
 // V1 PM 拍板 A · 真数据先 ship · 当前 34 person 中 31 个有效（3 个 [0,0] 占位 filter）
 // event + location 数据缺口落 backlog · 入参签名预留
+//
+// M-B2 T4.3 · MARX_LOCATIONS + marxLocationAtYear 抽到 lib/marx-itinerary.ts（迁徙轨迹 SSOT）
 
-// M-B2 T1.5 · Marx 行迹 6 段 (spec § 4.3)
-// yearEnd 是 exclusive (年区间 [yearStart, yearEnd))
-// 1883 死 / 最后一段 [1849, 1883] 用 < 1884 写法 → 但 Marx 死在 1883.03.14 / 1883 整年都算伦敦
-//   ∴ 最后段 yearEnd = 1884 / 1849-1883 整年覆盖
-const MARX_LOCATIONS: { yearStart: number; yearEnd: number; loc: [number, number] }[] = [
-  { yearStart: 1818, yearEnd: 1835, loc: [6.64, 49.75] }, // 特里尔
-  { yearStart: 1835, yearEnd: 1841, loc: [13.4, 52.52] }, // 波恩/柏林
-  { yearStart: 1841, yearEnd: 1843, loc: [6.96, 50.94] }, // 科隆
-  { yearStart: 1843, yearEnd: 1845, loc: [2.35, 48.86] }, // 巴黎
-  { yearStart: 1845, yearEnd: 1848, loc: [4.35, 50.85] }, // 布鲁塞尔
-  { yearStart: 1849, yearEnd: 1884, loc: [-0.13, 51.51] }, // 伦敦
-];
-
-function marxLocationAtYear(year: number): [number, number] {
-  const rec = MARX_LOCATIONS.find((r) => year >= r.yearStart && year < r.yearEnd);
-  return rec?.loc ?? [10, 50]; // fallback 欧洲中心
-}
+// DR-T4.2 · 国界过渡时长 350ms（anchor § 3 给 250-450 区间 · 取中值 · PM 微调入口 = borderTransitionMs option）
+export const BORDER_TRANSITION_MS = 350;
 
 export interface GeographicCanvasOptions {
   container: SVGSVGElement;
@@ -100,6 +113,11 @@ export interface GeographicCanvasOptions {
    *   入参为空数组时不渲染 arc（兼容 Stage 1 prototype 测试场景）
    */
   relations?: GeoRelation[];
+  /**
+   * M-B2 T4.2 · 国界 enter/exit fade 时长（ms）· 默认 BORDER_TRANSITION_MS (350)
+   *   0 = 关过渡（同步 join · 副窗低密度版 + unit test 用）
+   */
+  borderTransitionMs?: number;
 }
 
 export interface GeographicCanvasApi {
@@ -117,6 +135,10 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
   const nodes: GeoNode[] = opts.nodes ?? [];
   // M-B2 T2.3 · 渲染关系连线 · default [] 兼容
   const relations: GeoRelation[] = opts.relations ?? [];
+  // T4.2 · 国界 fade 时长（0 = 关）
+  const borderTransitionMs = opts.borderTransitionMs ?? BORDER_TRANSITION_MS;
+  // T4.3 · 迁徙 segment（5 段 · mount 时算一次 · 静态数据）
+  const migrationSegments: MigrationSegment[] = computeMigrationSegments();
   // T1.6+ B · 真线性内插 · k 从 zoom event 拿 / interpolateProjection 内按 k 算 scale
   let currentZoomK = 1;
   // T1.6++++ → T2.1.hotfix Issue 2 · 统一 drag state · drag 全程改 panCenter（删 currentRotate）
@@ -135,6 +157,22 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
 
   const svg = select(container);
   const g = svg.append('g').attr('class', 'geographic-root');
+
+  // Stage 4.2 · 分层 g（z-order 显式化 · keyed join 的容器）
+  const layers = {
+    borders: g.append('g').attr('class', 'borders-layer'),
+    graticule: g.append('g').attr('class', 'graticule-layer'),
+    borderLabels: g.append('g').attr('class', 'border-labels-layer'),
+    migration: g.append('g').attr('class', 'migration-layer'),
+    relations: g.append('g').attr('class', 'relations-layer'),
+    nodes: g.append('g').attr('class', 'nodes-layer'),
+    personLabels: g.append('g').attr('class', 'person-labels-layer'),
+  };
+  // graticule 单 path · mount 建一次 · render 只 update attr
+  const graticulePath = layers.graticule
+    .append('path')
+    .attr('class', 'graticule')
+    .attr('fill', 'none');
 
   // T1.4 · d3-zoom attach · scaleExtent [1,8] / on('zoom') → k 反查 mode → render
   // jsdom 不易模拟 wheel · unit 只验 __zoom 内部 state 已附加（间接验链路）
@@ -211,6 +249,7 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
   //     如果 mousedown 命中 circle.geo-node → return false → d3-drag 完全不接管该 mousedown
   //     → 不 attach window click.drag listener → native click 100% 到 dot.on('click') handler
   //   保留 clickDistance(5) 作为 svg 空白 click 的兜底（双保险）
+  //   ⚠ B-7 · v1+v2 prod 实测仍 fail · 真根因不明 · 此段不动 · 等专项 polish R（h1/h3-h6 假设池）
   //
   //   行为 trade-off ·
   //     dot mousedown → 走 click 路径（hover/click 联动 · F+ζ pattern）
@@ -249,16 +288,58 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
   svg.call(dragBehavior);
 
   // T1.5 · window 'marx:time-change' event listener · year → Marx 当年地点 → reorient
-  // timeline T4.x dispatch 此 event · 现在只 listen（dispatch 由后续 task 加）
   // listener 必须 destroy 时 detach（不然组件卸载后 stale closure 持续累加）
   // T2.1.hotfix · Issue 2 · 统一 state · 只 reset panCenter（删 currentRotate path）
   // Stage 4.1 · borders 动态切片（接 marx:time-change event）
   //   bordersFullGeojson cache 完整 322 features · loadBorders 内部 _cache 已防重复 fetch
   //   bordersGeojson 按 currentYear filter 后 ≈ 50-100 features · 喂 render() pathGen
   //   currentYear 初始 1843（hardcode 跟 Stage 1 sample 一致 · main.ts wire timeline initialCursor 后接到 Marx 1818-1883 range）
+  // Stage 4.2 · feature set 真变化才触发 fade（同一时期内拖动时间轴不重启 transition）
+  //   + 年份 clamp 到数据范围（cshapes 1806-2023 · 超界不再国界全空）
   let bordersFullGeojson: GeoJSON.FeatureCollection | null = null;
   let bordersGeojson: GeoJSON.FeatureCollection | null = null;
+  let bordersYearRange: { min: number; max: number } | null = null;
   let currentYear: number = 1843;
+
+  // Stage 4.2 · feature → 稳定 key（keyed join 用 · filterBordersAtYear 保留对象引用 → WeakMap 可行）
+  const borderKeyByFeature = new WeakMap<object, number>();
+  let borderKeySeq = 0;
+  function borderKey(f: GeoJSON.Feature): number {
+    let k = borderKeyByFeature.get(f);
+    if (k === undefined) {
+      k = borderKeySeq;
+      borderKeySeq += 1;
+      borderKeyByFeature.set(f, k);
+    }
+    return k;
+  }
+  // Stage 4.2 · centroid 静态 per-feature · cache（之前每 render 每 feature 算 3 次）
+  const centroidByFeature = new WeakMap<object, [number, number]>();
+  function borderCentroid(f: GeoJSON.Feature): [number, number] {
+    let c = centroidByFeature.get(f);
+    if (!c) {
+      c = geoCentroid(f as GeoJSON.GeoJsonObject) as [number, number];
+      centroidByFeature.set(f, c);
+    }
+    return c;
+  }
+
+  function clampBordersYear(year: number): number {
+    if (!bordersYearRange) return year;
+    return Math.max(bordersYearRange.min, Math.min(bordersYearRange.max, year));
+  }
+
+  function bordersSetChanged(
+    prev: GeoJSON.FeatureCollection | null,
+    next: GeoJSON.FeatureCollection,
+  ): boolean {
+    if (!prev) return true;
+    if (prev.features.length !== next.features.length) return true;
+    for (let i = 0; i < prev.features.length; i++) {
+      if (prev.features[i] !== next.features[i]) return true;
+    }
+    return false;
+  }
 
   const timeHandler = (e: Event): void => {
     const detail = (e as CustomEvent).detail as { year?: number } | undefined;
@@ -267,23 +348,39 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
       currentLoc = marxLocationAtYear(detail.year);
       panCenter = null; // reset pan · 让 currentLoc 重新作 projection.center · render 重算 rotate
       // Stage 4.1 · 动态 re-filter borders 按新 year（bordersFullGeojson 已 cache · O(322) features filter · 快）
+      let animateBorders = false;
       if (bordersFullGeojson) {
-        bordersGeojson = filterBordersAtYear(bordersFullGeojson, currentYear);
+        const filtered = filterBordersAtYear(bordersFullGeojson, clampBordersYear(currentYear));
+        animateBorders = bordersSetChanged(bordersGeojson, filtered);
+        bordersGeojson = filtered;
       }
-      render();
+      render({ animateBorders });
     }
   };
   window.addEventListener('marx:time-change', timeHandler);
 
   // T1.6+ C · cshapes 底图加载（Stage 1 静态 1843 sample · Stage 4.1 升级动态切片）
-  //   loadBorders().then 内：保存 full geojson + 按 currentYear initial filter
+  //   loadBorders().then 内：保存 full geojson + 数据年份范围 + 按 currentYear initial filter
   //   后续 marx:time-change event 触发 timeHandler 内 re-filter
   // async load · 失败兜底（L1 留 V1+ world-atlas fallback / 现在只 console.error）
   loadBorders()
-    .then((g) => {
-      bordersFullGeojson = g;
-      bordersGeojson = filterBordersAtYear(g, currentYear);
-      render();
+    .then((full) => {
+      bordersFullGeojson = full;
+      // Stage 4.2 · 数据年份范围（From min / To max - 1 · From===To sentinel 跳过）
+      let minFrom = Infinity;
+      let maxTo = -Infinity;
+      for (const f of full.features) {
+        const from = f.properties?.['From'] as number | undefined;
+        const to = f.properties?.['To'] as number | undefined;
+        if (typeof from !== 'number' || typeof to !== 'number' || from === to) continue;
+        if (from < minFrom) minFrom = from;
+        if (to > maxTo) maxTo = to;
+      }
+      if (minFrom !== Infinity && maxTo !== -Infinity) {
+        bordersYearRange = { min: minFrom, max: maxTo - 1 };
+      }
+      bordersGeojson = filterBordersAtYear(full, clampBordersYear(currentYear));
+      render({ animateBorders: true });
     })
     .catch((err) => {
       console.error('[geographic-canvas] borders load fail · L1 fallback world-atlas 留 V1+', err);
@@ -326,7 +423,12 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
               : 3.5;
   }
 
-  function render(): void {
+  interface RenderOptions {
+    /** T4.2 · 本次 render 国界走 enter/exit fade（仅 time-change 且 feature set 真变化时 true） */
+    animateBorders?: boolean;
+  }
+
+  function render(renderOpts?: RenderOptions): void {
     // T1.6+ B · 真线性内插 · currentZoomK 直接传 / interpolateProjection 内按 k 算 scale
     //   k=1 scale=200（sphere 视觉）/ k=8 scale=853（plateau 起点）/ k=16 scale=1600（细节最大）
     const k = computeEffectiveK();
@@ -357,66 +459,90 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
     const borderColor = borderStrokeColor(k);
     const dotOutlineW = strokeWidthAtZoom(k, 0.5, 0.3);
 
-    // T1.6+ C · borders 底图层（最底 / 在 graticule + nodes 之前 / 防遮节点）
+    // === borders 底图层（最底 · 防遮节点）===
     // spec § 6 视觉：米白 fill (#fcfaf6) + 沙石灰金 stroke
-    // T2.1.hotfix3-1A · stroke-width clamp min 0.6 + 颜色 zoom-adaptive（PM polish R1）
-    g.selectAll('path.border').remove();
-    if (bordersGeojson) {
-      const borderSel = g
-        .selectAll<SVGPathElement, GeoJSON.Feature>('path.border')
-        .data(bordersGeojson.features);
+    // Stage 4.2 · keyed join + enter/exit fade（DR-T4.2）· update 的 d 即时更新
+    const animate = (renderOpts?.animateBorders ?? false) && borderTransitionMs > 0;
+    const borderFeatures = bordersGeojson?.features ?? [];
+    const borderSel = layers.borders
+      .selectAll<SVGPathElement, GeoJSON.Feature>('path.border')
+      .data(borderFeatures, (d) => borderKey(d));
+    const borderEnter = borderSel
+      .enter()
+      .append('path')
+      .attr('class', 'border')
+      .attr('data-name', (d) => (d.properties as { Name?: string } | null)?.Name ?? '')
+      .attr('fill', '#fcfaf6'); // 米白底 · spec § 6
+    borderEnter
+      .merge(borderSel)
+      .attr('d', (d) => pathGen(d as GeoJSON.GeoJsonObject) ?? '')
+      .attr('stroke', borderColor) // T2.1.hotfix3-1A · sphere #d8cab0 / plane #b8a880
+      .attr('stroke-width', borderStrokeW);
+    if (animate) {
+      borderEnter
+        .attr('opacity', 0)
+        .transition('border-fade')
+        .duration(borderTransitionMs)
+        .attr('opacity', 1);
       borderSel
-        .enter()
-        .append('path')
-        .attr('class', 'border')
-        .attr('d', (d) => pathGen(d as GeoJSON.GeoJsonObject) ?? '')
-        .attr('fill', '#fcfaf6') // 米白底 · spec § 6
-        .attr('stroke', borderColor) // T2.1.hotfix3-1A · sphere #d8cab0 / plane #b8a880
-        .attr('stroke-width', borderStrokeW);
+        .exit()
+        .transition('border-fade')
+        .duration(borderTransitionMs)
+        .attr('opacity', 0)
+        .remove();
+    } else {
+      borderEnter.attr('opacity', 1);
+      borderSel.interrupt('border-fade').attr('opacity', 1);
+      borderSel.exit().interrupt('border-fade').remove();
     }
 
-    // graticule 经纬网（每 10° 一条 / d3 默认 step）
+    // graticule 经纬网（每 10° 一条 / d3 默认 step）· 单 path · 只 update attr
     // T2.1.hotfix3-1A · 跟 border 同步 dual lever（视觉风格一致）
-    g.selectAll('path.graticule').remove();
-    g.append('path')
-      .attr('class', 'graticule')
+    graticulePath
       .attr('d', pathGen(geoGraticule()()) ?? '')
-      .attr('fill', 'none')
       .attr('stroke', borderColor) // T2.1.hotfix3-1A · 跟 border 同色
       .attr('stroke-width', borderStrokeW);
 
     // T2.1.hotfix2-C · 国名英文标签（k>=4 trigger / 字体跟 zoom 走 / 背面 hide）
-    //   位置：d3.geoCentroid 算每国地理中心 → projection 推 pixel
+    //   位置：d3.geoCentroid 算每国地理中心（per-feature cache）→ projection 推 pixel
     //   字段：CShapes feature.properties.Name（英文如 "Belgium" "Prussia"）
-    //   中文映射 70 states 留 Stage 4 backlog（spec § 4.7 已规划）
     //   z-order：在 graticule 之后 · dots 之前（dots 在最上 · 标签辅助）
-    g.selectAll('text.border-label').remove();
-    if (bordersGeojson && shouldShowBorderLabels(k)) {
-      const fontSize = borderLabelFontSize(k);
-      g.selectAll<SVGTextElement, GeoJSON.Feature>('text.border-label')
-        .data(bordersGeojson.features)
-        .enter()
-        .append('text')
-        .attr('class', 'border-label')
-        .attr('x', (d) => {
-          const centroid = geoCentroid(d as GeoJSON.GeoJsonObject);
-          return projection(centroid as [number, number])?.[0] ?? 0;
-        })
-        .attr('y', (d) => {
-          const centroid = geoCentroid(d as GeoJSON.GeoJsonObject);
-          return projection(centroid as [number, number])?.[1] ?? 0;
-        })
-        .attr('text-anchor', 'middle')
-        .attr('font-size', fontSize)
-        .attr('fill', '#6a5a4a') // 沙石灰金深一档 · spec § 6
-        .attr('opacity', 0.75)
-        .attr('pointer-events', 'none')
-        .attr('display', (d) => {
-          const centroid = geoCentroid(d as GeoJSON.GeoJsonObject);
-          return geoDistance(center, centroid as [number, number]) > clipAngleRad ? 'none' : null;
-        })
-        .text((d) => ((d as GeoJSON.Feature).properties as { Name?: string } | null)?.Name ?? '');
-    }
+    const labelFeatures =
+      bordersGeojson && shouldShowBorderLabels(k) ? bordersGeojson.features : [];
+    const labelFontSize = borderLabelFontSize(k);
+    layers.borderLabels
+      .selectAll<SVGTextElement, GeoJSON.Feature>('text.border-label')
+      .data(labelFeatures, (d) => borderKey(d))
+      .join('text')
+      .attr('class', 'border-label')
+      .attr('x', (d) => projection(borderCentroid(d))?.[0] ?? 0)
+      .attr('y', (d) => projection(borderCentroid(d))?.[1] ?? 0)
+      .attr('text-anchor', 'middle')
+      .attr('font-size', labelFontSize)
+      .attr('fill', '#6a5a4a') // 沙石灰金深一档 · spec § 6
+      .attr('opacity', 0.75)
+      .attr('pointer-events', 'none')
+      .attr('display', (d) =>
+        geoDistance(center, borderCentroid(d)) > clipAngleRad ? 'none' : null,
+      )
+      .text((d) => ((d as GeoJSON.Feature).properties as { Name?: string } | null)?.Name ?? '');
+
+    // === M-B2 T4.3 · 迁徙轨迹（borders 之上 · relations/dots 之下）===
+    //   已走（currentYear >= arrivalYear）紫实线 opacity 0.55 / 未来紫虚线 '4 3' opacity 0.35
+    //   stroke-width 反比 zoom（跟 border dual lever 同思路 · base 1.2 / min 0.7）
+    const migrationStrokeW = strokeWidthAtZoom(k, 1.2, 0.7);
+    layers.migration
+      .selectAll<SVGPathElement, MigrationSegment>('path.migration')
+      .data(migrationSegments)
+      .join('path')
+      .attr('class', 'migration')
+      .attr('d', (d) => greatCircleArc(d.from, d.to, projection, 30))
+      .attr('fill', 'none')
+      .attr('stroke', '#5b3a8c')
+      .attr('stroke-width', migrationStrokeW)
+      .attr('stroke-dasharray', (d) => (currentYear >= d.arrivalYear ? null : '4 3'))
+      .attr('opacity', (d) => (currentYear >= d.arrivalYear ? 0.55 : 0.35))
+      .attr('pointer-events', 'none');
 
     // M-B2 T2.3 · 地理关系连线 arc 渲染（PM 拍 ζ · DR-107 · Q5a/Q6a/Q7a/Q8a）
     //   V1 数据 reality 37 条 person-person arc（35 influences + 1 mentor + 1 friend_collaborator）
@@ -424,15 +550,14 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
     //   hover person → 涉及 arc 临时高亮紫 opacity 0.7 sw 1
     //   click person → 涉及 arc 持久高亮紫 opacity 0.85 sw 1.2
     //   其他 arc（有 focus 但本 arc 不涉及）fade opacity 0.1（让位 focus · 突出叙事）
-    //   z-order：在 border-label 之后 · dots 之前（arc 不遮 dots · dot pointer-events 优先）
+    //   z-order：在 migration 之后 · dots 之前（arc 不遮 dots · dot pointer-events 优先）
     const focusPersonId = selectedPersonId ?? hoveredPersonId;
     const hasFocus = focusPersonId !== null;
     const focusIsSelected = selectedPersonId !== null;
-    g.selectAll('path.geo-relation').remove();
-    g.selectAll<SVGPathElement, GeoRelation>('path.geo-relation')
-      .data(relations)
-      .enter()
-      .append('path')
+    layers.relations
+      .selectAll<SVGPathElement, GeoRelation>('path.geo-relation')
+      .data(relations, (d) => `${d.fromId}|${d.toId}|${d.type}`)
+      .join('path')
       .attr('class', 'geo-relation')
       .attr('data-from', (d) => d.fromId)
       .attr('data-to', (d) => d.toId)
@@ -452,22 +577,44 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
 
     // M-B2 T2.1 · 86 节点完整渲染（V1 = 31 person · event + location backlog）
     // spec § 4.4 5 类节点视觉：
-    //   person → 紫 #5b3a8c · r=5（M5 主图同色）
-    //   event  → 橙 #cc6633 · r=4（V1 数据缺口 · 留 code path · V1+ wire up）
-    //   location → 灰 #9b8b6f · r=3（V1 数据缺口 · 留 code path · V1+ wire up）
+    //   person → 紫 #5b3a8c · M5 主图同色
+    //   event  → 橙 #cc6633（V1 数据缺口 · 留 code path · V1+ wire up）
+    //   location → 灰 #9b8b6f（V1 数据缺口 · 留 code path · V1+ wire up）
     // T2.1.hotfix · Issue 1 · 背面节点 display:none（great-circle 距离 > clipAngle 隐藏）
     // T2.1.hotfix2-B · dot radius 反比 zoom（治本 PM "圆点比国家大" 痛点）
     // T2.1.hotfix3-2A · dot radius ratio clamp baseR*0.6（PM polish R1 · 防过小看不见）
     //   + 米白 outline stroke（separation 跟底图 · contrast 增）
     // T2.2-F-Q3a · selected person dot 紫圈 indicator（B1 DR-087 复用 · stroke #5b3a8c sw=2）
-    // T2.2-F · hover/click handler on dot · update hoveredPersonId/selectedPersonId + re-render
-    g.selectAll('circle.geo-node').remove();
-    g.selectAll<SVGCircleElement, GeoNode>('circle.geo-node')
-      .data(nodes)
-      .enter()
-      .append('circle')
-      .attr('class', (d) => `geo-node geo-node-${d.type}`)
-      .attr('data-id', (d) => d.id)
+    // T2.2-F · hover/click handler on dot · update state + re-render
+    // Stage 4.2 · keyed join（id）· handler 只在 enter 时 attach 一次（不再每帧重建 DOM + 重挂 handler）
+    layers.nodes
+      .selectAll<SVGCircleElement, GeoNode>('circle.geo-node')
+      .data(nodes, (d) => d.id)
+      .join((enter) =>
+        enter
+          .append('circle')
+          .attr('class', (d) => `geo-node geo-node-${d.type}`)
+          .attr('data-id', (d) => d.id)
+          .on('mouseenter', (_event, d) => {
+            if (d.type !== 'person') return;
+            hoveredPersonId = d.id;
+            render();
+          })
+          .on('mouseleave', (_event, d) => {
+            if (d.type !== 'person') return;
+            if (hoveredPersonId === d.id) {
+              hoveredPersonId = null;
+              render();
+            }
+          })
+          .on('click', (event: MouseEvent, d) => {
+            if (d.type !== 'person') return;
+            event.stopPropagation();
+            // toggle · 点同一个取消 / 点另一个切换
+            selectedPersonId = selectedPersonId === d.id ? null : d.id;
+            render();
+          }),
+      )
       .attr('cx', (d) => projection(d.lonLat)?.[0] ?? 0)
       .attr('cy', (d) => projection(d.lonLat)?.[1] ?? 0)
       .attr('r', (d) =>
@@ -486,26 +633,7 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
       // T2.2-F-Q3a · selected dot 用紫圈 stroke 替换米白 outline · sw=2 视觉跟 B1 DR-087 一致
       .attr('stroke', (d) => (d.id === selectedPersonId ? '#5b3a8c' : '#fcfaf6'))
       .attr('stroke-width', (d) => (d.id === selectedPersonId ? 2 : dotOutlineW))
-      .attr('display', (d) => (geoDistance(center, d.lonLat) > clipAngleRad ? 'none' : null))
-      .on('mouseenter', (_event, d) => {
-        if (d.type !== 'person') return;
-        hoveredPersonId = d.id;
-        render();
-      })
-      .on('mouseleave', (_event, d) => {
-        if (d.type !== 'person') return;
-        if (hoveredPersonId === d.id) {
-          hoveredPersonId = null;
-          render();
-        }
-      })
-      .on('click', (event: MouseEvent, d) => {
-        if (d.type !== 'person') return;
-        event.stopPropagation();
-        // toggle · 点同一个取消 / 点另一个切换
-        selectedPersonId = selectedPersonId === d.id ? null : d.id;
-        render();
-      });
+      .attr('display', (d) => (geoDistance(center, d.lonLat) > clipAngleRad ? 'none' : null));
 
     // T2.2-F · person 节点名字标签（D+E 混合 · 数据 + zoom + hover/click 三维 visibility）
     //   D zoom threshold：plane mode (k>=4) 默认全显 · 球面 mode (k<4) 默认 hide
@@ -513,7 +641,6 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
     //   selected 加粗 (font-weight 700 · Q3 a 跟紫圈 dual indicator)
     //   位置：cx + r + 2 紧贴右侧 / italic / 紫 #5b3a8c (Q1 a · Q4 a)
     //   pointer-events none · 不抢 dot hover
-    g.selectAll('text.person-label').remove();
     const personNodes = nodes.filter((d) => d.type === 'person');
     const visiblePersonLabels = personNodes.filter((d) => {
       if (d.id === selectedPersonId) return true;
@@ -521,16 +648,14 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
       return k >= 4;
     });
     const defaultPersonFontSize = personLabelFontSize(k);
-    g.selectAll<SVGTextElement, GeoNode>('text.person-label')
+    const personDotR = dotRadiusAtZoom(k, DOT_BASE_RADIUS.person);
+    layers.personLabels
+      .selectAll<SVGTextElement, GeoNode>('text.person-label')
       .data(visiblePersonLabels, (d) => d.id)
-      .enter()
-      .append('text')
+      .join('text')
       .attr('class', 'person-label')
       .attr('data-id', (d) => d.id)
-      .attr('x', (d) => {
-        const dotR = dotRadiusAtZoom(k, DOT_BASE_RADIUS.person);
-        return (projection(d.lonLat)?.[0] ?? 0) + dotR + 2;
-      })
+      .attr('x', (d) => (projection(d.lonLat)?.[0] ?? 0) + personDotR + 2)
       .attr('y', (d) => (projection(d.lonLat)?.[1] ?? 0) + 3)
       .attr('text-anchor', 'start')
       .attr('font-style', 'italic')
