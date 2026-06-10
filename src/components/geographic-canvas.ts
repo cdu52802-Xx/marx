@@ -76,6 +76,7 @@ import {
   type ProjectionMode,
 } from '../lib/projection.ts';
 import { loadBorders, filterBordersAtYear } from '../lib/historical-borders.ts';
+import { borderDisplayName } from '../lib/border-names-zh.ts';
 import {
   marxLocationAtYear,
   computeMigrationSegments,
@@ -563,7 +564,11 @@ export function mountGeographicCanvas(opts: GeographicCanvasOptions): Geographic
       .attr('display', (d) =>
         geoDistance(center, borderCentroid(d)) > clipAngleRad ? 'none' : null,
       )
-      .text((d) => ((d as GeoJSON.Feature).properties as { Name?: string } | null)?.Name ?? '');
+      // B-2 · 中文国名（105 名全量映射 · Germany/奥斯曼按 From 年代区分 · 查不到 fallback 原文）
+      .text((d) => {
+        const props = d.properties as { Name?: string; From?: number } | null;
+        return borderDisplayName(props?.Name, props?.From);
+      });
 
     // === M-B2 T4.3 · 迁徙轨迹（borders 之上 · relations/dots 之下）===
     //   已走（currentYear >= arrivalYear）紫实线 opacity 0.55 / 未来紫虚线 '4 3' opacity 0.35
