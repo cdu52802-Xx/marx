@@ -94,4 +94,25 @@ lesson 4.8 兑现：互换/seek/联动/让位全部真浏览器 E2E 验证 · �
 
 ---
 
-**下一步**：PM 实测（§ 5 七步）→ 微调反馈 → 改完拍板 → 合 main + Stage 7 ship 流程。
+## 8. PM R1 微调轮（2026-06-10/11 · "还有很多 bug + 布局相互遮挡"）
+
+**回顾方法**：真浏览器（vite dev + preview 工具）逐状态截图 + 所有 fixed 元素 boundingRect 两两相交量化检测（list-main / geo-main / 搜索浮窗开 / 详情卡开 4 状态 · 1440×900）。
+
+**确认 6 问题 · 全修（commit `d2ccf99`）**：
+
+| # | 问题 | 修法 |
+|---|---|---|
+| 1 | geo-main 下 M5 zoom-control（z11）压图例 + 控制隐藏画布（点了"没反应"） | applyCanvasRole 隐藏 M5 专属控件 · 切回恢复 |
+| 2 | geo-main 下 sidebar 滤镜栏盖地图左缘 48px · 对地理图无意义 | 同上 |
+| 3 | 初始不同步：游标 2030 / 国界停 1843 / 副窗标题无年份 | geo mount 完补发一次 time-change(2030) |
+| 4 | 副窗缩略图 r=8 节点挤成一坨紫 + 盖迁徙线 | low 密度 dot ×0.45（主画布 baseR PM 拍过不动） |
+| 5 | 搜索浮窗无 max-height · 小屏可穿副窗/时间轴 | max-height calc(100vh-380px) + 内滚 |
+| 6 | 窄窗口 header 标题与控件文字叠文字 | header-controls 米白 0.92 底 + padding |
+
+**排除项（工具因素 · 非产品 bug）**：preview_click 误报 / eval 合成 click 缺 mousedown · elementsFromPoint 顶层无遮挡 + Playwright 真鼠标 22/22 全过。
+
+**验证**：Unit 491/494 · E2E 22/22（+3 断言锁定修复）· Lint 0/0 · 修复后 boundingRect 复测 0 遮挡。
+
+**仍开放**：B-7 geo 圆点 click 无反应（既有 backlog · 按约束未碰 · 若 PM 本轮所指 bug 包含它 · 请明示解禁再启专项）· B-1 国名/标签密度（已 backlog 等统一调）。
+
+**下一步**：PM 实测（§ 5 七步 + 本轮 6 修复点）→ 剩余 bug 请逐条描述（在哪个画布 · 做了什么 · 看到什么）→ 改完拍板 → 合 main + Stage 7 ship。
