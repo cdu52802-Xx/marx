@@ -120,3 +120,11 @@ lesson 4.8 兑现：互换/seek/联动/让位全部真浏览器 E2E 验证 · �
 ## 9. PM R2 微调轮（2026-06-11 · "观点斜线歪的不直" · commit `62420ee`）
 
 参照 denizcemonduygu.com/philo/browse 的 45° 直斜线。根因：claim-layout 段内 22/22 是 45° · 但 person 段交界跳「右 50 / 下 77」≈57° → 27 段累计多坠 ~730px · 每个人物处一个折。修法：单一 chain 游标贯穿全部 obs · 每步（含段交界 77/77）Δx 恒等 Δy → x−y 全局恒定 = 真直线 · 纵坐标逐点不变（行距/段距/呼吸感保留）· header 锚定首 obs 自成平行斜线 · 焦点模式同步变直。真浏览器实测 92 obs 共线 ✓ · E2E 22/22 ✓。
+
+## 10. 归档状态（2026-06-11 · PM 拍"先这样归档 · 后面慢慢看"）
+
+- **分支 `m-b2-complete` 共 12 commit** 全 push origin（全量完成 6 + R1 遮挡修复 2 + R2 斜线摆直 2 + 预览 bat 1 + 本归档 docs 1）· **main 未动**
+- 终态指标：Unit **494/497**（3 M3 pre-existing）· E2E **22/22** 真 Chromium · Lint 0/0 · Bundle JS gzip **54.54 KB**（≤80 · 余 25.5）
+- PM 实测入口：双击项目根 `启动本地预览.bat` → http://localhost:4173/marx/（dist 已是 HEAD 构建）
+- 续接动作（PM 慢看后）：剩余 bug 逐条描述（在哪个画布 · 做了什么 · 看到什么）→ 修 → 拍合 main → Stage 7 ship（4 件套 baseline + tag m-b2-final + watch deploy）
+- 开放项：B-7 dot click（约束未碰 · 要修请明示解禁）· B-8 连线 V2 专题 · B-1 标签密度
